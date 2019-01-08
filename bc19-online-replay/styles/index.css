@@ -1,0 +1,10 @@
+.tile {
+  width:20px;
+  height:20px;
+  background-color: wheat;
+  display:inline-block;
+}
+.map {
+  width: 645px;
+  height:640px;
+}

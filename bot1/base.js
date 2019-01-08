@@ -21,7 +21,7 @@ const unitMoveDeltas = {
      
      [1,-1], [1, 1], [-1, 1], [-1, -1],
      
-     [0,-2], [2, 0], [0, 2], [-2, 0]
+     [0,-2], [2, 0], [0, 2], [-2, 0],
      
      [1,-2], [1, 2], [-1, 2], [-1, -2],
      [2,-2], [2, 2], [-2, 2], [-2, -2],
@@ -86,9 +86,10 @@ function relToPos(p1x, p1y, p2x, p2y, self) {
   let closestDist = qmath.dist(p2x,p2y,p1x, p1y);
   let bestDelta = [0,0];
   for (let i = 0; i < deltas.length; i++) {
+
     let nx = p1x+deltas[i][0];
     let ny = p1y+deltas[i][1]
-    
+    //self.log(`bot: ${self.me.id} checks ${nx},${ny}`);
     if (self.fuel + self.me.fuel >= fuelCosts[i]){
       //enough fuel to move that far?
       
