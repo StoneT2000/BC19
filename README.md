@@ -24,5 +24,5 @@ units - Folder with all the code for processing self and returning an action, st
 
 ## Castle Talk Encoding
 The values ...
-0, ... 5 are reserved for units to tell a castle which unit got spawned.
-6 is reserved for units to tell all castles to pause building that turn.
+- 0, ... 5 are reserved for units to tell a castle which unit got spawned.
+- 6 is reserved for units to tell all castles to pause building that turn.
