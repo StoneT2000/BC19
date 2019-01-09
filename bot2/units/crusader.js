@@ -21,11 +21,9 @@ function mind(self){
       exploreTarget = [gameMap[0].length - self.me.x - 1, self.me.y];
     }
     
-    //let rels = base.relToPos(self.me.x, self.me.y, exploreTarget[0], exploreTarget[1], self);
-    //rally means crusader goes to a rally point
+
     target = exploreTarget;
-    self.status = 'rally';
-    //return {action:'', status:'rally', target: exploreTarget};
+    self.status = 'searchAndAttack';
   }
   
   let robotsInVision = self.getVisibleRobots();
@@ -33,13 +31,14 @@ function mind(self){
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
     //self.log(`Received from ${robotsInVision[i].id} castle msg: ${msg}`);
-    signal.processMessageCrusader(self, msg);
+    //signal.processMessageCrusader(self, msg);
   }
   
   if (self.status === 'rally') {
-    return {action:'', status:'rally', target: target};
+    return {action:'', status:'searchAndAttack', target: target};
   }
 
+  
   if (self.status === 'searchAndAttack') {
     //watch for enemies, then chase them
     //call out friends to chase as well?, well enemy might only send scout, so we might get led to the wrong place
@@ -72,6 +71,7 @@ function mind(self){
         
       }
     }
+    
     //enemy nearby, attack it?
     if (leastDistToTarget <= 16 && isEnemy === true) {
       //let rels = base.relToPos(self.me.x, self.me.y, target[0], target[1], self);
@@ -92,6 +92,7 @@ function mind(self){
       
       
     }
+    
   }
   if (target.length > 0 && self.status === 'searchAndAttack'){
     let distToTarget = qmath.dist(self.me.x, self.me.y, target[0], target[1]);

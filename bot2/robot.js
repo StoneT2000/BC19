@@ -1,9 +1,9 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
-import castle from './bot1/units/castle.js';
-import pilgrim from './bot1/units/pilgrim.js';
-import crusader from './bot1/units/crusader.js';
-import qmath from './bot1/math.js';
-import search from './bot1/search.js'
+import castle from './bot2/units/castle.js';
+import pilgrim from './bot2/units/pilgrim.js';
+import crusader from './bot2/units/crusader.js';
+import qmath from './bot2/math.js';
+import search from './bot2/search.js'
 
 
 let botTargets = [];

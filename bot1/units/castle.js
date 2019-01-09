@@ -61,9 +61,22 @@ function mind(self) {
   //Give commands to rally units to attack a known castle
   //Give commands to pilgrims who then relay the message to other units?
   
-  //if we have at least 3 crusaders, let them attack
-  if (self.crusaders >= 3) {
+  
+  let crusadersInVincinity = [];
+  for (let i = 0; i < robotsInVision.length; i++) {
+    let obot = robotsInVision[i];
+    if (obot.unit === SPECS.CRUSADER) {
+      let distToUnit = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
+      if (distToUnit <= 4) {
+        crusadersInVincinity.push(obot);
+      }
+    }
+  }
+  
+  //if we have at least 3 crusaders, let them attack, basically sending a warcry lmao
+  if (crusadersInVincinity.length >= 3) {
     self.signal(1, 4);
+    self.sentCommand = true;
   }
   
   //building code
@@ -86,7 +99,9 @@ function mind(self) {
           else if (self.pilgrims <= self.maxPilgrims){
             self.buildQueue.push(2);
           }
-
+          else {
+            self.buildQueue.push(3);
+          }
           if (unit === 3) {
             //send an initial signal?
           }
@@ -102,7 +117,7 @@ function mind(self) {
     
   }
 
-  return {action: '', status: '', response:''};
+  return {action: '', status: 'build', response:''};
 }
 
 //returns true if unit can build on that location

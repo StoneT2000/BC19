@@ -55,6 +55,7 @@ class MyRobot extends BCAbstractRobot {
     this.castles = 0;
     this.fuelSpots = [];
     this.karboniteSpots = [];
+    this.sentCommand = false;
   };
   
   turn() {

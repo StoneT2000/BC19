@@ -30,7 +30,6 @@ function processMessageCastle(self, msg) {
 function processMessageCrusader(self, msg){
   switch (msg){
     case 0:
-      self.status = 'rally';
       break;
     case 1:
       self.status = 'searchAndAttack';
