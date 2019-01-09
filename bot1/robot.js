@@ -47,6 +47,7 @@ class MyRobot extends BCAbstractRobot {
     this.knownDeposits = {};
     this.churches = 0;
     this.pilgrims = 0;
+    this.maxPilgrims = 0;
     this.buildQueue = []; //queue of what unit to build for castles and churches
     this.crusaders = 0;
     this.castles = 0;

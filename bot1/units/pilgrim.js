@@ -6,7 +6,7 @@ function mind(self) {
   const choices = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
   const choice = choices[Math.floor(Math.random() * choices.length)]
   //
-  self.log(`At ${self.me.x}, ${self.me.y}. Status:${self.status}`);
+  self.log(`Pilgrim (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
   let target = self.target;
   let fuelMap = self.getFuelMap();
   let karboniteMap = self.getKarboniteMap();

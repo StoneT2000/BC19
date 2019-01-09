@@ -35,6 +35,13 @@ function mind(self){
       let obot = robotsInVision[i];
       
       if (obot.team !== self.me.team) {
+        
+        //if bot sees enemy structures, log it, and send to castle
+        if (obot.unit === SPECS.CASTLE || obot.unit === SPECS.CHURCH) {
+          self.castleTalk()
+        }
+        
+        
         let distToThisTarget = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
         if (distToThisTarget < leastDistToTarget) {
           leastDistToTarget = distToThisTarget;
@@ -45,12 +52,12 @@ function mind(self){
         
       }
       else {
-        if (obot.unit === SPECS.CASTLE) {
+        
           //self.log(`Crusader see's our own castle`);
-        }
+        
       }
     }
-    //adjacent
+    //enemy nearby, attack it?
     if (leastDistToTarget <= 16 && isEnemy === true) {
       //let rels = base.relToPos(self.me.x, self.me.y, target[0], target[1], self);
       let rels = base.rel(self.me.x, self.me.y, target[0], target[1]);
@@ -58,15 +65,20 @@ function mind(self){
       if (self.readyAttack()){
         if (enemyBot.health <= 10) {
           //enemy bot killed
-          //return {action:self.attack(rels.dx,rels.dy), status:'searchAndAttack', target: //[Math.floor(Math.random()*gameMap[0].length),Math.floor(Math.random()*gameMap.length)]};
+          //finish attack by returning attack move and then set target to nothing, forcing bot do something else whilst searching for enemies
+          return {action:self.attack(rels.dx,rels.dy), status:'searchAndAttack', target:[]}; //[Math.floor(Math.random()*gameMap[0].length),Math.floor(Math.random()*gameMap.length)]
         }
+        return {action:self.attack(rels.dx,rels.dy), status:'searchAndAttack', target: target};
+      }
+      else {
+        return {action:'', status:'searchAndAttack', target: target};
       }
       //if (enemyBot.health)
       
-      return {action:self.attack(rels.dx,rels.dy), status:'searchAndAttack', target: target};
-    } 
+      
+    }
   }
-  if (target && self.status === 'searchAndAttack'){
+  if (target.length > 0 && self.status === 'searchAndAttack'){
     let distToTarget = qmath.dist(self.me.x, self.me.y, target[0], target[1]);
     if (distToTarget <= 2){
       target = [Math.floor(Math.random()*gameMap[0].length),Math.floor(Math.random()*gameMap.length)]
@@ -80,10 +92,12 @@ function mind(self){
     }
   }
   
-  
+  self.log(`Randomly moving`)
   const choices = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
   const choice = choices[Math.floor(Math.random() * choices.length)]
   return {action: self.move(...choice), status: 'searchAndAttack', target: []};
+  
+
   
 }
 function invert(x,y){

@@ -39,6 +39,7 @@ function mind(self) {
       }
     }
     let numFuelSpots = self.fuelSpots.length;
+    self.maxPilgrims = numFuelSpots/2;
     self.buildQueue.push(2,2,2);
     
     
@@ -69,11 +70,17 @@ function mind(self) {
           
           self.log(`Building a ${unit} at ${checkPos[0]}, ${checkPos[1]}`);
           if (unit === 2){
-            self.buildQueue.push(3);
+            self.buildQueue.push(3,3);
           }
-          else {
+          else if (self.pilgrims <= self.maxPilgrims){
             self.buildQueue.push(2);
           }
+          
+          if (unit === 3) {
+            //send an initial signal?
+          }
+          
+          
           return {action: self.buildUnit(unit, search.bfsDeltas[1][i][0], search.bfsDeltas[1][i][1]), status:'build', response:'built'};
         }
       }
