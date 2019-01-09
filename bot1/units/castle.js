@@ -8,6 +8,7 @@ function mind(self) {
   //these 2d maps have it like map[y][x]...
   let robotsInVision = self.getVisibleRobots();
   
+  let action = '';
   
   self.log(`Castle (${self.me.x}, ${self.me.y}); Status: ${self.status}; Castles:${self.castles}, Churches: ${self.churches}, Pilgrims: ${self.pilgrims}, Crusaders: ${self.crusaders}`);
   
@@ -41,7 +42,7 @@ function mind(self) {
     }
     let numFuelSpots = self.fuelSpots.length;
     self.maxPilgrims = numFuelSpots/2;
-    self.buildQueue.push(2,2,2);
+    self.buildQueue.push(2);
     
     self.status = 'build';
     
@@ -91,14 +92,11 @@ function mind(self) {
         if (self.buildQueue.length > 0 && enoughResourcesToBuild(self, self.buildQueue[0])) {
           //build the first unit put into the build queue
           let unit = self.buildQueue.shift(); //remove that unit
-          if (self.pilgrims < 1){
           
-            self.log(`Building a ${unit} at ${checkPos[0]}, ${checkPos[1]} ${self.pilgrims}`);
-            return {action: self.buildUnit(unit, search.bfsDeltas[1][i][0], search.bfsDeltas[1][i][1]), status:'build', response:'built'};
-          }
+          
           
           if (unit === 2){
-            self.buildQueue.push(3,3);
+            self.buildQueue.push(3,3,3,3);
           }
           else if (self.pilgrims <= self.maxPilgrims){
             self.buildQueue.push(2);
@@ -109,8 +107,15 @@ function mind(self) {
           if (unit === 3) {
             //send an initial signal?
           }
-
-          return {action:'',status:'build',response:'none'};
+          action = self.buildUnit(unit, search.bfsDeltas[1][i][0], search.bfsDeltas[1][i][1]);
+          return {action:action};
+          //RUSH STRAT
+          /*
+          if (self.crusaders < self.maxCrusaders) {
+            return {action: self.buildUnit(3, search.bfsDeltas[1][i][0], search.bfsDeltas[1][i][1]), status:'build', response:'built'};
+          }
+          */
+          //return {action:'',status:'build',response:'none'};
           //return {action: self.buildUnit(unit, search.bfsDeltas[1][i][0], search.bfsDeltas[1][i][1]), status:'build', response:'built'};
         }
       }

@@ -58,6 +58,7 @@ class MyRobot extends BCAbstractRobot {
     this.fuelSpots = [];
     this.karboniteSpots = [];
     this.sentCommand = false;
+    this.planner = null;
   };
   
   turn() {
@@ -73,14 +74,12 @@ class MyRobot extends BCAbstractRobot {
     }
     else if (this.me.unit === SPECS.CRUSADER) {
       let result = crusader.mind(this);
-      this.status = result.status;
-      this.target = result.target;
       return result.action;
     } 
     else if (this.me.unit === SPECS.PILGRIM) {
       let result = pilgrim.mind(this);
-      this.status = result.status;
-      this.target = result.target;
+      //this.status = result.status;
+      //this.target = result.target;
       return result.action;
     }
     let endTime = new Date();
@@ -98,7 +97,7 @@ class MyRobot extends BCAbstractRobot {
     let robotMap = this.getVisibleRobotMap();
     let passableMap = this.getPassableMap();
     let fuelCost = SPECS.UNITS[this.me.unit].FUEL_PER_MOVE;
-    let dist2 = qmath.dist(dx, dy);
+    let dist2 = qmath.distDelta(dx, dy);
     fuelCost *= dist2;
 
     if(this.fuel >= fuelCost && search.emptyPos(this.me.x + dx, this.me.y + dy, robotMap, passableMap)) {
@@ -115,6 +114,27 @@ class MyRobot extends BCAbstractRobot {
     if (this.fuel >= fuelCost) {
       return true;
     }
+  }
+  /*
+  * Sets the robots finalTarget key and also plans new path. After setting this, if the robot mind hasn't decided to perform an action earlier, it will always move towards this target accordingly
+  * @param{[px,py]} newTarget - array of position of new target
+  */
+  setFinalTarget(newTarget) {
+   this.finalTarget = newTarget;
+    let path = [];
+    if (this.planner !== null) {
+      this.planner.search(this.me.y,this.me.x,newTarget[1],newTarget[0],path);
+    }
+    else {
+      //this.log('using ez')
+      path = [this.me.y,this.me.x, newTarget[1], newTarget[0]];
+    }
+    path.shift();
+    path.shift();
+    //this.log(`My path: ${path}`);
+    this.path = path;
+    this.target[1] = path.shift();
+    this.target[0] = path.shift();
   }
   
 }

@@ -100,14 +100,15 @@ function relToPos(p1x, p1y, p2x, p2y, self) {
   
   let closestDist = qmath.dist(p2x,p2y,p1x, p1y);
   let bestDelta = [0,0];
+  //self.log(`bot: ${self.me.id} checks ${p1x},${p1y}, d(${0}, ${0}) distLeft: ${closestDist}`);
   for (let i = 0; i < deltas.length; i++) {
 
     let nx = p1x+deltas[i][0];
     let ny = p1y+deltas[i][1]
     let pass = self.canMove(deltas[i][0],deltas[i][1])
     if (pass === true){
-      let distLeft = qmath.dist(p2x,p2y,nx, ny);
-      //self.log(`bot: ${self.me.id} checks ${nx},${ny}, distLeft: ${distLeft}`);
+      let distLeft = qmath.dist(nx,ny,p2x,p2y);
+      //self.log(`bot: ${self.me.id} checks ${nx},${ny}, d(${deltas[i][0]}, ${deltas[i][1]}) distLeft: ${distLeft}`);
       if (distLeft < closestDist) {
         closestDist = distLeft;
         bestDelta = deltas[i];

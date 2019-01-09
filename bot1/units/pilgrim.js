@@ -7,7 +7,7 @@ import pathing from '../pathing/pathing-bundled.js';
 function mind(self) {
   const choices = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
   const choice = choices[Math.floor(Math.random() * choices.length)]
-  //
+  
   self.log(`Pilgrim (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
   let target = self.target;
   let fuelMap = self.getFuelMap();
@@ -19,12 +19,14 @@ function mind(self) {
   let action = '';
   
   //Initialization code for robot to at least store the structure robot is born in
-
+  
   if (self.status === 'justBuilt') {
     //for pilgrims, search first
+    self.log('Just built')
     self.status = 'searchForDeposit';
-    let origCastleLoc = search.findNearestStructure(self)
-    self.knownStructures[self.me.team].push({x:origCastleLoc[0], y:origCastleLoc[1]});
+    let origCastle = search.findNearestStructure(self)
+    self.knownStructures[self.me.team].push(origCastle);
+    //self.log(`${self.knownStructures[self.me.team][0].x}`);
     /*
     let castleId = robotMap[origCastleLoc[1]][origCastleLoc[0]];
     let castleSignal = self.getRobot(castleId).signal;
@@ -47,10 +49,12 @@ function mind(self) {
   }
   
   //initializing planner
-  if (self.me.turn === 3) {
+  if (self.me.turn === 1) {
     pathing.initializePlanner(self);
+    self.setFinalTarget(self.finalTarget);
   }
-  if (self.me.turn === 4) {
+  /*
+  if (self.me.turn === -1) {
     let path = [];
     self.planner.search(self.me.y,self.me.x,27,5,path);
     path.shift();
@@ -58,31 +62,20 @@ function mind(self) {
     self.path = path;
 
     self.log(`Pilgrim follows path: ${self.path}`);
-  }
+  }*/
   
-  //code to follow path
-  if (self.path.length > 0) {
-    //if sub target almost reached
-    let distLeft = qmath.dist(self.me.x, self.me.y, target[0], target[1]);
-    if (distLeft <= 2){
-      self.log(`Pilgrim has new sub target`)
-      //set new sub target
-      target[1] = self.path.shift();
-      target[0] = self.path.shift();
-    }
-  }
+
   
   //if robot is going to deposit but it is taken up, search for new deposit loc.
   if (self.status === 'goingToDeposit') {
-    if (robotMap[target[1]][target[0]] !== self.me.id){
+    //self.log(`Robotmap at 11,11 ${robotMap[self.finalTarget[1]][self.finalTarget[0]]}`)
+    if (robotMap[self.finalTarget[1]][self.finalTarget[0]] !== self.me.id && robotMap[self.finalTarget[1]][self.finalTarget[0]] > 0){
       self.status = 'searchForDeposit';
     }
-  } 
+  }
+  //search for deposit, set new finalTarget and set path
   if (self.status === 'searchForDeposit') {
     //perform search for closest deposit
-    //let newTarget = search.bfs(self, self.me.x, self.me.y, search.fuelDeposit, search.canPass)
-    //^^ bfs is slower????
-    
     let newTarget;
     let cd = 9999990;
     
@@ -90,8 +83,8 @@ function mind(self) {
       let nx = self.fuelSpots[i].x;
       let ny = self.fuelSpots[i].y;
       if (robotMap[ny][nx] <= 0){
-        //self.log(`Robot at ${j},${i}:${robotMap[i][j]}`)
-        let distToThere = qmath.dist(self.me.x,self.me.y,nx,ny);
+        let patharr = [];
+        let distToThere = self.planner.search(self.me.y,self.me.x,ny,nx,patharr);
         if (distToThere < cd) {
           cd = distToThere;
           newTarget = [nx,ny];
@@ -102,7 +95,6 @@ function mind(self) {
       let nx = self.karboniteSpots[i].x;
       let ny = self.karboniteSpots[i].y;
       if (robotMap[ny][nx] <= 0){
-        //self.log(`Robot at ${j},${i}:${robotMap[i][j]}`)
         let distToThere = qmath.dist(self.me.x,self.me.y,nx,ny);
         if (distToThere < cd) {
           cd = distToThere;
@@ -110,26 +102,17 @@ function mind(self) {
         }
       }
     }
-    let self.finalTarget = newTarget;
-    //let rels = base.relToPos(self.me.x, self.me.y, newTarget[0], newTarget[1], self);
-    //return {action:self.move(rels.dx,rels.dy), status:'goingToDeposit', target: newTarget};
-    
+    self.status = 'goingToDeposit';
+    self.setFinalTarget([newTarget[0],newTarget[1]]);
   }
   //When pilgrim is returning to structure to deliver karbo or fuel...
   if (self.status === 'return') {
-    if (self.me.x === target[0] && self.me.y === target[1]) {
-      //shouldn't happen
-      return {action:''};
-    }
-    else {
-      let rels = base.relToPos(self.me.x, self.me.y, target[0], target[1], self);
-      let currRels = base.rel(self.me.x, self.me.y, target[0], target[1]);
-      if (Math.abs(currRels.dx) <= 1 && Math.abs(currRels.dy) <= 1){
-        //if abs value of dx and dy are 1 or less, ship is next to church or castle, deliver all fuel
-        self.log(`${currRels.dx}, ${currRels.dy}`);
-        return {action:self.give(currRels.dx, currRels.dy, self.me.karbonite, self.me.fuel), status:'searchForDeposit', target: [self.me.x,self.me.y]}
-      }
-      return {action:self.move(rels.dx,rels.dy), status:'return', target: target};  
+    let currRels = base.rel(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
+    if (Math.abs(currRels.dx) <= 1 && Math.abs(currRels.dy) <= 1){
+      self.status = 'searchForDeposit';
+      //give stuff if close enough
+      action = self.give(currRels.dx, currRels.dy, self.me.karbonite, self.me.fuel);
+      return {action:action}; 
     }
   }
   
@@ -138,33 +121,58 @@ function mind(self) {
   if ((self.me.fuel >= 100 || self.me.karbonite >= 20) && self.status !== 'return') {
     //send karbo
     let bestTarget = search.findNearestStructure(self);
-    //if there are no visible robots, go to nearest known structure
-    
-    let rels = base.relToPos(self.me.x, self.me.y, bestTarget[0], bestTarget[1], self);
-    let currRels = base.rel(self.me.x, self.me.y, bestTarget[0], bestTarget[1]);
+    self.setFinalTarget([bestTarget.x,bestTarget.y]);
+    self.status = 'return';
+
+    let currRels = base.rel(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
     if (Math.abs(currRels.dx) <= 1 && Math.abs(currRels.dy) <= 1){
-      //if abs value of dx and dy are 1 or less, ship is next to church or castle, deliver all fuel
-      self.log(`${currRels.dx}, ${currRels.dy}`);
-      //return {action:self.give(currRels.dx, currRels.dy, self.me.karbonite, self.me.fuel), status:'searchForDeposit', target: [self.me.x,self.me.y]}
+      self.status = 'searchForDeposit';
+      //give stuff if close enough
+      action = self.give(currRels.dx, currRels.dy, self.me.karbonite, self.me.fuel);
+      return {action:action}; 
     }
-    return {action:self.move(rels.dx,rels.dy), status:'return', target: bestTarget};
   }
   
   //forever mine
-  if (fuelMap[self.me.y][self.me.x] === true) {
-    return {action:self.mine(), status:'mine', target: [self.me.x,self.me.y]};
+  if (fuelMap[self.me.y][self.me.x] === true && self.status !== 'return') {
+    action = self.mine();
+    self.status = 'mine';
+    return {action:action}; 
   }
-  else if (karboniteMap[self.me.y][self.me.x] === true) {
-    return {action:self.mine(), status:'mine', target: [self.me.x,self.me.y]};
-  }
-  if (target) {
-    self.log(`Target: ${target[0]}, ${target[1]}`)
-    let rels = base.relToPos(self.me.x, self.me.y, target[0], target[1], self);
-    return {action:self.move(rels.dx,rels.dy), status:self.status, target: target};  
+  else if (karboniteMap[self.me.y][self.me.x] === true && self.status !== 'return') {
+    action = self.mine();
+    self.status = 'mine';
+    return {action:action}; 
   }
   
   
-  return {action:action, status:self.status, target: target}; 
+  //AT THE END, we check if there is a path created for this final target
+  
+  //code to follow path, decide on current subtarget
+  if (self.path.length > 0) {
+    //if sub target almost reached
+
+    let distLeftToSubTarget = qmath.dist(self.me.x, self.me.y, self.target[0], self.target[1]);
+    self.log(`Dist left: ${distLeftToSubTarget}`);
+    if (distLeftToSubTarget <= 1){
+      //self.log(`Pilgrim has new sub target`)
+      //set new sub target
+      self.target[1] = self.path.shift();
+      self.target[0] = self.path.shift();
+    }
+  }
+  if (self.target) {
+    //self.log(`Path: ${self.path}`);
+    let rels = base.relToPos(self.me.x, self.me.y, self.target[0], self.target[1], self);
+    //self.log(`Target: ${self.target[0]}, ${self.target[1]}, dx:${rels.dx}, dy:${rels.dy}`)
+    if (rels.dx === 0 && rels.dy === 0) {
+      action = ''
+    }
+    else {
+      action = self.move(rels.dx, rels.dy);    
+    }
+  }
+  return {action:action}; 
 
   //return self.move(0,0);
 }

@@ -3,12 +3,13 @@ import search from '../search.js';
 import base from '../base.js';
 import qmath from '../math.js';
 import signal from '../signals.js';
+import pathing from '../pathing/pathing-bundled.js';
 
 function mind(self){
   let target = self.target;
   let gameMap = self.map;
   let otherTeamNum = (self.me.team + 1) % 2;
-      
+  let action = '';
   self.log(`Crusader (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
   if (self.status === 'justBuilt') {
     //broadcast your unit number for castles to add to their count of units
@@ -22,13 +23,18 @@ function mind(self){
       exploreTarget = [gameMap[0].length - self.me.x - 1, self.me.y];
     }
     
-    self.knownStructures[otherTeamNum].push({x:exploreTarget[0], y:exploreTarget[1]});
+    self.knownStructures[otherTeamNum].push({x:exploreTarget[0], y:exploreTarget[1], unit: 0});
     //let rels = base.relToPos(self.me.x, self.me.y, exploreTarget[0], exploreTarget[1], self);
     //rally means crusader goes to a rally point
-    target = exploreTarget;
     self.status = 'rally';
+    self.target = [self.me.x,self.me.y]
     //return {action:'', status:'rally', target: exploreTarget};
   }
+  if (self.me.turn === 2) {
+    pathing.initializePlanner(self);
+    self.setFinalTarget(self.finalTarget);
+  }
+  
   
   let robotsInVision = self.getVisibleRobots();
   //process signals
@@ -40,11 +46,11 @@ function mind(self){
   
   //given status, set target
   if (self.status === 'rally') {
-    target = [self.me.x, self.me.y];
+    self.setFinalTarget([self.me.x, self.me.y]);
     //return {action:'', status:'rally', target: target};
   }
   if (self.status === 'searchAndAttack') {
-    target = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
+    self.setFinalTarget([self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y]);
   }
   
   //at any time
@@ -71,7 +77,7 @@ function mind(self){
             //if rallying, don't reset target
           }
           else {
-            target = [obot.x, obot.y];
+            self.setFinalTarget([obot.x, obot.y]);
           }
           isEnemy = true;
           enemyBot = obot;
@@ -93,40 +99,39 @@ function mind(self){
         if (enemyBot.health <= 10) {
           //enemy bot killed
           //finish attack by returning attack move and then set target to nothing, forcing bot do something else whilst searching for enemies
-          return {action:self.attack(rels.dx,rels.dy), status:self.status, target:target}; //[Math.floor(Math.random()*gameMap[0].length),Math.floor(Math.random()*gameMap.length)]
+          action = self.attack(rels.dx,rels.dy)
+          return {action:action};
         }
-        return {action:self.attack(rels.dx,rels.dy), status:self.status, target: target};
+        action = self.attack(rels.dx,rels.dy)
+        return {action:action};
       }
-      else {
-        return {action:'', status:self.status, target: target};
-      }
-      //if (enemyBot.health)
-      
-      
     }
   }
   
-  //robot always goes towards its target if possible
-  if (target.length > 0){
-    /*
-    let distToTarget = qmath.dist(self.me.x, self.me.y, target[0], target[1]);
-    if (distToTarget <= 2){
-      target = [Math.floor(Math.random()*gameMap[0].length),Math.floor(Math.random()*gameMap.length)]
+  if (self.path.length > 0) {
+    //if sub target almost reached
+
+    let distLeftToSubTarget = qmath.dist(self.me.x, self.me.y, self.target[0], self.target[1]);
+    self.log(`Dist left: ${distLeftToSubTarget}`);
+    if (distLeftToSubTarget <= 1){
+      //self.log(`Pilgrim has new sub target`)
+      //set new sub target
+      self.target[1] = self.path.shift();
+      self.target[0] = self.path.shift();
     }
-    */
-    let rels = base.relToPos(self.me.x, self.me.y, target[0], target[1], self);
-    if (self.canMove(rels.dx, rels.dy)){
-      return {action:self.move(rels.dx,rels.dy), status:self.status, target: target};
+  }
+  if (self.target) {
+    //self.log(`Path: ${self.path}`);
+    let rels = base.relToPos(self.me.x, self.me.y, self.target[0], self.target[1], self);
+    //self.log(`Target: ${self.target[0]}, ${self.target[1]}, dx:${rels.dx}, dy:${rels.dy}`)
+    if (rels.dx === 0 && rels.dy === 0) {
+      action = ''
     }
     else {
-      return {action:'', status:self.status, target: target};
+      action = self.move(rels.dx, rels.dy);    
     }
   }
-  
-  self.log(`Randomly moving`)
-  const choices = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
-  const choice = choices[Math.floor(Math.random() * choices.length)]
-  return {action: self.move(...choice), status: 'searchAndAttack', target: []};
+  return {action:action}; 
   
 
   

@@ -114,15 +114,15 @@ function getNeighbors(i,j) {
 function findNearestStructure(self) {
   let visibleRobots = self.getVisibleRobots();
   let shortestDist = 10000000;
-  let bestTarget = []
+  let bestTarget = null;
   
   //First we search through known locations in case these structures aren't visible
   for (let i = 0; i < self.knownStructures[self.me.team].length; i++) {
-    let friendlyStructureLoc = self.knownStructures[self.me.team][i];
-    let distToStruct = qmath.dist(self.me.x, self.me.y, friendlyStructureLoc[0], friendlyStructureLoc[1]);
+    let friendlyStructure = self.knownStructures[self.me.team][i];
+    let distToStruct = qmath.dist(self.me.x, self.me.y, friendlyStructure.x, friendlyStructure.y);
     if (distToStruct < shortestDist) {
       shortestDist = distToStruct;
-      bestTarget = friendlyStructureLoc;
+      bestTarget = friendlyStructure;
       //self.log(`Pilgrim-${self.me.id} found past struct: ${bestTarget}`);
     }
   }
@@ -137,14 +137,15 @@ function findNearestStructure(self) {
         let distToStruct = qmath.dist(self.me.x, self.me.y, thatRobot.x, thatRobot.y);
         if (distToStruct < shortestDist) {
           shortestDist = distToStruct;
-          bestTarget = [thatRobot.x, thatRobot.y];
+          bestTarget = {x:thatRobot.x, y:thatRobot.y, unit: thatRobot.unit};
         }
       }
     }
   }
-  if (bestTarget.length === 0) {
+  if (bestTarget === null) {
     return false;
   }
+  //self.log(`${bestTarget.x},${bestTarget.y}`)
   return bestTarget;
 }
 
