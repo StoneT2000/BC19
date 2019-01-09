@@ -38,7 +38,7 @@ function mind(self){
         
         //if bot sees enemy structures, log it, and send to castle
         if (obot.unit === SPECS.CASTLE || obot.unit === SPECS.CHURCH) {
-          self.castleTalk()
+          //self.castleTalk()
         }
         
         

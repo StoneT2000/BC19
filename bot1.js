@@ -504,6 +504,8 @@ function mind(self) {
           else if (self.pilgrims <= self.maxPilgrims){
             self.buildQueue.push(2);
           }
+          
+          
           return {action: self.buildUnit(unit, search.bfsDeltas[1][i][0], search.bfsDeltas[1][i][1]), status:'build', response:'built'};
         }
       }
@@ -812,6 +814,11 @@ function mind$2(self){
       let obot = robotsInVision[i];
       
       if (obot.team !== self.me.team) {
+        
+        //if bot sees enemy structures, log it, and send to castle
+        if (obot.unit === SPECS.CASTLE || obot.unit === SPECS.CHURCH) ;
+        
+        
         let distToThisTarget = qmath$1.dist(self.me.x, self.me.y, obot.x, obot.y);
         if (distToThisTarget < leastDistToTarget) {
           leastDistToTarget = distToThisTarget;
@@ -820,9 +827,6 @@ function mind$2(self){
           enemyBot = obot;
         }
         
-      }
-      else {
-        if (obot.unit === SPECS.CASTLE) ;
       }
     }
     //enemy nearby, attack it?
