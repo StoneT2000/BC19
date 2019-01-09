@@ -1,11 +1,15 @@
-# FILE STRUCTURE
+# Battlecode 2019 Bot
+This is team "Codelympians" source code for our bot
+
+Below is some structuring stuff:
+
+## FILE STRUCTURE
 math.js - Basic math functions for:
 - Squared Distance (Will use lookup tables)
 
 base.js - Functions to determine the best greedy move to a target position
 
-pathing - 
-  - 
+pathing - Folder with pathing algorithms stuff
   
 search.js - Functions for searching for data
 - Determine if position has fuel, karbonite, is passable
