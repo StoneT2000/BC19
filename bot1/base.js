@@ -117,4 +117,26 @@ function relToPos(p1x, p1y, p2x, p2y, self) {
   return {dx:bestDelta[0], dy:bestDelta[1]};
 }
 
+//Log the structureBot into known structures if it hasn't been put there already
+function logStructure(self, structureBot) {
+  let teamNum = structureBot.team;
+  let exists = false;
+  for (let k = 0; k < self.knownStructures[teamNum]; k++) {
+    let knownStructure = self.knownStructures[teamNum][k];
+    if (structureBot.x === knownStructure.x && structureBot.y === knownStructure.y) {
+      exist = true;
+      break;
+    }
+  }
+  //log structure
+  if (exists === false) {
+    self.knownStructures.push({x:structureBot.x,y:structureBot.y,unit:structureBot.unit});
+  }
+}
+
+function updateKnownStructures(self) {
+  
+}
+
+
 export default {rel, relToPos, unitMoveDeltas};

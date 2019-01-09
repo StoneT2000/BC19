@@ -23,7 +23,7 @@ function mind(self) {
     //for pilgrims, search first
     self.status = 'searchForDeposit';
     let origCastleLoc = search.findNearestStructure(self)
-    self.knownStructures[self.me.team].push(origCastleLoc);
+    self.knownStructures[self.me.team].push({x:origCastleLoc[0], y:origCastleLoc[1]});
     /*
     let castleId = robotMap[origCastleLoc[1]][origCastleLoc[0]];
     let castleSignal = self.getRobot(castleId).signal;

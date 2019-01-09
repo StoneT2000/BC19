@@ -43,7 +43,7 @@ class MyRobot extends BCAbstractRobot {
     this.waypointEdges = []; //stores edges connecting waypoints. an edge exists if there is a direct clear easy path from one way point to the other
     //note, this waypointMap and Edges is basically a connected graph. Also, for different units the way points are different because some units can move farther. using different waypoints will take advantage of the fact that units can jump over walls.
     //maybe just let castles calculate the waypoints, and then let it communicate the map to everyone)
-    this.knownStructures = {0:[],1:[]}; //contains positions of all the known structures this robot knows. Keys are ids of structures seen
+    this.knownStructures = {0:[],1:[]}; //contains positions of all the known structures this robot knows. Keys 0 is team 0, key 1 is team1. Each is an array of objects {x:,y:}
     //this.knownStructures[id].team = team the structure is on, .position = [x,y] position array;
     this.knownDeposits = {};
     this.churches = 0;
