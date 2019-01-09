@@ -49,9 +49,11 @@ function mind(self) {
   }
   
   //initializing planner
-  if (self.me.turn === 1) {
+  //give bot time to get some time under its belt
+  if (self.me.turn === 5) {
     pathing.initializePlanner(self);
     self.setFinalTarget(self.finalTarget);
+    self.status = 'searchForDeposit';
   }
   /*
   if (self.me.turn === -1) {
@@ -84,7 +86,14 @@ function mind(self) {
       let ny = self.fuelSpots[i].y;
       if (robotMap[ny][nx] <= 0){
         let patharr = [];
-        let distToThere = self.planner.search(self.me.y,self.me.x,ny,nx,patharr);
+        let distToThere = 0;
+        if (self.planner !== null) {
+          distToThere = self.planner.search(self.me.y,self.me.x,ny,nx,patharr);
+        }
+        else {
+          distToThere = qmath.dist(self.me.x,self.me.y,nx,ny);
+        }
+        
         if (distToThere < cd) {
           cd = distToThere;
           newTarget = [nx,ny];
@@ -95,7 +104,14 @@ function mind(self) {
       let nx = self.karboniteSpots[i].x;
       let ny = self.karboniteSpots[i].y;
       if (robotMap[ny][nx] <= 0){
-        let distToThere = qmath.dist(self.me.x,self.me.y,nx,ny);
+        let patharr = [];
+        let distToThere = 0;
+        if (self.planner !== null) {
+          distToThere = self.planner.search(self.me.y,self.me.x,ny,nx,patharr);
+        }
+        else {
+          distToThere = qmath.dist(self.me.x,self.me.y,nx,ny);
+        }
         if (distToThere < cd) {
           cd = distToThere;
           newTarget = [nx,ny];

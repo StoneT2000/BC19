@@ -30,7 +30,7 @@ function mind(self){
     self.target = [self.me.x,self.me.y]
     //return {action:'', status:'rally', target: exploreTarget};
   }
-  if (self.me.turn === 2) {
+  if (self.me.turn === 3) {
     pathing.initializePlanner(self);
     self.setFinalTarget(self.finalTarget);
   }
