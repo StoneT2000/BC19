@@ -29,8 +29,9 @@ let numCastles = 0;
 * We run unit.mind(this) to get decisions
 * That returns an object result where
 * result.action = the action to be returned
-* status = new status the bot should take. status = null means no change
-* response = a response to what was given
+* result.status = new status the bot should take. status = null means no change
+* result.target = new target the bot should take
+* result.response = a response to what was given
 */
 
 class MyRobot extends BCAbstractRobot {
@@ -49,6 +50,7 @@ class MyRobot extends BCAbstractRobot {
     this.pilgrims = 0;
     this.maxPilgrims = 0;
     this.buildQueue = []; //queue of what unit to build for castles and churches
+    this.maxCrusaders = 1000;
     this.crusaders = 0;
     this.castles = 0;
     this.fuelSpots = [];
@@ -64,8 +66,6 @@ class MyRobot extends BCAbstractRobot {
       let result = {action:''};
       result = castle.mind(this);
       this.status = result.status;
-
-      //return this.buildUnit(SPECS.PILGRIM,1,1);
       return result.action;
     }
     else if (this.me.unit === SPECS.CRUSADER) {
@@ -79,7 +79,7 @@ class MyRobot extends BCAbstractRobot {
       this.status = result.status;
       this.target = result.target;
       return result.action;
-    } 
+    }
   }
   
   //other helper functions

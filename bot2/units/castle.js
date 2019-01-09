@@ -63,7 +63,7 @@ function mind(self) {
   
   //if we have at least 3 crusaders, let them attack
   if (self.crusaders >= 3) {
-    self.signal(1, 4);
+    //self.signal(1, 4);
   }
   
   //building code
