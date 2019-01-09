@@ -1,5 +1,6 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
 import search from '../search.js';
+import signal from '../signals.js';
 import qmath from '../math.js'
 function mind(self) {
   let robotsMapInVision = self.getVisibleRobotMap();
@@ -10,9 +11,9 @@ function mind(self) {
   
   self.log(`Castle (${self.me.x}, ${self.me.y}); Status: ${self.status}; Castles:${self.castles}, Churches: ${self.churches}, Pilgrims: ${self.pilgrims}, Crusaders: ${self.crusaders}`);
   
-  
+  //Initialization code for the castle
   if (self.me.turn === 1){
-    //initialization for the castle
+    
     
     //CALCULATING HOW MANY INITIAL CASTLES WE HAVE
     //we make the assumption that each castle makes a pilgrim first thing
@@ -42,6 +43,7 @@ function mind(self) {
     self.maxPilgrims = numFuelSpots/2;
     self.buildQueue.push(2,2,2);
     
+    self.status = 'build';
     
   }
   
@@ -51,23 +53,24 @@ function mind(self) {
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].castle_talk;
     //self.log(`Received from ${robotsInVision[i].id} castle msg: ${msg}`);
-    processMessageCastle(self, msg);
+    signal.processMessageCastle(self, msg);
   }
   
   
   
   //building code
-  let adjacentPos = search.circle(self.me.x, self.me.y, 1);
-  for (let i = 1; i < adjacentPos.length; i++) {
-    let checkPos = adjacentPos[i];
-    //prioritize building direction in future?
+  if (self.status === 'build') {
+    let adjacentPos = search.circle(self.me.x, self.me.y, 1);
+    for (let i = 1; i < adjacentPos.length; i++) {
+      let checkPos = adjacentPos[i];
+      //prioritize building direction in future?
 
-    if(canBuild(checkPos[0], checkPos[1], robotsMapInVision, passableMap)){
-      if (self.status === 'build') {
+      if(canBuild(checkPos[0], checkPos[1], robotsMapInVision, passableMap)){
+
         if (self.buildQueue.length > 0 && enoughResourcesToBuild(self, self.buildQueue[0])) {
           //build the first unit put into the build queue
           let unit = self.buildQueue.shift(); //remove that unit
-          
+
           self.log(`Building a ${unit} at ${checkPos[0]}, ${checkPos[1]}`);
           if (unit === 2){
             self.buildQueue.push(3,3);
@@ -75,19 +78,21 @@ function mind(self) {
           else if (self.pilgrims <= self.maxPilgrims){
             self.buildQueue.push(2);
           }
-          
+
           if (unit === 3) {
             //send an initial signal?
           }
-          
-          
+
+
           return {action: self.buildUnit(unit, search.bfsDeltas[1][i][0], search.bfsDeltas[1][i][1]), status:'build', response:'built'};
         }
       }
-  
+
     }
   }
+  if (self.status === 'pause'){
     
+  }
 
   return {action: '', status: '', response:''};
 }
@@ -115,22 +120,5 @@ function enoughResourcesToBuild(self, unitType) {
   }
   return false;
 }
-
-function processMessageCastle(self, msg) {
-  switch(msg) {
-    case 1:
-      self.churches += 1;
-      break;
-    case 2:
-      self.pilgrims += 1;
-      break;
-    case 3:
-      self.crusaders += 1;
-      break;
-    default:
-      break;
-  }
-}
-
 
 export default {mind}

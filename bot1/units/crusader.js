@@ -2,7 +2,7 @@ import {BCAbstractRobot, SPECS} from 'battlecode';
 import search from '../search.js';
 import base from '../base.js';
 import qmath from '../math.js';
-
+import signal from '../signals.js';
 
 function mind(self){
   let target = self.target;
@@ -21,10 +21,25 @@ function mind(self){
       exploreTarget = [gameMap[0].length - self.me.x - 1, self.me.y];
     }
     
-    let rels = base.relToPos(self.me.x, self.me.y, exploreTarget[0], exploreTarget[1], self);
-    return {action:self.move(rels.dx,rels.dy), status:'searchAndAttack', target: exploreTarget};
+    //let rels = base.relToPos(self.me.x, self.me.y, exploreTarget[0], exploreTarget[1], self);
+    //rally means crusader goes to a rally point
+    target = exploreTarget;
+    self.status = 'rally';
+    //return {action:'', status:'rally', target: exploreTarget};
   }
+  
   let robotsInVision = self.getVisibleRobots();
+  //process signals
+  for (let i = 0; i < robotsInVision.length; i++) {
+    let msg = robotsInVision[i].signal;
+    //self.log(`Received from ${robotsInVision[i].id} castle msg: ${msg}`);
+    signal.processMessageCrusader(self, msg);
+  }
+  
+  if (self.status === 'rally') {
+    return {action:'', status:'rally', target: target};
+  }
+
   if (self.status === 'searchAndAttack') {
     //watch for enemies, then chase them
     //call out friends to chase as well?, well enemy might only send scout, so we might get led to the wrong place

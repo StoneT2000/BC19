@@ -62,21 +62,8 @@ class MyRobot extends BCAbstractRobot {
     
     if (this.me.unit === SPECS.CASTLE) {
       let result = {action:''};
-      this.status = 'build';
       result = castle.mind(this);
       this.status = result.status;
-      /*
-      if (this.pilgrims < maxPilgrims){
-        this.status = 'buildPilgrim';
-        
-        if (result.response === 'built') {
-        }
-      }
-      else if (this.crusaders < maxCrusader){
-        this.status = 'buildCrusader';
-        result = castle.mind(this);
-      }
-      */
 
       //return this.buildUnit(SPECS.PILGRIM,1,1);
       return result.action;
