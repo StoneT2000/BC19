@@ -8,7 +8,7 @@ function mind(self) {
   const choices = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
   const choice = choices[Math.floor(Math.random() * choices.length)]
   //
-  self.log(`Pilgrim (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
+  //self.log(`Pilgrim (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
   let target = self.target;
   let fuelMap = self.getFuelMap();
   let karboniteMap = self.getKarboniteMap();
@@ -86,7 +86,7 @@ function mind(self) {
     }
     
     let ft = new Date();
-    self.log(`took:${ft-it}ms`);
+    //self.log(`took:${ft-it}ms`);
     
     let rels = base.relToPos(self.me.x, self.me.y, newTarget[0], newTarget[1], self);
     return {action:self.move(rels.dx,rels.dy), status:'goingToDeposit', target: newTarget};
@@ -110,7 +110,7 @@ function mind(self) {
       let currRels = base.rel(self.me.x, self.me.y, target[0], target[1]);
       if (Math.abs(currRels.dx) <= 1 && Math.abs(currRels.dy) <= 1){
         //if abs value of dx and dy are 1 or less, ship is next to church or castle, deliver all fuel
-        self.log(`${currRels.dx}, ${currRels.dy}`);
+        //self.log(`${currRels.dx}, ${currRels.dy}`);
         return {action:self.give(currRels.dx, currRels.dy, self.me.karbonite, self.me.fuel), status:'searchForDeposit', target: [self.me.x,self.me.y]}
       }
       return {action:self.move(rels.dx,rels.dy), status:'return', target: target};  
@@ -128,7 +128,7 @@ function mind(self) {
     let currRels = base.rel(self.me.x, self.me.y, bestTarget[0], bestTarget[1]);
     if (Math.abs(currRels.dx) <= 1 && Math.abs(currRels.dy) <= 1){
       //if abs value of dx and dy are 1 or less, ship is next to church or castle, deliver all fuel
-      self.log(`${currRels.dx}, ${currRels.dy}`);
+      //self.log(`${currRels.dx}, ${currRels.dy}`);
       return {action:self.give(currRels.dx, currRels.dy, self.me.karbonite, self.me.fuel), status:'searchForDeposit', target: [self.me.x,self.me.y]}
     }
     return {action:self.move(rels.dx,rels.dy), status:'return', target: bestTarget};

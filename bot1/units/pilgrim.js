@@ -3,7 +3,7 @@ import search from '../search.js';
 import base from '../base.js';
 import qmath from '../math.js';
 import signal from '../signals.js';
-
+import pathing from '../pathing/pathing-bundled.js';
 function mind(self) {
   const choices = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
   const choice = choices[Math.floor(Math.random() * choices.length)]
@@ -16,6 +16,7 @@ function mind(self) {
   let robotMap = self.getVisibleRobotMap();
   //we can improve the speed here by using bfs
   
+  let action = '';
   
   //Initialization code for robot to at least store the structure robot is born in
 
@@ -41,10 +42,36 @@ function mind(self) {
         }
       }
     }
-    
-    
-    
+    self.target = [self.me.x,self.me.y]
+    target = self.target;
   }
+  
+  //initializing planner
+  if (self.me.turn === 3) {
+    pathing.initializePlanner(self);
+  }
+  if (self.me.turn === 4) {
+    let path = [];
+    self.planner.search(self.me.y,self.me.x,27,5,path);
+    path.shift();
+    path.shift();
+    self.path = path;
+
+    self.log(`Pilgrim follows path: ${self.path}`);
+  }
+  
+  //code to follow path
+  if (self.path.length > 0) {
+    //if sub target almost reached
+    let distLeft = qmath.dist(self.me.x, self.me.y, target[0], target[1]);
+    if (distLeft <= 2){
+      self.log(`Pilgrim has new sub target`)
+      //set new sub target
+      target[1] = self.path.shift();
+      target[0] = self.path.shift();
+    }
+  }
+  
   //if robot is going to deposit but it is taken up, search for new deposit loc.
   if (self.status === 'goingToDeposit') {
     if (robotMap[target[1]][target[0]] !== self.me.id){
@@ -53,7 +80,6 @@ function mind(self) {
   } 
   if (self.status === 'searchForDeposit') {
     //perform search for closest deposit
-    let it = new Date();
     //let newTarget = search.bfs(self, self.me.x, self.me.y, search.fuelDeposit, search.canPass)
     //^^ bfs is slower????
     
@@ -84,23 +110,13 @@ function mind(self) {
         }
       }
     }
-    
-    let ft = new Date();
-    self.log(`took:${ft-it}ms`);
-    
-    let rels = base.relToPos(self.me.x, self.me.y, newTarget[0], newTarget[1], self);
-    return {action:self.move(rels.dx,rels.dy), status:'goingToDeposit', target: newTarget};
+    let self.finalTarget = newTarget;
+    //let rels = base.relToPos(self.me.x, self.me.y, newTarget[0], newTarget[1], self);
+    //return {action:self.move(rels.dx,rels.dy), status:'goingToDeposit', target: newTarget};
     
   }
-  
-
-  
-  
   //When pilgrim is returning to structure to deliver karbo or fuel...
   if (self.status === 'return') {
-    
-    
-    
     if (self.me.x === target[0] && self.me.y === target[1]) {
       //shouldn't happen
       return {action:''};
@@ -129,7 +145,7 @@ function mind(self) {
     if (Math.abs(currRels.dx) <= 1 && Math.abs(currRels.dy) <= 1){
       //if abs value of dx and dy are 1 or less, ship is next to church or castle, deliver all fuel
       self.log(`${currRels.dx}, ${currRels.dy}`);
-      return {action:self.give(currRels.dx, currRels.dy, self.me.karbonite, self.me.fuel), status:'searchForDeposit', target: [self.me.x,self.me.y]}
+      //return {action:self.give(currRels.dx, currRels.dy, self.me.karbonite, self.me.fuel), status:'searchForDeposit', target: [self.me.x,self.me.y]}
     }
     return {action:self.move(rels.dx,rels.dy), status:'return', target: bestTarget};
   }
@@ -141,12 +157,15 @@ function mind(self) {
   else if (karboniteMap[self.me.y][self.me.x] === true) {
     return {action:self.mine(), status:'mine', target: [self.me.x,self.me.y]};
   }
+  if (target) {
+    self.log(`Target: ${target[0]}, ${target[1]}`)
+    let rels = base.relToPos(self.me.x, self.me.y, target[0], target[1], self);
+    return {action:self.move(rels.dx,rels.dy), status:self.status, target: target};  
+  }
   
-  let rels = base.relToPos(self.me.x, self.me.y, target[0], target[1], self);
-  return {action:self.move(rels.dx,rels.dy), status:self.status, target: target};  
   
-  
-  return {action: self.move(...choice), status: 'searchForDeposit', target: []};
+  return {action:action, status:self.status, target: target}; 
+
   //return self.move(0,0);
 }
 

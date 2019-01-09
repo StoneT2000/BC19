@@ -27,7 +27,7 @@ Each unit.js file has a function mind(self).
 
 This function first has an initialization part of code, what must be performed upon creation
 
-Then the robot checks for signals (castles also check for the additional castle talk signals). Robot accordingly updates self.status, self.target
+Then the robot checks for signals (castles also check for the additional castle talk signals). Robot accordingly updates self.status and self.target, self.finalTarget as needed
 
 Depending on self.status, robot processes data and returns its decision to the main turn() function in the Robot class. It returns an result with keys, action, status, target, and optionally response
 

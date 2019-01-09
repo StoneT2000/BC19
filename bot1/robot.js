@@ -38,7 +38,9 @@ class MyRobot extends BCAbstractRobot {
   constructor() {
     super();
     this.status = 'justBuilt'; //current status of robot; just built means bot was just built has no prior status
-    this.target = [0,0]; //current target destination for robot
+    this.target = [0,0]; //current target destination for robot, used for travelling to waypoints
+    this.finalTarget = [0,0]; //the final target bot wnats to go to
+    this.path = [];
     this.waypointMap = []; //stores waypoints
     this.waypointEdges = []; //stores edges connecting waypoints. an edge exists if there is a direct clear easy path from one way point to the other
     //note, this waypointMap and Edges is basically a connected graph. Also, for different units the way points are different because some units can move farther. using different waypoints will take advantage of the fact that units can jump over walls.
@@ -61,7 +63,7 @@ class MyRobot extends BCAbstractRobot {
   turn() {
     let unitType = '';
     //this.log(`Turn ${this.me.turn}: ID: ${this.id} Unit Type: ${unitTypesStr[this.me.unit]}`);
-
+    let startTime = new Date();
     
     if (this.me.unit === SPECS.CASTLE) {
       let result = {action:''};
@@ -81,6 +83,8 @@ class MyRobot extends BCAbstractRobot {
       this.target = result.target;
       return result.action;
     }
+    let endTime = new Date();
+    this.log(`Turn took ${endTime - startTime} ms`);
   }
   
   //other helper functions

@@ -91,8 +91,12 @@ function mind(self) {
         if (self.buildQueue.length > 0 && enoughResourcesToBuild(self, self.buildQueue[0])) {
           //build the first unit put into the build queue
           let unit = self.buildQueue.shift(); //remove that unit
-
-          self.log(`Building a ${unit} at ${checkPos[0]}, ${checkPos[1]}`);
+          if (self.pilgrims < 1){
+          
+            self.log(`Building a ${unit} at ${checkPos[0]}, ${checkPos[1]} ${self.pilgrims}`);
+            return {action: self.buildUnit(unit, search.bfsDeltas[1][i][0], search.bfsDeltas[1][i][1]), status:'build', response:'built'};
+          }
+          
           if (unit === 2){
             self.buildQueue.push(3,3);
           }
@@ -106,8 +110,8 @@ function mind(self) {
             //send an initial signal?
           }
 
-
-          return {action: self.buildUnit(unit, search.bfsDeltas[1][i][0], search.bfsDeltas[1][i][1]), status:'build', response:'built'};
+          return {action:'',status:'build',response:'none'};
+          //return {action: self.buildUnit(unit, search.bfsDeltas[1][i][0], search.bfsDeltas[1][i][1]), status:'build', response:'built'};
         }
       }
 
