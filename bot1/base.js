@@ -75,13 +75,21 @@ const unitMoveFuelCosts = {
 function rel(p1x, p1y, p2x, p2y) {
   return {dx: p2x-p1x, dy: p2y-p1y};
 }
+const unitAttackFuelCosts = {
+  0:null,
+  1:null,
+  2:null,
+  3:10,
+  4:25,
+  5:15,
+}
 
 //implement half-A* later using this. Half-A* means using way points from which to go from waypoint A to waypoint B, relToPos suffices to travel from A to B. 
 //relToPos gives relative dx dy that this unit should take that reaches the closest to target p2x,p2y within fuel constraints, passability etc.
 function relToPos(p1x, p1y, p2x, p2y, self) {
   let vals = rel(p1x, p1y, p2x, p2y);
   let deltas = unitMoveDeltas[self.me.unit];
-  let fuelCosts = unitMoveFuelCosts[self.me.unit];
+  //let fuelCosts = unitMoveFuelCosts[self.me.unit];
   
   let closestDist = qmath.dist(p2x,p2y,p1x, p1y);
   let bestDelta = [0,0];
@@ -89,19 +97,13 @@ function relToPos(p1x, p1y, p2x, p2y, self) {
 
     let nx = p1x+deltas[i][0];
     let ny = p1y+deltas[i][1]
-    //self.log(`bot: ${self.me.id} checks ${nx},${ny}`);
-    if (self.fuel + self.me.fuel >= fuelCosts[i]){
-      //enough fuel to move that far?
-      
-      //passable?
-      let pass = search.emptyPos(nx, ny, self.getVisibleRobotMap(), self.getPassableMap());
-      if (pass === true){
-        let distLeft = qmath.dist(p2x,p2y,nx, ny);
-        //self.log(`bot: ${self.me.id} checks ${nx},${ny}, distLeft: ${distLeft}`);
-        if (distLeft < closestDist) {
-          closestDist = distLeft;
-          bestDelta = deltas[i];
-        }
+    let pass = self.canMove(deltas[i][0],deltas[i][1])
+    if (pass === true){
+      let distLeft = qmath.dist(p2x,p2y,nx, ny);
+      //self.log(`bot: ${self.me.id} checks ${nx},${ny}, distLeft: ${distLeft}`);
+      if (distLeft < closestDist) {
+        closestDist = distLeft;
+        bestDelta = deltas[i];
       }
     }
   }

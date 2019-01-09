@@ -121,6 +121,7 @@ function findNearestStructure(self) {
     if (distToStruct < shortestDist) {
       shortestDist = distToStruct;
       bestTarget = friendlyStructureLoc;
+      //self.log(`Pilgrim-${self.me.id} found past struct: ${bestTarget}`);
     }
   }
   
@@ -144,4 +145,15 @@ function findNearestStructure(self) {
   }
   return bestTarget;
 }
-export default {circle, bfsDeltas, emptyPos, bfs, canPass, fuelDeposit, karboniteDeposit, findNearestStructure};
+function horizontalSymmetry(gameMap){
+  //determine if map is horizontally symmetrical by checking line by line for equal passable tiles
+  for (let i = 0; i < 4/*gameMap.length/2*/; i++) {
+    for (let j = 0; j < gameMap[i].length; j++) {
+      if (gameMap[i][j] !== gameMap[gameMap.length - i - 1][j]) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+export default {circle, bfsDeltas, emptyPos, bfs, canPass, fuelDeposit, karboniteDeposit, findNearestStructure, horizontalSymmetry};

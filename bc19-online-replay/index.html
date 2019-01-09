@@ -30,13 +30,77 @@
       <div class='upload-wrapper'>
         <input type='file' id="fileDrop">
       </div>
-      <div class="map">
-        <!--
-        <div class="tile" id="00">
-        </div><div class="tile" id="10">
-        </div><div class="tile" id="01">
-        </div><div class="tile" id="11">
-        </div>-->
+      <div class='row'>
+        <div class='col-md-4'>
+          <div class='stats row'>
+            <div class='red-stats'>
+              <h3>Red</h3>
+              <table>
+                <th>Metric</th>
+                <th>Value</th>
+                <tr>
+                  <td>Karbonite</td>
+                  <td class='karbonite'>0</td>
+                </tr>
+                <tr>
+                  <td>Fuel</td>
+                  <td class='fuel'>0</td>
+                </tr>
+              </table>
+            </div>
+            <div class='blue-stats'>
+              <h3>Blue</h3>
+              <table>
+                <th>Metric</th>
+                <th>Value</th>
+                <tr>
+                  <td>Karbonite</td>
+                  <td class='karbonite'>0</td>
+                </tr>
+                <tr>
+                  <td>Fuel</td>
+                  <td class='fuel'>0</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+          <div class='row'> 
+            <div class="gameInfo">
+              <h3>Game Info</h3>
+              <table>
+                <tr>
+                  <td>Round Number</td>
+                  <td ><input type='text' class='roundNum'></td>
+                </tr>
+                <tr>
+                  <td>Turn Number</td>
+                  <td ><input type='text' class='turnNum'></td>
+                </tr>
+              </table>
+              <div class="slidecontainer">
+  <input type="range" min="0" max="1000" value="0" class="slider roundNum">
+              </div>
+              <button onclick='start(visualization)'>Start</button>
+              <button onclick='stop(visualization)'>Stop</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class='col-md-8'>
+          <div class="map">
+            <div class='botDisplay'>
+              <div class='bot castle'>
+              </div>
+            </div>
+            <!--
+            <div class="tile" id="00">
+            </div><div class="tile" id="10">
+            </div><div class="tile" id="01">
+            </div><div class="tile" id="11">
+            </div>-->
+          </div>
+        </div>
+
       </div>
     </div>
   </div>

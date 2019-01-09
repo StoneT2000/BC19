@@ -6,26 +6,78 @@ function mind(self) {
   let passableMap = self.getPassableMap();
   //these 2d maps have it like map[y][x]...
   let robotsInVision = self.getVisibleRobots();
-  let str = "";
   
   
-  self.log(`Castle (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
+  self.log(`Castle (${self.me.x}, ${self.me.y}); Status: ${self.status}; Castles:${self.castles}, Churches: ${self.churches}, Pilgrims: ${self.pilgrims}, Crusaders: ${self.crusaders}`);
   
+  
+  if (self.me.turn === 1){
+    //initialization for the castle
+    
+    //CALCULATING HOW MANY INITIAL CASTLES WE HAVE
+    //we make the assumption that each castle makes a pilgrim first thing
+    let offsetVal = 0;
+    if (self.karbonite === 90) {
+      offsetVal = 1;
+    }
+    else if (self.karbonite === 80) {
+      offsetVal = 2;
+    }
+    self.log(`We have ${robotsInVision.length - offsetVal} castles`);
+    self.castles = robotsInVision.length - offsetVal;
+    
+    let fuelMap = self.getFuelMap();
+    let karboniteMap = self.getKarboniteMap();
+    for (let i = 0; i < fuelMap.length; i++) {
+      for (let j = 0; j < fuelMap[0].length; j++) {
+        if (fuelMap[i][j] === true){
+          self.fuelSpots.push({x:j, y:i});
+        }
+        if (karboniteMap[i][j] === true){
+          self.karboniteSpots.push({x:j, y:i});
+        }
+      }
+    }
+    let numFuelSpots = self.fuelSpots.length;
+    self.buildQueue.push(2,2,2);
+    
+    
+  }
+  
+  
+  
+  //check for signals in castle talk
+  for (let i = 0; i < robotsInVision.length; i++) {
+    let msg = robotsInVision[i].castle_talk;
+    //self.log(`Received from ${robotsInVision[i].id} castle msg: ${msg}`);
+    processMessageCastle(self, msg);
+  }
+  
+  
+  
+  //building code
   let adjacentPos = search.circle(self.me.x, self.me.y, 1);
   for (let i = 1; i < adjacentPos.length; i++) {
     let checkPos = adjacentPos[i];
     //prioritize building direction in future?
 
     if(canBuild(checkPos[0], checkPos[1], robotsMapInVision, passableMap)){
-      if (self.status === 'buildPilgrim') {
-        self.log("Building a pilgrim at " + (checkPos[0]) + ", " + (checkPos[1]));
-        return {action: self.buildUnit(SPECS.PILGRIM, search.bfsDeltas[1][i][0], search.bfsDeltas[1][i][1]), status:'', response:'built'}
+      if (self.status === 'build') {
+        if (self.buildQueue.length > 0 && enoughResourcesToBuild(self, self.buildQueue[0])) {
+          //build the first unit put into the build queue
+          let unit = self.buildQueue.shift(); //remove that unit
+          
+          self.log(`Building a ${unit} at ${checkPos[0]}, ${checkPos[1]}`);
+          if (unit === 2){
+            self.buildQueue.push(3);
+          }
+          else {
+            self.buildQueue.push(2);
+          }
+          return {action: self.buildUnit(unit, search.bfsDeltas[1][i][0], search.bfsDeltas[1][i][1]), status:'build', response:'built'};
+        }
       }
-      else if (self.status === 'buildCrusader') {
-        self.log("Building a crusader at " + (checkPos[0]) + ", " + (checkPos[1]));
-        return {action: self.buildUnit(SPECS.CRUSADER, search.bfsDeltas[1][i][0], search.bfsDeltas[1][i][1]), status:'', response:'built'}
-      }
-
+  
     }
   }
     
@@ -47,7 +99,31 @@ function canBuild(xpos, ypos, robotMap, passableMap) {
 }
 
 function enoughResourcesToBuild(self, unitType) {
-  
+  let fuelCost = SPECS.UNITS[unitType].CONSTRUCTION_FUEL;
+  let karbCost = SPECS.UNITS[unitType].CONSTRUCTION_KARBONITE;
+  if (fuelCost <= self.fuel) {
+    if (karbCost <= self.karbonite) {
+      return true;
+    }
+  }
+  return false;
 }
+
+function processMessageCastle(self, msg) {
+  switch(msg) {
+    case 1:
+      self.churches += 1;
+      break;
+    case 2:
+      self.pilgrims += 1;
+      break;
+    case 3:
+      self.crusaders += 1;
+      break;
+    default:
+      break;
+  }
+}
+
 
 export default {mind}

@@ -20,9 +20,35 @@ function mind(self) {
   if (self.status === 'justBuilt') {
     //for pilgrims, search first
     self.status = 'searchForDeposit';
-    self.knownStructures[self.me.team].push(search.findNearestStructure(self));
+    let origCastleLoc = search.findNearestStructure(self)
+    self.knownStructures[self.me.team].push(origCastleLoc);
+    /*
+    let castleId = robotMap[origCastleLoc[1]][origCastleLoc[0]];
+    let castleSignal = self.getRobot(castleId).signal;
+    self.log(`Signal from born castle-${castleId}: ${castleSignal}`)
+    */
+    self.castleTalk(self.me.unit);
+    
+    for (let i = 0; i < fuelMap.length; i++) {
+      for (let j = 0; j < fuelMap[0].length; j++) {
+        if (fuelMap[i][j] === true){
+          self.fuelSpots.push({x:j, y:i});
+        }
+        if (karboniteMap[i][j] === true){
+          self.karboniteSpots.push({x:j, y:i});
+        }
+      }
+    }
+    
+    
+    
   }
-  
+  //if robot is going to deposit but it is taken up, search for new deposit loc.
+  if (self.status === 'goingToDeposit') {
+    if (robotMap[target[1]][target[0]] !== self.me.id){
+      self.status = 'searchForDeposit';
+    }
+  } 
   if (self.status === 'searchForDeposit') {
     //perform search for closest deposit
     let it = new Date();
@@ -32,17 +58,27 @@ function mind(self) {
     let newTarget;
     let cd = 9999990;
     
-    for (let i = 0; i < fuelMap.length; i++) {
-      for (let j = 0; j < fuelMap[i].length; j++) {
-        if (fuelMap[i][j] === true || karboniteMap[i][j] === true) {
-          if (robotMap[i][j] <= 0){
-            //self.log(`Robot at ${j},${i}:${robotMap[i][j]}`)
-            let distToThere = qmath.dist(self.me.x,self.me.y,j,i);
-            if (distToThere < cd) {
-              cd = distToThere;
-              newTarget = [j,i];
-            }
-          }
+    for (let i = 0; i < self.fuelSpots.length; i++) {
+      let nx = self.fuelSpots[i].x;
+      let ny = self.fuelSpots[i].y;
+      if (robotMap[ny][nx] <= 0){
+        //self.log(`Robot at ${j},${i}:${robotMap[i][j]}`)
+        let distToThere = qmath.dist(self.me.x,self.me.y,nx,ny);
+        if (distToThere < cd) {
+          cd = distToThere;
+          newTarget = [nx,ny];
+        }
+      }
+    }
+    for (let i = 0; i < self.karboniteSpots.length; i++) {
+      let nx = self.karboniteSpots[i].x;
+      let ny = self.karboniteSpots[i].y;
+      if (robotMap[ny][nx] <= 0){
+        //self.log(`Robot at ${j},${i}:${robotMap[i][j]}`)
+        let distToThere = qmath.dist(self.me.x,self.me.y,nx,ny);
+        if (distToThere < cd) {
+          cd = distToThere;
+          newTarget = [nx,ny];
         }
       }
     }
@@ -55,8 +91,14 @@ function mind(self) {
     
   }
   
+
+  
+  
   //When pilgrim is returning to structure to deliver karbo or fuel...
   if (self.status === 'return') {
+    
+    
+    
     if (self.me.x === target[0] && self.me.y === target[1]) {
       //shouldn't happen
       return {action:''};
@@ -73,7 +115,7 @@ function mind(self) {
     }
   }
   
-  let visibleRobots = self.getVisibleRobots();
+  //let visibleRobots = self.getVisibleRobots();
   
   if ((self.me.fuel >= 100 || self.me.karbonite >= 20) && self.status !== 'return') {
     //send karbo

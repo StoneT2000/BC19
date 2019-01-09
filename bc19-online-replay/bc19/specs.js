@@ -21,6 +21,8 @@ SPECS = {
     "BLUE":               1,
     "CHESS_INITIAL":      100,
     "CHESS_EXTRA":        20,
+    "TURN_MAX_TIME":      200,
+    "MAX_MEMORY":         50000000,
 
     "UNITS": [
         {
@@ -31,7 +33,7 @@ SPECS = {
             "SPEED": 0,
             "FUEL_PER_MOVE": null,
             "STARTING_HP": 100,
-            "VISION_RADIUS": 10,
+            "VISION_RADIUS": 100,
             "ATTACK_DAMAGE": null,
             "ATTACK_RADIUS": null,
             "ATTACK_FUEL_COST": null,
@@ -45,7 +47,7 @@ SPECS = {
             "SPEED": 0,
             "FUEL_PER_MOVE": null,
             "STARTING_HP": 50,
-            "VISION_RADIUS": 10,
+            "VISION_RADIUS": 100,
             "ATTACK_DAMAGE": null,
             "ATTACK_RADIUS": null,
             "ATTACK_FUEL_COST": null,
@@ -59,7 +61,7 @@ SPECS = {
             "SPEED": 4,
             "FUEL_PER_MOVE": 1,
             "STARTING_HP": 10,
-            "VISION_RADIUS": 10,
+            "VISION_RADIUS": 100,
             "ATTACK_DAMAGE": null,
             "ATTACK_RADIUS": null,
             "ATTACK_FUEL_COST": null,
@@ -73,9 +75,9 @@ SPECS = {
             "SPEED": 9,
             "FUEL_PER_MOVE": 1,
             "STARTING_HP": 40,
-            "VISION_RADIUS": 6,
+            "VISION_RADIUS": 36,
             "ATTACK_DAMAGE": 10,
-            "ATTACK_RADIUS": [1,4],
+            "ATTACK_RADIUS": [1,16],
             "ATTACK_FUEL_COST": 10,
             "DAMAGE_SPREAD": 0
         },
@@ -87,9 +89,9 @@ SPECS = {
             "SPEED": 4,
             "FUEL_PER_MOVE": 2,
             "STARTING_HP": 20,
-            "VISION_RADIUS": 8,
+            "VISION_RADIUS": 64,
             "ATTACK_DAMAGE": 10,
-            "ATTACK_RADIUS": [4,8],
+            "ATTACK_RADIUS": [16,64],
             "ATTACK_FUEL_COST": 25,
             "DAMAGE_SPREAD": 0
         },
@@ -101,11 +103,11 @@ SPECS = {
             "SPEED": 4,
             "FUEL_PER_MOVE": 3,
             "STARTING_HP": 60,
-            "VISION_RADIUS": 4,
+            "VISION_RADIUS": 16,
             "ATTACK_DAMAGE": 20,
-            "ATTACK_RADIUS": [1,4],
+            "ATTACK_RADIUS": [1,16],
             "ATTACK_FUEL_COST": 15,
-            "DAMAGE_SPREAD": 9
+            "DAMAGE_SPREAD": 3
         }
     ]
 }

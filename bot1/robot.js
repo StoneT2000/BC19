@@ -2,7 +2,8 @@ import {BCAbstractRobot, SPECS} from 'battlecode';
 import castle from './bot1/units/castle.js';
 import pilgrim from './bot1/units/pilgrim.js';
 import crusader from './bot1/units/crusader.js';
-
+import qmath from './bot1/math.js';
+import search from './bot1/search.js'
 
 
 let botTargets = [];
@@ -12,8 +13,17 @@ let unitTypesStr = ['Castle', 'Church', 'Pilgrim', 'Crusader', 'Prophet', 'Preac
 
 let status = '';
 
-let maxPilgrims = 4;
+let maxPilgrims = 3;
 let myPilgrims = 0;
+let pilgrims = 0;
+
+
+
+let maxCrusader = 3;
+let myCrusaders = 0; //crusaders this castle has spawned
+let crusaders = 0; //total crusaders *approx?
+let numCastles = 0;
+
 
 /* SYSTEM
 * We run unit.mind(this) to get decisions
@@ -35,26 +45,38 @@ class MyRobot extends BCAbstractRobot {
     this.knownStructures = {0:[],1:[]}; //contains positions of all the known structures this robot knows. Keys are ids of structures seen
     //this.knownStructures[id].team = team the structure is on, .position = [x,y] position array;
     this.knownDeposits = {};
+    this.churches = 0;
+    this.pilgrims = 0;
+    this.buildQueue = []; //queue of what unit to build for castles and churches
+    this.crusaders = 0;
+    this.castles = 0;
+    this.fuelSpots = [];
+    this.karboniteSpots = [];
   };
   
   turn() {
     let unitType = '';
-    this.log(`Turn ${this.me.turn}: ID: ${this.id} Unit Type: ${unitTypesStr[this.me.unit]}`);
+    //this.log(`Turn ${this.me.turn}: ID: ${this.id} Unit Type: ${unitTypesStr[this.me.unit]}`);
 
     
     if (this.me.unit === SPECS.CASTLE) {
-      let result ={action:''};
-      if (myPilgrims < maxPilgrims){
+      let result = {action:''};
+      this.status = 'build';
+      result = castle.mind(this);
+      this.status = result.status;
+      /*
+      if (this.pilgrims < maxPilgrims){
         this.status = 'buildPilgrim';
-        result = castle.mind(this);
+        
         if (result.response === 'built') {
-          myPilgrims += 1;
         }
       }
-      else {
+      else if (this.crusaders < maxCrusader){
         this.status = 'buildCrusader';
         result = castle.mind(this);
       }
+      */
+
       //return this.buildUnit(SPECS.PILGRIM,1,1);
       return result.action;
     }
@@ -69,9 +91,39 @@ class MyRobot extends BCAbstractRobot {
       this.status = result.status;
       this.target = result.target;
       return result.action;
-      
     } 
   }
+  
+  //other helper functions
+
+  /* 
+  * Returns whether or not a bot can move dx dy
+  * @param {number} dx - move dx in x direction
+  * @param {number} dy - move dy in y direction
+  */
+  canMove(dx, dy) {
+    let robotMap = this.getVisibleRobotMap();
+    let passableMap = this.getPassableMap();
+    let fuelCost = SPECS.UNITS[this.me.unit].FUEL_PER_MOVE;
+    let dist2 = qmath.dist(dx, dy);
+    fuelCost *= dist2;
+
+    if(this.fuel >= fuelCost && search.emptyPos(this.me.x + dx, this.me.y + dy, robotMap, passableMap)) {
+      return true;
+    }
+    return false;
+  }
+
+  /*
+  * Returns true if bot has enough fuel to attack
+  */
+  readyAttack() {
+    let fuelCost = SPECS.UNITS[this.me.unit].ATTACK_FUEL_COST;
+    if (this.fuel >= fuelCost) {
+      return true;
+    }
+  }
+  
 }
 
 var robot = new MyRobot();
