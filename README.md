@@ -57,3 +57,7 @@ Send signals to other bots depending on self.status, received signals etc.
 The values ...
 - 0, ... 5 are reserved for units to tell all castles which unit got spawned.
 - 6 is reserved for units to tell all castles to pause building that turn.
+
+## Signal Encoding
+The values ...
+- 1 is reserved for units to tell other units with attacking abilities to go and attack the first known structure
