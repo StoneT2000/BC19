@@ -20,9 +20,12 @@ function mind(self) {
     if (self.karbonite === 90) {
       offsetVal = 1;
     }
-    else if (self.karbonite === 80) {
+    else if (self.karbonite === 60) {
       offsetVal = 2;
     }
+    //we can also detemrine the offset val by looking at how many castle talk messages of 0 this castle gets.
+    //if we all build turn 1, castle 1 gets 3 messages, castle 2 gets 4 messages, castle 3 gets 5 messages.
+    
     //self.log(`We have ${robotsInVision.length - offsetVal} castles`);
     self.castles = robotsInVision.length - offsetVal;
     
@@ -39,8 +42,9 @@ function mind(self) {
       }
     }
     let numFuelSpots = self.fuelSpots.length;
-    self.maxPilgrims = numFuelSpots/2;
-    self.buildQueue.push(2);
+    self.maxPilgrims = Math.ceil(numFuelSpots/3);
+    
+
     
     self.status = 'build';
     
@@ -57,6 +61,32 @@ function mind(self) {
         locCastleNum +=1;
       }
     }
+    
+    //only first castle builds pilgrim in 3 preacher defence strategy
+    if (self.castles === 3) {
+      //only first castle builds pilgrim in 3 preacher defence strategy
+      if (offsetVal === 0) {
+        self.buildQueue.push(2,5, 5);
+      }
+      else if (offsetVal === 1){
+        self.buildQueue.push(5,-1, 5);
+      }
+      else if (offsetVal === 2) {
+        self.buildQueue.push(5,-1, 5);
+      }
+    }
+    else if (self.castles === 2) {
+      if (offsetVal === 0) {
+        self.buildQueue.push(2,5, 5);
+      }
+      else if (offsetVal === 1) {
+        self.buildQueue.push(5, 5, 5);
+      }
+    }
+    else if (self.castles === 1) {
+      self.buildQueue.push(2,5,5,5);
+    }
+    
     
   }
   
@@ -150,7 +180,7 @@ function mind(self) {
   //building code
   if (self.status === 'build') {
     let adjacentPos = search.circle(self.me.x, self.me.y, 2);
-    self.log(`Checking: ${adjacentPos}`)
+    self.log(`BuildQueue: ${self.buildQueue}`)
     for (let i = 1; i < adjacentPos.length; i++) {
       let checkPos = adjacentPos[i];
       //prioritize building direction in future?
@@ -158,20 +188,20 @@ function mind(self) {
       if(canBuild(self, checkPos[0], checkPos[1], robotsMapInVision, passableMap)){
         //self.log(`${self.buildQueue}`)
 
-        if (self.buildQueue.length > 0 && enoughResourcesToBuild(self, self.buildQueue[0])) {
+        if (self.buildQueue.length > 0 && self.buildQueue[0] !== -1 && enoughResourcesToBuild(self, self.buildQueue[0])) {
           //build the first unit put into the build queue
           let unit = self.buildQueue.shift(); //remove that unit
           
           
           
-          if (unit === 2){
-            self.buildQueue.push(5,3,3,3);
+          if (self.buildQueue[self.buildQueue.length-1] === 2){
+            self.buildQueue.push(5,5);
           }
           else if (self.pilgrims <= self.maxPilgrims){
             self.buildQueue.push(2);
           }
           else {
-            self.buildQueue.push(3);
+            self.buildQueue.push(5,5);
           }
           if (unit === 3) {
             //send an initial signal?

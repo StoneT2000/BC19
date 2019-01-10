@@ -42,7 +42,7 @@ function mind(self){
   //SIGNAL PROCESSION
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
-    self.log(`Received from ${robotsInVision[i].id}  msg: ${msg}`);
+    //self.log(`Received from ${robotsInVision[i].id}  msg: ${msg}`);
     signal.processMessageCrusader(self, msg);
   }
   
@@ -69,7 +69,6 @@ function mind(self){
   }
   
   if (self.status === 'searchAndAttack') {
-    self.log(`${self.me.id} Attacking`);
     self.finalTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
   }
   

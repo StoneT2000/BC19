@@ -155,10 +155,12 @@ function findNearestStructure(self) {
 
 
 //Finds the nearest enemy unit, optionally searches for nearest unit type unit
+//returns null if no nearby enemies
 function findNearestEnemy(self, unit) {
   let leastDistToTarget = 99999999;
   let isEnemy = false;
-  let enemyBot;
+  let enemyBot = null;
+  let robotsInVision = self.getVisibleRobots();
   for (let i = 0; i < robotsInVision.length; i++) {
     let obot = robotsInVision[i];
 
@@ -174,6 +176,7 @@ function findNearestEnemy(self, unit) {
     else {
     }
   }
+  return enemyBot;
 }
 
 
@@ -191,4 +194,4 @@ function horizontalSymmetry(gameMap){
   }
   return true;
 }
-export default {circle, bfsDeltas, emptyPos, bfs, canPass, fuelDeposit, karboniteDeposit, findNearestStructure, horizontalSymmetry};
+export default {circle, bfsDeltas, emptyPos, bfs, canPass, fuelDeposit, karboniteDeposit, findNearestStructure, horizontalSymmetry, inArr};

@@ -51,6 +51,7 @@ function mind(self) {
   
   //initializing planner
   if (self.me.turn === 3) {
+    self.log('Trying to plan');
     pathing.initializePlanner(self);
     self.setFinalTarget(self.finalTarget);
     self.status = 'searchForKarbDeposit';

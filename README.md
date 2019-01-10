@@ -61,3 +61,10 @@ The values ...
 ## Signal Encoding
 The values ...
 - 1 is reserved for units to tell other units with attacking abilities to go and attack the first known structure
+
+
+## STRATEGIES
+### EARLY GAME
+#### Mage Defence
+Defenders have a general advantage, so we start with building 1 pilgrim, 3 mages split amongst castles
+TODO: Spawn pilgrim in best position?

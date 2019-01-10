@@ -15,13 +15,16 @@ function mind(self){
   let robotMap = self.getVisibleRobotMap();
   
   self.log(`Preacher (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
+  //STRATS:
+  //3 preacher defence. build a pilgrim then 3 preachers
+  
   
   //INITIALIZATION
   if (self.me.turn === 1) {
     self.castleTalk(self.me.unit);
     
     self.finalTarget = [self.me.x, self.me.y];
-    self.status = 'rally';
+    self.status = 'defend';
     
     let exploreTarget = [gameMap[0].length - self.me.x - 1, gameMap.length - self.me.y - 1];
     if (search.horizontalSymmetry(gameMap)) {
@@ -33,7 +36,10 @@ function mind(self){
     self.knownStructures[otherTeamNum].push({x:exploreTarget[0], y:exploreTarget[1], unit: 0});
 
     let rels = base.relToPos(self.me.x, self.me.y, exploreTarget[0], exploreTarget[1], self);
-    self.finalTarget = [self.me.x + rels.dx, self.me.y+rels.dy];
+    let rels2 = base.relToPos(self.me.x + rels.dx, self.me.y+rels.dy, exploreTarget[0], exploreTarget[1], self);
+    
+    self.finalTarget = [self.me.x + rels.dx + rels2.dx, self.me.y+rels.dy + rels.dy];
+    
     
   }
   if (self.me.turn === 3) {
@@ -48,19 +54,25 @@ function mind(self){
     let msg = robotsInVision[i].signal;
     signal.processMessagePreacher(self, msg);
   }
-  if (self.status === 'rally'){
+  if (self.status === 'rally' || self.status === 'defend'){
     let crusadersInVincinity = [];
     for (let i = 0; i < robotsInVision.length; i++) {
       let obot = robotsInVision[i];
-      if (obot.unit === SPECS.CRUSADER) {
+      if (obot.unit === SPECS.CRUSADER || obot.unit === SPECS.PREACHER) {
         let distToUnit = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
         if (distToUnit <= 9) {
           crusadersInVincinity.push(obot);
         }
       }
     }
-    if (crusadersInVincinity.length >= 3) {
+    let distToTarget = qmath.dist(self.me.x, self.me.y, self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y);
+    
+    let fuelNeededForAttack = distToTarget/4
+    
+    if (crusadersInVincinity.length >= 6) {
       self.status = 'searchAndAttack';
+      //once we send the warcry, on average each turn the preachers spend 72 fuel to move
+      //Once they start attacking enemies, they spend 15 fuel, so we need to wait until fuel is enough
       self.signal(1,9);//note, this signal will be broadcasted to other units at where this unit is at the end of its turn
       forcedAction = '';
     }
@@ -127,26 +139,28 @@ function mind(self){
       if (oVisRobot.id !== self.me.id){
         for (let k = 0; k < checkPositions.length; k++) {
           let checkPos = checkPositions[k];
-          let oRobotId = robotMap[checkPos[1]][checkPos[0]];
+          if (search.inArr(checkPos[0], checkPos[1], robotMap)){
+            let oRobotId = robotMap[checkPos[1]][checkPos[0]];
 
-          //ok if hit self
-          if (oRobotId > 0) {
-            let oRobot = self.getRobot(oRobotId);
-            //if other team, add to number of affected enemies
-            //Strategy is to hit as many enemies as possible and as little friendlies as possible
-            if (oRobot.team !== self.me.team) {
-              unitsAttacked += 1; //enemy team hit
-
-            }
-            else {
-              if (oRobotId === self.me.id) {
+            //ok if hit self
+            if (oRobotId > 0) {
+              let oRobot = self.getRobot(oRobotId);
+              //if other team, add to number of affected enemies
+              //Strategy is to hit as many enemies as possible and as little friendlies as possible
+              if (oRobot.team !== self.me.team) {
+                unitsAttacked += 1; //enemy team hit
 
               }
               else {
-                unitsAttacked -= 1;
-              }
-            }
+                if (oRobotId === self.me.id) {
 
+                }
+                else {
+                  unitsAttacked -= 1;
+                }
+              }
+
+            }
           }
         }
 

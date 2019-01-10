@@ -9,69 +9,59 @@ import qmath from './bot1/math.js';
 import search from './bot1/search.js'
 import base from './bot1/base.js';
 
-let botTargets = [];
 
 //REMEMBER, NO GLOBAL VARIABLES
 let unitTypesStr = ['Castle', 'Church', 'Pilgrim', 'Crusader', 'Prophet', 'Preacher'];
-
-let status = '';
-
-let maxPilgrims = 3;
-let myPilgrims = 0;
-let pilgrims = 0;
-
-
-
-let maxCrusader = 3;
-let myCrusaders = 0; //crusaders this castle has spawned
-let crusaders = 0; //total crusaders *approx?
-let numCastles = 0;
 
 
 /* SYSTEM
 * We run unit.mind(this) to get decisions
 * That returns an object result where
 * result.action = the action to be returned
-* result.status = new status the bot should take. status = null means no change
-* result.target = new target the bot should take
-* result.response = a response to what was given
 */
 
 class MyRobot extends BCAbstractRobot {
   constructor() {
     super();
+    
     this.status = 'justBuilt'; //current status of robot; just built means bot was just built has no prior status
+    
     this.target = [0,0]; //current target destination for robot, used for travelling to waypoints
-    this.finalTarget = [0,0]; //the final target bot wnats to go to
-    this.path = [];
-    this.waypointMap = []; //stores waypoints
-    this.waypointEdges = []; //stores edges connecting waypoints. an edge exists if there is a direct clear easy path from one way point to the other
-    //note, this waypointMap and Edges is basically a connected graph. Also, for different units the way points are different because some units can move farther. using different waypoints will take advantage of the fact that units can jump over walls.
-    //maybe just let castles calculate the waypoints, and then let it communicate the map to everyone)
+    this.finalTarget = [0,0]; //the final target bot wants to go to
+    this.path = []; //path bot follows
+
     this.knownStructures = {0:[],1:[]}; //contains positions of all the known structures this robot knows. Keys 0 is team 0, key 1 is team1. Each is an array of objects {x:,y:}
     //this.knownStructures[id].team = team the structure is on, .position = [x,y] position array;
     this.knownDeposits = {};
+    
+    //Counts for number of units we have
+    //Available only to castles
+    this.castles = 0;
     this.churches = 0;
     this.pilgrims = 0;
-    this.maxPilgrims = 0;
-    this.buildQueue = []; //queue of what unit to build for castles and churches
-    this.maxCrusaders = 1000;
     this.crusaders = 0;
-    this.preachers = 0;
     this.prophets = 0;
-    this.castles = 0;
-    this.fuelSpots = [];
-    this.karboniteSpots = [];
+    this.preachers = 0;
+    
+    this.buildQueue = []; //queue of what unit to build for castles and churches. First element is the next unit to build.
+    
+    this.maxPilgrims = 0;
+    this.maxCrusaders = 1000;
+    
+    
+    
+    
+    this.fuelSpots = []; //array of all fuelspots
+    this.karboniteSpots = []; //array of all karbonite spots
     this.sentCommand = false;
-    this.planner = null;
+    this.planner = null; //planner used to navigate
     
     this.allUnits = {}; //array of all units castle can still hear. allUnits[id] is unit type
-    //if we no longer hear back from id, we remove it from this list, reduce pilgrims count
+    //if we no longer hear back from id, we remove it from this list. This is how we keep accurate unit counts
     
   };
   
   turn() {
-    let unitType = '';
     //this.log(`Turn ${this.me.turn}: ID: ${this.id} Unit Type: ${unitTypesStr[this.me.unit]}`);
     let startTime = new Date();
     
@@ -191,7 +181,10 @@ class MyRobot extends BCAbstractRobot {
     }
     return action;
   }
-  
+  /*
+  * Returns the nearest enemy unit
+  *
+  */
 }
 
 var robot = new MyRobot();
