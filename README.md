@@ -25,17 +25,33 @@ units - Folder with all the code for processing self and returning an action, st
 ## General Unit Structure
 Each unit.js file has a function mind(self).
 
-This function first has an initialization part of code, what must be performed upon creation
+It consists of the following synchronous sections in the following order:
+- Initialization
+- Signal Procession
+- Updating information
+- Deciding on Actions and Final Target
+- Processing final target, returning new path and following said path
+- Sending Signals
 
-Then the robot checks for signals (castles also check for the additional castle talk signals). Robot accordingly updates self.status and self.target, self.finalTarget as needed
+### Initialization
+Code that is run upon creation of robot
 
-Depending on self.status, robot processes data and returns its decision to the main turn() function in the Robot class. It returns an result with keys, action, status, target, and optionally response
+For any robot, it must send self.castleTalk(self.me.id), to notify the castles of its existence
 
-result.action is returned in turn() and thus performed. This said action must be performable, avoid logging errors as this will complicate code for the robot who may have thought they completed their action. 
+### Signal Procession
+How the robot processes signals it receives
 
-result.status is an status update that gets passed into the next time turn() is run and mind(self) is run
+### Updating information
+(realy only done in churches and castles). Robot runs through self.AllUnits and add new units appropriately
 
-result.target is an target update. If mind(self) doesn't return a proper action, the bot will always move towards its target.
+### Deciding on Actions and Final Target
+The final target, self.finalTarget, is where the bot will attempt to head towards. self.Target should not be touched.
+
+### Processing final target
+The robot runs the algorithms and finds a path to the final target and heads towards its sub target, self.Target. It returns an movement action if an action hasn't been sent already.
+
+### Sending Signals (could honestly be anywhere)
+Send signals to other bots depending on self.status, received signals etc.
 
 ## Castle Talk Encoding
 The values ...

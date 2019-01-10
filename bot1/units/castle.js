@@ -10,12 +10,10 @@ function mind(self) {
   
   let action = '';
   
-  self.log(`Castle (${self.me.x}, ${self.me.y}); Status: ${self.status}; Castles:${self.castles}, Churches: ${self.churches}, Pilgrims: ${self.pilgrims}, Crusaders: ${self.crusaders}`);
+  
   
   //Initialization code for the castle
   if (self.me.turn === 1){
-    
-    
     //CALCULATING HOW MANY INITIAL CASTLES WE HAVE
     //we make the assumption that each castle makes a pilgrim first thing
     let offsetVal = 0;
@@ -25,7 +23,7 @@ function mind(self) {
     else if (self.karbonite === 80) {
       offsetVal = 2;
     }
-    self.log(`We have ${robotsInVision.length - offsetVal} castles`);
+    //self.log(`We have ${robotsInVision.length - offsetVal} castles`);
     self.castles = robotsInVision.length - offsetVal;
     
     let fuelMap = self.getFuelMap();
@@ -46,16 +44,81 @@ function mind(self) {
     
     self.status = 'build';
     
+    
+    //Here, we initialize self.AllUnits to contain ids of all the castles
+    let locCastleNum = 0;
+    for (let i = 0; i < robotsInVision.length; i++) {
+      let msg = robotsInVision[i].castle_talk;
+      self.log(`Received from ${robotsInVision[i].id} castle msg: ${msg}`);
+      
+      //because we receive castle information first, locCastleNum < self.castles makes sure the messages received are just castles sending 0's or alive signals
+      if (msg === 0 && locCastleNum < self.castles) {
+        self.allUnits[robotsInVision[i].id] = 0;
+        locCastleNum +=1;
+      }
+    }
+    
   }
   
   
   
   //check for signals in castle talk
+  
+  let idsWeCanHear = [];
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].castle_talk;
-    //self.log(`Received from ${robotsInVision[i].id} castle msg: ${msg}`);
-    signal.processMessageCastle(self, msg);
+    idsWeCanHear.push(robotsInVision[i].id);
+    self.log(`Received from ${robotsInVision[i].id} castle msg: ${msg}`);
+    signal.processMessageCastle(self, msg, robotsInVision[i].id);
   }
+  
+  
+  //Count units
+  self.castles = 0;
+  self.pilgrims = 0;
+  self.crusaders = 0;
+  self.churches = 0;
+  self.prophets = 0;
+  self.preachers = 0;
+  
+  //out of all last turns self.allUnits and the additional units added after processing signals, check which ones are still 
+  for (let id in self.allUnits) {
+    let alive = false;
+    for (let k = 0; k < idsWeCanHear.length; k++) {
+      if (idsWeCanHear[k] == id) {
+        alive = true;
+        break;
+      }
+    }
+    if (alive === true){      
+      switch(self.allUnits[id]) {
+        case 0:
+          self.castles += 1;
+          break;
+        case 1:
+          self.churches += 1;
+          break;
+        case 2:
+          self.pilgrims += 1;
+          break;
+        case 3:
+          self.crusaders += 1;
+          break;
+        case 4:
+          self.prophets += 1;
+          break;
+        case 5:
+          self.preachers += 1;
+          break;
+        default:
+          break;
+      }
+    }
+  }
+  
+  
+  //Accurate numbers as of the end of the last round
+  self.log(`Round ${self.me.turn}: Castle (${self.me.x}, ${self.me.y}); Status: ${self.status}; Castles:${self.castles}, Churches: ${self.churches}, Pilgrims: ${self.pilgrims}, Crusaders: ${self.crusaders}, Prophets: ${self.prophets}, Preachers: ${self.preachers}`);
   
   //Commands code:
   //Here, castles give commands to surrounding units?

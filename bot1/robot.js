@@ -59,6 +59,10 @@ class MyRobot extends BCAbstractRobot {
     this.karboniteSpots = [];
     this.sentCommand = false;
     this.planner = null;
+    
+    this.allUnits = {}; //array of all units castle can still hear. allUnits[id] is unit type
+    //if we no longer hear back from id, we remove it from this list, reduce pilgrims count
+    
   };
   
   turn() {
@@ -120,8 +124,9 @@ class MyRobot extends BCAbstractRobot {
   * @param{[px,py]} newTarget - array of position of new target
   */
   setFinalTarget(newTarget) {
-   this.finalTarget = newTarget;
+    this.finalTarget = newTarget;
     let path = [];
+    //this.log(`New Path`);
     if (this.planner !== null) {
       this.planner.search(this.me.y,this.me.x,newTarget[1],newTarget[0],path);
     }

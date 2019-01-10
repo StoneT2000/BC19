@@ -135,6 +135,7 @@ function logStructure(self, structureBot) {
   }
 }
 
+//Checks within vision and updates itself whether or not a structure still exists
 function updateKnownStructures(self) {
   
 }

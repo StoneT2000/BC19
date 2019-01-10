@@ -11,6 +11,8 @@ function mind(self){
   let otherTeamNum = (self.me.team + 1) % 2;
   let action = '';
   self.log(`Crusader (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
+    
+  //INITIALIZATION
   if (self.status === 'justBuilt') {
     //broadcast your unit number for castles to add to their count of units
     self.castleTalk(self.me.unit);
@@ -27,7 +29,8 @@ function mind(self){
     //let rels = base.relToPos(self.me.x, self.me.y, exploreTarget[0], exploreTarget[1], self);
     //rally means crusader goes to a rally point
     self.status = 'rally';
-    self.target = [self.me.x,self.me.y]
+    self.target = [self.me.x,self.me.y];
+    self.finalTarget = [self.me.x, self.me.y];
     //return {action:'', status:'rally', target: exploreTarget};
   }
   if (self.me.turn === 3) {
@@ -37,20 +40,21 @@ function mind(self){
   
   
   let robotsInVision = self.getVisibleRobots();
-  //process signals
+  
+  //SIGNAL PROCESSION
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
     //self.log(`Received from ${robotsInVision[i].id} castle msg: ${msg}`);
     signal.processMessageCrusader(self, msg);
   }
   
-  //given status, set target
+  //DECISION MAKING
   if (self.status === 'rally') {
-    self.setFinalTarget([self.me.x, self.me.y]);
-    //return {action:'', status:'rally', target: target};
+    self.finalTarget = [self.me.x, self.me.y];
   }
+  //NOTE; We reset target each time
   if (self.status === 'searchAndAttack') {
-    self.setFinalTarget([self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y]);
+    self.finalTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
   }
   
   //at any time
@@ -67,7 +71,7 @@ function mind(self){
         
         //if bot sees enemy structures, log it, and send to castle
         if (obot.unit === SPECS.CASTLE || obot.unit === SPECS.CHURCH) {
-          //self.castleTalk()
+          //base.logStructure(self, obot);
         }
         let distToThisTarget = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
         if (distToThisTarget < leastDistToTarget) {
@@ -77,7 +81,7 @@ function mind(self){
             //if rallying, don't reset target
           }
           else {
-            self.setFinalTarget([obot.x, obot.y]);
+            self.finalTarget = [obot.x, obot.y];
           }
           isEnemy = true;
           enemyBot = obot;
@@ -108,11 +112,13 @@ function mind(self){
     }
   }
   
+  //PROCESSING FINAL TARGET
+  self.setFinalTarget(self.finalTarget);
   if (self.path.length > 0) {
     //if sub target almost reached
 
     let distLeftToSubTarget = qmath.dist(self.me.x, self.me.y, self.target[0], self.target[1]);
-    self.log(`Dist left: ${distLeftToSubTarget}`);
+    //self.log(`Dist left: ${distLeftToSubTarget}`);
     if (distLeftToSubTarget <= 1){
       //self.log(`Pilgrim has new sub target`)
       //set new sub target

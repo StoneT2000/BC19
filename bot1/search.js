@@ -149,6 +149,30 @@ function findNearestStructure(self) {
   return bestTarget;
 }
 
+
+//Finds the nearest enemy unit, optionally searches for nearest unit type unit
+function findNearestEnemy(self, unit) {
+  let leastDistToTarget = 99999999;
+  let isEnemy = false;
+  let enemyBot;
+  for (let i = 0; i < robotsInVision.length; i++) {
+    let obot = robotsInVision[i];
+
+    if (obot.team !== self.me.team) {
+      let distToThisTarget = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
+      if (distToThisTarget < leastDistToTarget) {
+        leastDistToTarget = distToThisTarget;
+        isEnemy = true;
+        enemyBot = obot;
+      }
+
+    }
+    else {
+    }
+  }
+}
+
+
 //determine if map is horizontally symmetrical by checking line by line for equal passable tiles
 function horizontalSymmetry(gameMap){
   

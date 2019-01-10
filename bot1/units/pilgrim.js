@@ -9,7 +9,6 @@ function mind(self) {
   const choice = choices[Math.floor(Math.random() * choices.length)]
   
   self.log(`Pilgrim (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
-  let target = self.target;
   let fuelMap = self.getFuelMap();
   let karboniteMap = self.getKarboniteMap();
   
@@ -18,8 +17,8 @@ function mind(self) {
   
   let action = '';
   
-  //Initialization code for robot to at least store the structure robot is born in
   
+  //INITIALIZATION
   if (self.status === 'justBuilt') {
     //for pilgrims, search first
     self.log('Just built')
@@ -45,28 +44,23 @@ function mind(self) {
       }
     }
     self.target = [self.me.x,self.me.y]
-    target = self.target;
+    self.finalTarget = [self.me.x, self.me.y];
   }
   
   //initializing planner
-  //give bot time to get some time under its belt
   if (self.me.turn === 5) {
     pathing.initializePlanner(self);
     self.setFinalTarget(self.finalTarget);
     self.status = 'searchForDeposit';
   }
-  /*
-  if (self.me.turn === -1) {
-    let path = [];
-    self.planner.search(self.me.y,self.me.x,27,5,path);
-    path.shift();
-    path.shift();
-    self.path = path;
-
-    self.log(`Pilgrim follows path: ${self.path}`);
-  }*/
   
+  //SIGNAL PROCESSION
+  let robotsInVision = self.getVisibleRobots();
+  for (let i = 0; i < robotsInVision.length; i++) {
+    let msg = robotsInVision[i].signal;
+  }
 
+  //DECISION MAKING
   
   //if robot is going to deposit but it is taken up, search for new deposit loc.
   if (self.status === 'goingToDeposit') {
@@ -119,7 +113,7 @@ function mind(self) {
       }
     }
     self.status = 'goingToDeposit';
-    self.setFinalTarget([newTarget[0],newTarget[1]]);
+    self.finalTarget = [newTarget[0],newTarget[1]];
   }
   //When pilgrim is returning to structure to deliver karbo or fuel...
   if (self.status === 'return') {
@@ -137,7 +131,7 @@ function mind(self) {
   if ((self.me.fuel >= 100 || self.me.karbonite >= 20) && self.status !== 'return') {
     //send karbo
     let bestTarget = search.findNearestStructure(self);
-    self.setFinalTarget([bestTarget.x,bestTarget.y]);
+    self.finalTarget = [bestTarget.x, bestTarget.y];
     self.status = 'return';
 
     let currRels = base.rel(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
@@ -162,14 +156,13 @@ function mind(self) {
   }
   
   
-  //AT THE END, we check if there is a path created for this final target
+  self.setFinalTarget(self.finalTarget);
   
-  //code to follow path, decide on current subtarget
+  //PROCESSING FINAL TARGET
   if (self.path.length > 0) {
     //if sub target almost reached
 
     let distLeftToSubTarget = qmath.dist(self.me.x, self.me.y, self.target[0], self.target[1]);
-    self.log(`Dist left: ${distLeftToSubTarget}`);
     if (distLeftToSubTarget <= 1){
       //self.log(`Pilgrim has new sub target`)
       //set new sub target
