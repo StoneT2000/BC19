@@ -4,7 +4,7 @@ import pilgrim from './bot1/units/pilgrim.js';
 import crusader from './bot1/units/crusader.js';
 import qmath from './bot1/math.js';
 import search from './bot1/search.js'
-
+import base from './bot1/base.js';
 
 let botTargets = [];
 
@@ -140,6 +140,33 @@ class MyRobot extends BCAbstractRobot {
     this.path = path;
     this.target[1] = path.shift();
     this.target[0] = path.shift();
+  }
+
+  /*
+  * Returns the action that leads the bot to the final target using the planner
+  * @param{[x,y]} finalTarget - An array of the position of the target the bot wants to navigate to
+  *
+  */
+  navigate(finalTarget) {
+    this.setFinalTarget(finalTarget);
+    let action = '';
+    if (this.path.length > 0) {
+      let distLeftToSubTarget = qmath.dist(this.me.x, this.me.y, this.target[0], this.target[1]);
+      if (distLeftToSubTarget <= 1){
+        this.target[1] = this.path.shift();
+        this.target[0] = this.path.shift();
+      }
+    }
+    if (this.target) {
+      let rels = base.relToPos(this.me.x, this.me.y, this.target[0], this.target[1], this);
+      if (rels.dx === 0 && rels.dy === 0) {
+        action = ''
+      }
+      else {
+        action = this.move(rels.dx, rels.dy);    
+      }
+    }
+    return action;
   }
   
 }

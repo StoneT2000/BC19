@@ -38,6 +38,40 @@ function processMessageCrusader(self, msg){
     
   }
 }
+function processMessagePreacher(self, msg){
+  switch (msg){
+    case 0:
+      break;
+    case 1:
+      self.status = 'searchAndAttack';
+      break;
+    
+  }
+}
+function processMessageProphet(self, msg){
+  switch (msg){
+    case 0:
+      break;
+    case 1:
+      self.status = 'searchAndAttack';
+      break;
+  }
+}
+function processMessageChurch(self, msg){
+  switch (msg){
+    case 0:
+      break;
+    case 1:
+      break;
+  }
+}
+function processMessagePilgrim(self, msg){
+  switch (msg){
+    case 0:
+      break;
+    case 1:
+      break; 
+  }
+}
 
-
-export default {processMessageCastle, processMessageCrusader}
+export default {processMessageCastle, processMessageCrusader, processMessagePreacher, processMessageProphet, processMessageChurch, processMessagePilgrim}

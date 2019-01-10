@@ -6,14 +6,13 @@ import signal from '../signals.js';
 import pathing from '../pathing/pathing-bundled.js';
 
 function mind(self){
-  let target = self.target;
   let gameMap = self.map;
   let otherTeamNum = (self.me.team + 1) % 2;
   let action = '';
   self.log(`Crusader (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
     
   //INITIALIZATION
-  if (self.status === 'justBuilt') {
+  if (self.me.turn === 1) {
     //broadcast your unit number for castles to add to their count of units
     self.castleTalk(self.me.unit);
     
@@ -26,12 +25,10 @@ function mind(self){
     }
     
     self.knownStructures[otherTeamNum].push({x:exploreTarget[0], y:exploreTarget[1], unit: 0});
-    //let rels = base.relToPos(self.me.x, self.me.y, exploreTarget[0], exploreTarget[1], self);
     //rally means crusader goes to a rally point
     self.status = 'rally';
     self.target = [self.me.x,self.me.y];
     self.finalTarget = [self.me.x, self.me.y];
-    //return {action:'', status:'rally', target: exploreTarget};
   }
   if (self.me.turn === 3) {
     pathing.initializePlanner(self);
@@ -113,31 +110,8 @@ function mind(self){
   }
   
   //PROCESSING FINAL TARGET
-  self.setFinalTarget(self.finalTarget);
-  if (self.path.length > 0) {
-    //if sub target almost reached
-
-    let distLeftToSubTarget = qmath.dist(self.me.x, self.me.y, self.target[0], self.target[1]);
-    //self.log(`Dist left: ${distLeftToSubTarget}`);
-    if (distLeftToSubTarget <= 1){
-      //self.log(`Pilgrim has new sub target`)
-      //set new sub target
-      self.target[1] = self.path.shift();
-      self.target[0] = self.path.shift();
-    }
-  }
-  if (self.target) {
-    //self.log(`Path: ${self.path}`);
-    let rels = base.relToPos(self.me.x, self.me.y, self.target[0], self.target[1], self);
-    //self.log(`Target: ${self.target[0]}, ${self.target[1]}, dx:${rels.dx}, dy:${rels.dy}`)
-    if (rels.dx === 0 && rels.dy === 0) {
-      action = ''
-    }
-    else {
-      action = self.move(rels.dx, rels.dy);    
-    }
-  }
-  return {action:action}; 
+  action = self.navigate(self.finalTarget);
+  return {action:action};
   
 
   

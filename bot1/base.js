@@ -83,7 +83,6 @@ const unitAttackFuelCosts = {
   4:25,
   5:15,
 }
-//implement a waypoint map later using this
 /*
 *
 * Greedy algorithm that returns relative dx dy that this unit should take that reaches the closest to target p2x,p2y within fuel constraints, passability etc.
@@ -96,11 +95,9 @@ const unitAttackFuelCosts = {
 function relToPos(p1x, p1y, p2x, p2y, self) {
   let vals = rel(p1x, p1y, p2x, p2y);
   let deltas = unitMoveDeltas[self.me.unit];
-  //let fuelCosts = unitMoveFuelCosts[self.me.unit];
   
   let closestDist = qmath.dist(p2x,p2y,p1x, p1y);
   let bestDelta = [0,0];
-  //self.log(`bot: ${self.me.id} checks ${p1x},${p1y}, d(${0}, ${0}) distLeft: ${closestDist}`);
   for (let i = 0; i < deltas.length; i++) {
 
     let nx = p1x+deltas[i][0];
@@ -108,7 +105,6 @@ function relToPos(p1x, p1y, p2x, p2y, self) {
     let pass = self.canMove(deltas[i][0],deltas[i][1])
     if (pass === true){
       let distLeft = qmath.dist(nx,ny,p2x,p2y);
-      //self.log(`bot: ${self.me.id} checks ${nx},${ny}, d(${deltas[i][0]}, ${deltas[i][1]}) distLeft: ${distLeft}`);
       if (distLeft < closestDist) {
         closestDist = distLeft;
         bestDelta = deltas[i];
