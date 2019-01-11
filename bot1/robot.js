@@ -160,30 +160,53 @@ class MyRobot extends BCAbstractRobot {
   *
   */
   navigate(finalTarget) {
-    this.setFinalTarget(finalTarget);
-    let action = '';
-    if (this.path.length > 0) {
-      let distLeftToSubTarget = qmath.dist(this.me.x, this.me.y, this.target[0], this.target[1]);
-      if (distLeftToSubTarget <= 1){
-        this.target[1] = this.path.shift();
-        this.target[0] = this.path.shift();
+    if (finalTarget !== null){
+      this.setFinalTarget(finalTarget);
+      let action = '';
+      if (this.path.length > 0) {
+        let distLeftToSubTarget = qmath.dist(this.me.x, this.me.y, this.target[0], this.target[1]);
+        if (distLeftToSubTarget <= 1){
+          this.target[1] = this.path.shift();
+          this.target[0] = this.path.shift();
+        }
       }
+      if (this.target) {
+        let rels = base.relToPos(this.me.x, this.me.y, this.target[0], this.target[1], this);
+        if (rels.dx === 0 && rels.dy === 0) {
+          action = ''
+        }
+        else {
+          action = this.move(rels.dx, rels.dy);    
+        }
+      }
+      return action;
     }
-    if (this.target) {
-      let rels = base.relToPos(this.me.x, this.me.y, this.target[0], this.target[1], this);
-      if (rels.dx === 0 && rels.dy === 0) {
-        action = ''
-      }
-      else {
-        action = this.move(rels.dx, rels.dy);    
-      }
-    }
-    return action;
+    return '';
   }
   /*
   * Returns the nearest enemy unit
   *
   */
+  
+  /*
+  * Returns the map location given a compressed location value
+  * @param{num} hash - The compressed location
+  */
+  getLocation(hash) {
+    let xpos = hash % this.map[0].length;
+    let ypos = (hash - xpos) / this.map[0].length;
+    //this.log(`Xy:${xpos}, ${ypos}`)
+    return {x:xpos, y:ypos};
+    //hash is now a value from 0 to 4095, representing every possible map location
+  }
+  /*
+  * Compresses a location into a number between 0 and 4095
+  * @param{num} x - Xpos
+  * @param{num} y - Ypos
+  */
+  compressLocation(x,y) {
+    return x + y * this.map[0].length;
+  }
 }
 
 var robot = new MyRobot();

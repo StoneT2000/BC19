@@ -61,6 +61,9 @@ The values ...
 ## Signal Encoding
 The values ...
 - 1 is reserved for units to tell other units with attacking abilities to go and attack the first known structure
+- 2,3 for castle to tell pilgrim to search for karbonite (2) or fuel (3)
+- 4 for pilgrim to tell castle it just gave out its fuel and karbonite and is ready to receive new instructions if needed
+- 5, ... 5000 are for sending new target locations for preachers
 
 
 ## STRATEGIES

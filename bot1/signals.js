@@ -50,7 +50,6 @@ function processMessageCrusader(self, msg){
     case 1:
       self.status = 'searchAndAttack';
       break;
-    
   }
 }
 function processMessagePreacher(self, msg){
@@ -60,7 +59,13 @@ function processMessagePreacher(self, msg){
     case 1:
       self.status = 'searchAndAttack';
       break;
-    
+    case 5:
+      //preachers waiting for stack of fuel to engage in next venture stay as that status
+      if (self.status !== 'waitingForFuelStack'){
+        self.status = 'defend';
+      }
+      break;
+    //if message is from 6 to 5001, this is a map location, with 6 units of padding
   }
 }
 function processMessageProphet(self, msg){

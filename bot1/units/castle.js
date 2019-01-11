@@ -158,7 +158,7 @@ function mind(self) {
   
   
   //Accurate numbers as of the end of the last round
-  self.log(`Round ${self.me.turn}: Castle (${self.me.x}, ${self.me.y}); Status: ${self.status}; Castles:${self.castles}, Churches: ${self.churches}, Pilgrims: ${self.pilgrims}, Crusaders: ${self.crusaders}, Prophets: ${self.prophets}, Preachers: ${self.preachers}`);
+  self.log(`Round ${self.me.turn}: Castle (${self.me.x}, ${self.me.y}); Status: ${self.status}; Castles:${self.castles}, Churches: ${self.churches}, Pilgrims: ${self.pilgrims}, Crusaders: ${self.crusaders}, Prophets: ${self.prophets}, Preachers: ${self.preachers}, Fuel:${self.fuel}, Karbonite: ${self.karbonite}`);
   
   //Commands code:
   //Here, castles give commands to surrounding units?
@@ -192,7 +192,7 @@ function mind(self) {
   
   //building code
   if (self.status === 'build') {
-    let adjacentPos = search.circle(self.me.x, self.me.y, 2);
+    let adjacentPos = search.circle(self, self.me.x, self.me.y, 2);
     self.log(`BuildQueue: ${self.buildQueue}`)
     for (let i = 1; i < adjacentPos.length; i++) {
       let checkPos = adjacentPos[i];
@@ -200,37 +200,42 @@ function mind(self) {
 
       if(canBuild(self, checkPos[0], checkPos[1], robotsMapInVision, passableMap)){
         //self.log(`${self.buildQueue}`)
+        if (self.buildQueue[0] !== -1){
+          if (self.buildQueue.length > 0 && enoughResourcesToBuild(self, self.buildQueue[0])) {
+            //build the first unit put into the build queue
+            let unit = self.buildQueue.shift(); //remove that unit
 
-        if (self.buildQueue.length > 0 && self.buildQueue[0] !== -1 && enoughResourcesToBuild(self, self.buildQueue[0])) {
-          //build the first unit put into the build queue
-          let unit = self.buildQueue.shift(); //remove that unit
-          
-          
-          
-          if (self.buildQueue[self.buildQueue.length-1] === 2){
-            self.buildQueue.push(5,5);
+
+
+            if (self.buildQueue[self.buildQueue.length-1] === 2){
+              self.buildQueue.push(5,5);
+            }
+            else if (self.pilgrims <= self.maxPilgrims){
+              self.buildQueue.push(2);
+            }
+            else {
+              self.buildQueue.push(5,5);
+            }
+            if (unit === 3) {
+              //send an initial signal?
+            }
+            action = self.buildUnit(unit, search.bfsDeltas[2][i][0], search.bfsDeltas[2][i][1]);
+            return {action:action};
+            //RUSH STRAT
+            /*
+            if (self.crusaders < self.maxCrusaders) {
+              return {action: self.buildUnit(3, search.bfsDeltas[1][i][0], search.bfsDeltas[1][i][1]), status:'build', response:'built'};
+            }
+            */
+            //return {action:'',status:'build',response:'none'};
+            //return {action: self.buildUnit(unit, search.bfsDeltas[1][i][0], search.bfsDeltas[1][i][1]), status:'build', response:'built'};
           }
-          else if (self.pilgrims <= self.maxPilgrims){
-            self.buildQueue.push(2);
-          }
-          else {
-            self.buildQueue.push(5,5);
-          }
-          if (unit === 3) {
-            //send an initial signal?
-          }
-          action = self.buildUnit(unit, search.bfsDeltas[2][i][0], search.bfsDeltas[2][i][1]);
-          return {action:action};
-          //RUSH STRAT
-          /*
-          if (self.crusaders < self.maxCrusaders) {
-            return {action: self.buildUnit(3, search.bfsDeltas[1][i][0], search.bfsDeltas[1][i][1]), status:'build', response:'built'};
-          }
-          */
-          //return {action:'',status:'build',response:'none'};
-          //return {action: self.buildUnit(unit, search.bfsDeltas[1][i][0], search.bfsDeltas[1][i][1]), status:'build', response:'built'};
+        }
+        else {
+          self.buildQueue.shift();
         }
       }
+
 
     }
   }

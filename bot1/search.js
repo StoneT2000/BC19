@@ -9,12 +9,18 @@ const bfsDeltas = {
 }
 
 //Search in a circle
-function circle(xpos, ypos, radius) {
+function circle(self, xpos, ypos, radius) {
   let positions = [];
   let deltas = bfsDeltas[radius];
   let deltaLength = deltas.length;
   for (let k = 0; k < deltaLength; k++) {
-    positions.push([xpos + deltas[k][0], ypos + deltas[k][1]]);
+   
+    let nx = xpos + deltas[k][0];
+    let ny = ypos + deltas[k][1];
+    //self.log(`circle xy: ${xpos}, ${ypos}; NEW: ${nx}, ${ny}`);
+    if (inArr(nx,ny, self.map)){
+      positions.push([nx,ny]);
+    }
   }
   return positions;
 }
