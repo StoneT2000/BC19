@@ -66,25 +66,25 @@ function mind(self) {
     if (self.castles === 3) {
       //only first castle builds pilgrim in 3 preacher defence strategy
       if (offsetVal === 0) {
-        self.buildQueue.push(2,5, 5, 5, 5);
+        self.buildQueue.push(2,5, 5);
       }
       else if (offsetVal === 1){
-        self.buildQueue.push(-1,-1, -1, 2, 5, 5);
+        self.buildQueue.push(5,-1, 5);
       }
       else if (offsetVal === 2) {
-        self.buildQueue.push(-1,-1, -1, 2, 5, 5);
+        self.buildQueue.push(5,-1, 5);
       }
     }
     else if (self.castles === 2) {
       if (offsetVal === 0) {
-        self.buildQueue.push(2,5, 5, 5, 5);
+        self.buildQueue.push(2,5, 5);
       }
       else if (offsetVal === 1) {
-        self.buildQueue.push(-1, -1, -1, 2, 5, 5);
+        self.buildQueue.push(5, 5, 5);
       }
     }
     else if (self.castles === 1) {
-      self.buildQueue.push(2,5,5,5,5,2);
+      self.buildQueue.push(2,5,5,5);
     }
     
     
@@ -194,14 +194,13 @@ function mind(self) {
   if (self.status === 'build') {
     let adjacentPos = search.circle(self, self.me.x, self.me.y, 2);
     self.log(`BuildQueue: ${self.buildQueue}`)
-    if (self.buildQueue[0] !== -1){
-      for (let i = 1; i < adjacentPos.length; i++) {
+    for (let i = 1; i < adjacentPos.length; i++) {
       let checkPos = adjacentPos[i];
       //prioritize building direction in future?
 
       if(canBuild(self, checkPos[0], checkPos[1], robotsMapInVision, passableMap)){
         //self.log(`${self.buildQueue}`)
-        
+        if (self.buildQueue[0] !== -1){
           if (self.buildQueue.length > 0 && enoughResourcesToBuild(self, self.buildQueue[0])) {
             //build the first unit put into the build queue
             let unit = self.buildQueue.shift(); //remove that unit
@@ -232,11 +231,12 @@ function mind(self) {
             //return {action: self.buildUnit(unit, search.bfsDeltas[1][i][0], search.bfsDeltas[1][i][1]), status:'build', response:'built'};
           }
         }
-
+        else {
+          self.buildQueue.shift();
+        }
       }
-    }
-    else {
-      self.buildQueue.shift();
+
+
     }
   }
   

@@ -38,10 +38,8 @@ function mind(self){
 
     let rels = base.relToPos(self.me.x, self.me.y, exploreTarget[0], exploreTarget[1], self);
     let rels2 = base.relToPos(self.me.x + rels.dx, self.me.y+rels.dy, exploreTarget[0], exploreTarget[1], self);
-    let rels3 = base.relToPos(self.me.x + rels.dx + rels2.dx, self.me.y+rels.dy + rels.dy, exploreTarget[0], exploreTarget[1], self);
-    let relsx = self.me.x + rels.dx + rels2.dx + rels3.x
-    //self.finalTarget = [self.me.x + rels.dx + rels2.dx + rels3.x, self.me.y + rels.dy + rels2.dy + rels3.dy];
-    self.finalTarget = [exploreTarget[0], exploreTarget[1]];
+    
+    self.finalTarget = [self.me.x + rels.dx + rels2.dx, self.me.y+rels.dy + rels.dy];
     
   }
   if (self.me.turn === 3) {
@@ -70,13 +68,13 @@ function mind(self){
   if (self.status === 'defend') {
     self.finalTarget = null;
   }
-  if (self.status === 'rally'){
+  if (self.status === 'rally' || self.status === 'defend'){
     let crusadersInVincinity = [];
     for (let i = 0; i < robotsInVision.length; i++) {
       let obot = robotsInVision[i];
       if (obot.unit === SPECS.CRUSADER || obot.unit === SPECS.PREACHER) {
         let distToUnit = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
-        if (distToUnit <= 36) {
+        if (distToUnit <= 9) {
           crusadersInVincinity.push(obot);
         }
       }
@@ -102,7 +100,7 @@ function mind(self){
         self.status = 'searchAndAttack';
         //once we send the warcry, on average each turn the preachers spend 72 fuel to move
         //Once they start attacking enemies, they spend 15 fuel, so we need to wait until fuel is enough
-        self.signal(1,36);//note, this signal will be broadcasted to other units at where this unit is at the end of its turn
+        self.signal(1,25);//note, this signal will be broadcasted to other units at where this unit is at the end of its turn
         forcedAction = '';
         
         //tell castles they may continue building, karbonite etc.
@@ -111,30 +109,6 @@ function mind(self){
       else {
         //tell castles to stop building, stack fuel for attack
         self.castleTalk(6);
-      }
-    }
-    
-    //force unit to be apart
-    if (self.me.turn <= 8) {
-      if (self.me.x % 2 === 0 || self.me.y %2 === 0) {
-        let closestDist = 99999;
-        let bestLoc = null;
-        for (let i = 0; i < gameMap.length; i++) {
-          for (let j = 0; j < gameMap[0].length; j++) {
-            if (i % 2 === 1 && j % 2 === 1){
-              if (search.emptyPos(j, i , robotMap, gameMap)){
-                let thisDist = qmath.dist(self.me.x, self.me.y, j, i);
-                if (thisDist < closestDist) {
-                  closestDist = thisDist;
-                  bestLoc = [j, i];
-                }
-              }
-            }
-          }
-        }
-        if (bestLoc !== null) {
-          self.finalTarget = bestLoc;
-        }
       }
     }
   }

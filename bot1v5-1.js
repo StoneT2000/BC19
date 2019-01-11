@@ -280,10 +280,12 @@ function circle(self, xpos, ypos, radius) {
   let deltas = bfsDeltas[radius];
   let deltaLength = deltas.length;
   for (let k = 0; k < deltaLength; k++) {
+   
     let nx = xpos + deltas[k][0];
     let ny = ypos + deltas[k][1];
+    //self.log(`circle xy: ${xpos}, ${ypos}; NEW: ${nx}, ${ny}`);
     if (inArr(nx,ny, self.map)){
-      positions.push([xpos + deltas[k][0], ypos + deltas[k][1]]);
+      positions.push([nx,ny]);
     }
   }
   return positions;
@@ -484,7 +486,6 @@ function processMessageCrusader(self, msg){
     case 1:
       self.status = 'searchAndAttack';
       break;
-    
   }
 }
 function processMessagePreacher(self, msg){
@@ -494,7 +495,13 @@ function processMessagePreacher(self, msg){
     case 1:
       self.status = 'searchAndAttack';
       break;
-    //if message is from 4 to 4099, this is a map location, with 4 units of padding
+    case 5:
+      //preachers waiting for stack of fuel to engage in next venture stay as that status
+      if (self.status !== 'waitingForFuelStack'){
+        self.status = 'defend';
+      }
+      break;
+    //if message is from 6 to 5001, this is a map location, with 6 units of padding
   }
 }
 function processMessageProphet(self, msg){
@@ -597,25 +604,25 @@ function mind(self) {
     if (self.castles === 3) {
       //only first castle builds pilgrim in 3 preacher defence strategy
       if (offsetVal === 0) {
-        self.buildQueue.push(2,5, 5);
+        self.buildQueue.push(2,5, 5, 5, 5);
       }
       else if (offsetVal === 1){
-        self.buildQueue.push(5,-1, 5);
+        self.buildQueue.push(-1,-1, -1, 2, 5, 5);
       }
       else if (offsetVal === 2) {
-        self.buildQueue.push(5,-1, 5);
+        self.buildQueue.push(-1,-1, -1, 2, 5, 5);
       }
     }
     else if (self.castles === 2) {
       if (offsetVal === 0) {
-        self.buildQueue.push(2,5, 5);
+        self.buildQueue.push(2,5, 5, 5, 5);
       }
       else if (offsetVal === 1) {
-        self.buildQueue.push(5, 5, 5);
+        self.buildQueue.push(-1, -1, -1, 2, 5, 5);
       }
     }
     else if (self.castles === 1) {
-      self.buildQueue.push(2,5,5,5);
+      self.buildQueue.push(2,5,5,5,5,2);
     }
     
     
@@ -689,7 +696,7 @@ function mind(self) {
   
   
   //Accurate numbers as of the end of the last round
-  self.log(`Round ${self.me.turn}: Castle (${self.me.x}, ${self.me.y}); Status: ${self.status}; Castles:${self.castles}, Churches: ${self.churches}, Pilgrims: ${self.pilgrims}, Crusaders: ${self.crusaders}, Prophets: ${self.prophets}, Preachers: ${self.preachers}`);
+  self.log(`Round ${self.me.turn}: Castle (${self.me.x}, ${self.me.y}); Status: ${self.status}; Castles:${self.castles}, Churches: ${self.churches}, Pilgrims: ${self.pilgrims}, Crusaders: ${self.crusaders}, Prophets: ${self.prophets}, Preachers: ${self.preachers}, Fuel:${self.fuel}, Karbonite: ${self.karbonite}`);
   for (let i = 0; i < robotsInVision.length; i++) {
     let obot = robotsInVision[i];
     if (obot.unit === SPECS.CRUSADER) {
@@ -704,13 +711,14 @@ function mind(self) {
   if (self.status === 'build') {
     let adjacentPos = search.circle(self, self.me.x, self.me.y, 2);
     self.log(`BuildQueue: ${self.buildQueue}`);
-    for (let i = 1; i < adjacentPos.length; i++) {
+    if (self.buildQueue[0] !== -1){
+      for (let i = 1; i < adjacentPos.length; i++) {
       let checkPos = adjacentPos[i];
       //prioritize building direction in future?
 
       if(canBuild(self, checkPos[0], checkPos[1], robotsMapInVision, passableMap)){
         //self.log(`${self.buildQueue}`)
-        if (self.buildQueue[0] !== -1){
+        
           if (self.buildQueue.length > 0 && enoughResourcesToBuild(self, self.buildQueue[0])) {
             //build the first unit put into the build queue
             let unit = self.buildQueue.shift(); //remove that unit
@@ -738,12 +746,11 @@ function mind(self) {
             //return {action: self.buildUnit(unit, search.bfsDeltas[1][i][0], search.bfsDeltas[1][i][1]), status:'build', response:'built'};
           }
         }
-        else {
-          self.buildQueue.shift();
-        }
+
       }
-
-
+    }
+    else {
+      self.buildQueue.shift();
     }
   }
   
@@ -4765,9 +4772,9 @@ function mind$5(self){
   //INITIALIZATION
   if (self.me.turn === 1) {
     self.castleTalk(self.me.unit);
-    
+    self.allowedToMove = true;
     self.finalTarget = [self.me.x, self.me.y];
-    self.status = 'defend';
+    self.status = 'rally';
     self.lastAttackedUnit = null;
     let exploreTarget = [gameMap[0].length - self.me.x - 1, gameMap.length - self.me.y - 1];
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
@@ -4781,8 +4788,10 @@ function mind$5(self){
 
     let rels = base.relToPos(self.me.x, self.me.y, exploreTarget[0], exploreTarget[1], self);
     let rels2 = base.relToPos(self.me.x + rels.dx, self.me.y+rels.dy, exploreTarget[0], exploreTarget[1], self);
-    
-    self.finalTarget = [self.me.x + rels.dx + rels2.dx, self.me.y+rels.dy + rels.dy];
+    let rels3 = base.relToPos(self.me.x + rels.dx + rels2.dx, self.me.y+rels.dy + rels.dy, exploreTarget[0], exploreTarget[1], self);
+    let relsx = self.me.x + rels.dx + rels2.dx + rels3.x;
+    //self.finalTarget = [self.me.x + rels.dx + rels2.dx + rels3.x, self.me.y + rels.dy + rels2.dy + rels3.dy];
+    self.finalTarget = [exploreTarget[0], exploreTarget[1]];
     
   }
   if (self.me.turn === 3) {
@@ -4796,23 +4805,28 @@ function mind$5(self){
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
     signal.processMessagePreacher(self, msg);
-    
-    //process new target location
-    if (msg >= 5 && msg <= 5000) {
-      //- 5 for padding
-      let newTarget = self.getLocation(msg - 5);
-      self.finalTarget = [newTarget.x, newTarget.y];
-      self.status = 'exploreAndAttack';
-      self.log(`New target: ${self.finalTarget} from message:${msg}`);
+    if(robotsInVision[i].id !== self.me.id){
+      //process new target location
+      if (msg >= 6 && msg <= 5001) {
+        //- 6 for padding
+        let newTarget = self.getLocation(msg - 6);
+        self.finalTarget = [newTarget.x, newTarget.y];
+        self.status = 'exploreAndAttack';
+        self.allowedToMove = true;
+        self.log(`New target: ${self.finalTarget} from message:${msg}`);
+      }
     }
   }
-  if (self.status === 'rally' || self.status === 'defend'){
+  if (self.status === 'defend') {
+    self.finalTarget = null;
+  }
+  if (self.status === 'rally'){
     let crusadersInVincinity = [];
     for (let i = 0; i < robotsInVision.length; i++) {
       let obot = robotsInVision[i];
       if (obot.unit === SPECS.CRUSADER || obot.unit === SPECS.PREACHER) {
         let distToUnit = qmath$1.dist(self.me.x, self.me.y, obot.x, obot.y);
-        if (distToUnit <= 9) {
+        if (distToUnit <= 36) {
           crusadersInVincinity.push(obot);
         }
       }
@@ -4828,17 +4842,17 @@ function mind$5(self){
     }
     //qmath.unitDist(self.me.x, self.me.y, self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y);
     
-    //path distance / 2 movement * 12 for fuel cost * 6 for num units
-    let fuelNeededForAttack = (distToTarget2/2) * 12 * 6;
+    //path distance / 2 movement * 12 for fuel cost * 8 for num units
+    let fuelNeededForAttack = (distToTarget2/2) * 12 * 8;
     //self.log(`To attack, we need ${fuelNeededForAttack}`);
     //less fuel is needed if we let preachers move slowly, and then rush in once near target
     
-    if (crusadersInVincinity.length >= 6) {
+    if (crusadersInVincinity.length >= 8) {
       if (self.fuel >= fuelNeededForAttack){
         self.status = 'searchAndAttack';
         //once we send the warcry, on average each turn the preachers spend 72 fuel to move
         //Once they start attacking enemies, they spend 15 fuel, so we need to wait until fuel is enough
-        self.signal(1,9);//note, this signal will be broadcasted to other units at where this unit is at the end of its turn
+        self.signal(1,36);//note, this signal will be broadcasted to other units at where this unit is at the end of its turn
         forcedAction = '';
         
         //tell castles they may continue building, karbonite etc.
@@ -4847,6 +4861,30 @@ function mind$5(self){
       else {
         //tell castles to stop building, stack fuel for attack
         self.castleTalk(6);
+      }
+    }
+    
+    //force unit to be apart
+    if (self.me.turn <= 8) {
+      if (self.me.x % 2 === 0 || self.me.y %2 === 0) {
+        let closestDist = 99999;
+        let bestLoc = null;
+        for (let i = 0; i < gameMap.length; i++) {
+          for (let j = 0; j < gameMap[0].length; j++) {
+            if (i % 2 === 1 && j % 2 === 1){
+              if (search.emptyPos(j, i , robotMap, gameMap)){
+                let thisDist = qmath$1.dist(self.me.x, self.me.y, j, i);
+                if (thisDist < closestDist) {
+                  closestDist = thisDist;
+                  bestLoc = [j, i];
+                }
+              }
+            }
+          }
+        }
+        if (bestLoc !== null) {
+          self.finalTarget = bestLoc;
+        }
       }
     }
   }
@@ -4859,7 +4897,7 @@ function mind$5(self){
     self.finalTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
   }
   
-  if (self.status === 'searchAndAttack' || self.status === 'rally' || self.status === 'defend' || self.status === 'exploreAndAttack') {
+  if (self.status === 'searchAndAttack' || self.status === 'rally' || self.status === 'defend' || self.status === 'exploreAndAttack' || self.status === 'waitingForFuelStack') {
     let isEnemy = false;
     let attackLoc = {};
     
@@ -4910,40 +4948,44 @@ function mind$5(self){
     let enemyToAttack = null;
     for (let i = 0; i < robotsInVision.length; i++) {
       let oVisRobot = robotsInVision[i];
-      let checkPositions = search.circle(self, oVisRobot.x, oVisRobot.y, 2);
-      let unitsAttacked = 0;
-      if (oVisRobot.id !== self.me.id){
-        for (let k = 0; k < checkPositions.length; k++) {
-          let checkPos = checkPositions[k];
-          if (search.inArr(checkPos[0], checkPos[1], robotMap)){
-            self.log(`Check xy: ${checkPos}`);
-            let oRobotId = robotMap[checkPos[1]][checkPos[0]];
-            self.log(`id:${oRobotId}`);
-            //ok if hit self
-            if (oRobotId > 0) {
-              let oRobot = self.getRobot(oRobotId);
-              //if other team, add to number of affected enemies
-              //Strategy is to hit as many enemies as possible and as little friendlies as possible
-              if (oRobot.team !== self.me.team) {
-                unitsAttacked += 1; //enemy team hit
-                existEnemy = true;
-                enemyToAttack = oRobot;
-              }
-              else {
-                if (oRobotId === self.me.id) ;
-                else {
-                  unitsAttacked -= 1;
+  
+      //check if they defined or not, because of some bugs with bc19 i think
+      if (oVisRobot.x !== undefined && oVisRobot.y !== undefined){
+        let checkPositions = search.circle(self, oVisRobot.x, oVisRobot.y, 2);
+        let unitsAttacked = 0;
+        if (oVisRobot.id !== self.me.id){
+          for (let k = 0; k < checkPositions.length; k++) {
+            let checkPos = checkPositions[k];
+            if (search.inArr(checkPos[0], checkPos[1], robotMap)){
+              //self.log(`Check xy: ${checkPos}`);
+              let oRobotId = robotMap[checkPos[1]][checkPos[0]];
+              //self.log(`id:${oRobotId}`);
+              //ok if hit self
+              if (oRobotId > 0) {
+                let oRobot = self.getRobot(oRobotId);
+                //if other team, add to number of affected enemies
+                //Strategy is to hit as many enemies as possible and as little friendlies as possible
+                if (oRobot.team !== self.me.team) {
+                  unitsAttacked += 1; //enemy team hit
+                  existEnemy = true;
+                  enemyToAttack = oRobot;
                 }
-              }
+                else {
+                  if (oRobotId === self.me.id) ;
+                  else {
+                    unitsAttacked -= 1;
+                  }
+                }
 
+              }
             }
           }
-        }
 
-        if (mostUnitsAttacked < unitsAttacked && existEnemy === true) {
-          attackLoc = {x:oVisRobot.x,y:oVisRobot.y};
-          mostUnitsAttacked = unitsAttacked;
-          isEnemy = true;
+          if (mostUnitsAttacked < unitsAttacked && existEnemy === true) {
+            attackLoc = {x:oVisRobot.x,y:oVisRobot.y};
+            mostUnitsAttacked = unitsAttacked;
+            isEnemy = true;
+          }
         }
       }
     }
@@ -4991,12 +5033,19 @@ function mind$5(self){
           else {
             distToTarget2 = qmath$1.unitDist(self.me.x, self.me.y, newLoc[0], newLoc[1]);
           }
-          //let fuelNeededForAttack = (distToTarget2/2) * 12 * 6;
+          let fuelNeededForAttack = (distToTarget2/2) * 12 * 6;
           let compressedLocationHash = self.compressLocation(newLoc[0], newLoc[1]);
-          //padding hash by 5
-          self.signal(5 + compressedLocationHash, 18);
+          //padding hash by 6
+          self.status = 'waitingForFuelStack';
+          self.signalToSendAfterFuelIsMet = 6 + compressedLocationHash;
+          self.fuelNeeded = fuelNeededForAttack;
+          //self.signal(5 + compressedLocationHash, 36);
           self.finalTarget = newLoc;
-          self.log(`Initial New target: ${self.finalTarget}`);
+          self.allowedToMove = false;
+          
+          //send signal to tell bots to stop moving
+          self.signal(5, 36);
+          //self.log(`Initial New target: ${self.finalTarget}`);
           self.lastAttackedUnit = null;
         }
       }
@@ -5015,12 +5064,32 @@ function mind$5(self){
     }
   }
   
+  //robot is waiting for enough fuel to start another war charge
+  if (self.status === 'waitingForFuelStack') {
+    self.log(`Waiting for fuel stack:${self.fuelNeeded}`);
+    if (self.fuelNeeded <= self.fuel) {
+      self.signal(self.signalToSendAfterFuelIsMet, 36);
+      self.status = 'exploreAndAttack';
+      self.allowedToMove = true;
+      forcedAction = '';
+      self.castleTalk(7);
+    }
+    else {
+      //tell castle to pause
+      self.castleTalk(6);
+    }
+  }
   
   //PROCESSING FINAL TARGET
   if (forcedAction !== null) {
     return {action:forcedAction};
   }
-  action = self.navigate(self.finalTarget);
+  if (self.allowedToMove === true){
+    action = self.navigate(self.finalTarget);
+  }
+  else {
+    action = '';
+  }
   return {action:action}; 
 }
 
@@ -5169,25 +5238,28 @@ class MyRobot extends BCAbstractRobot {
   *
   */
   navigate(finalTarget) {
-    this.setFinalTarget(finalTarget);
-    let action = '';
-    if (this.path.length > 0) {
-      let distLeftToSubTarget = qmath$1.dist(this.me.x, this.me.y, this.target[0], this.target[1]);
-      if (distLeftToSubTarget <= 1){
-        this.target[1] = this.path.shift();
-        this.target[0] = this.path.shift();
+    if (finalTarget !== null){
+      this.setFinalTarget(finalTarget);
+      let action = '';
+      if (this.path.length > 0) {
+        let distLeftToSubTarget = qmath$1.dist(this.me.x, this.me.y, this.target[0], this.target[1]);
+        if (distLeftToSubTarget <= 1){
+          this.target[1] = this.path.shift();
+          this.target[0] = this.path.shift();
+        }
       }
+      if (this.target) {
+        let rels = base.relToPos(this.me.x, this.me.y, this.target[0], this.target[1], this);
+        if (rels.dx === 0 && rels.dy === 0) {
+          action = '';
+        }
+        else {
+          action = this.move(rels.dx, rels.dy);    
+        }
+      }
+      return action;
     }
-    if (this.target) {
-      let rels = base.relToPos(this.me.x, this.me.y, this.target[0], this.target[1], this);
-      if (rels.dx === 0 && rels.dy === 0) {
-        action = '';
-      }
-      else {
-        action = this.move(rels.dx, rels.dy);    
-      }
-    }
-    return action;
+    return '';
   }
   /*
   * Returns the nearest enemy unit
