@@ -4863,9 +4863,12 @@ function mind$5(self){
         self.castleTalk(6);
       }
     }
+    else {
+      self.castleTalk(7);
+    }
     
     //force unit to be apart
-    if (self.me.turn <= 8) {
+    if (self.me.turn <= 8 && self.me.turn >= 5) {
       if (self.me.x % 2 === 0 || self.me.y %2 === 0) {
         let closestDist = 99999;
         let bestLoc = null;
