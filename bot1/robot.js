@@ -68,7 +68,6 @@ class MyRobot extends BCAbstractRobot {
     if (this.me.unit === SPECS.CASTLE) {
       let result = {action:''};
       result = castle.mind(this);
-      this.status = result.status;
       return result.action;
     }
     else if (this.me.unit === SPECS.CRUSADER) {

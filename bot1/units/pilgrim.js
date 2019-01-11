@@ -146,6 +146,7 @@ function mind(self) {
       else {
         self.status = 'searchForKarbDeposit';
       }
+      self.signal(4,2);
       action = self.give(currRels.dx, currRels.dy, self.me.karbonite, self.me.fuel);
       return {action:action}; 
     }

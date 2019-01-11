@@ -103,7 +103,13 @@ function mind(self) {
     
     let orobot = robotsInVision[i];
     
-    signal.processMessageCastle(self, msg, robotsInVision[i].id);
+    signal.processMessageCastleTalk(self, msg, robotsInVision[i].id);
+    if (signalmsg === 4) {
+      //pilgrim is nearby, assign it new mining stuff if needed
+      if (self.status === 'pause') {
+        self.signal(3,2)
+      }
+    }
   }
   
   
@@ -161,12 +167,19 @@ function mind(self) {
   
   
   let crusadersInVincinity = [];
+  let pilgrimsNearby = [];
   for (let i = 0; i < robotsInVision.length; i++) {
     let obot = robotsInVision[i];
     if (obot.unit === SPECS.CRUSADER) {
       let distToUnit = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
       if (distToUnit <= 4) {
         crusadersInVincinity.push(obot);
+      }
+    }
+    else if (obot.unit === SPECS.PILGRIM) {
+      let distToUnit = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
+      if (distToUnit <= 2) {
+        pilgrimsNearby.push(obot);
       }
     }
   }
@@ -221,6 +234,8 @@ function mind(self) {
 
     }
   }
+  
+  //if status is pause, that means we are stacking fuel, so send signal to nearby pilgrims to mine fuel
   if (self.status === 'pause'){
     
   }

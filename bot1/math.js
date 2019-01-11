@@ -6,4 +6,7 @@ function dist(p1x, p1y, p2x, p2y) {
 function distDelta(dx,dy) {
   return dx * dx + dy * dy;
 }
-export default {dist, distDelta}
+function unitDist(p1x,p1y,p2x,p2y) {
+  return Math.abs(p2x-p1x) + Math.abs(p2y-p1y);
+}
+export default {dist, distDelta, unitDist}

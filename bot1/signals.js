@@ -3,7 +3,7 @@
 * @param {robot} self - The robot object
 * @param {number} msg - the message value
 */
-function processMessageCastle(self, msg, id) {
+function processMessageCastleTalk(self, msg, id) {
   switch(msg) {
     case 1:
       self.allUnits[id] = msg;
@@ -21,8 +21,21 @@ function processMessageCastle(self, msg, id) {
       self.allUnits[id] = msg;
       break;
     case 6:
+      self.status = 'pause';
+      break;
+    case 7:
+      self.status = 'build';
+    case 8:
+      
       break;
     default:
+      break;
+  }
+}
+function processMessageCastle (self, msg, id) {
+  switch (msg) {
+    case 4:
+      //process in castle.js. Received when a pilgrim is about to give karbonite or fuel
       break;
   }
 }
@@ -69,7 +82,13 @@ function processMessageChurch(self, msg){
 }
 function processMessagePilgrim(self, msg){
   switch (msg){
+    case 2:
+      self.status = 'searchForKarbDeposit'
+      break;
+    case 3:
+      self.status = 'searchForFuelDeposit'
+      break;
   }
 }
 
-export default {processMessageCastle, processMessageCrusader, processMessagePreacher, processMessageProphet, processMessageChurch, processMessagePilgrim}
+export default {processMessageCastleTalk, processMessageCastle, processMessageCrusader, processMessagePreacher, processMessageProphet, processMessageChurch, processMessagePilgrim}
