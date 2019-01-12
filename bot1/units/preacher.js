@@ -20,7 +20,7 @@ function mind(self){
   
   
   //INITIALIZATION
-  if (self.me.turn === 3) {
+  if (self.me.turn === 5) {
     pathing.initializePlanner(self);
     self.setFinalTarget(self.finalTarget);
   }
@@ -145,7 +145,14 @@ function mind(self){
     }
     //self.log('c:' + self.finalTarget );
     //We force the unit to stay away from each other
-    if (self.me.x % 2 === 0 || self.me.y % 2 === 0) {
+    
+    //if we are farther from enemy castle than our own castle, recalc.
+    let fartherAway = false;
+    if (qmath.dist(self.knownStructures[self.me.team][0].x,self.knownStructures[self.me.team][0].y,self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y) <= qmath.dist(self.me.x, self.me.y,self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y)){
+      self.log(`Im far`);
+      fartherAway = true;
+    }
+    if (self.me.x % 2 === 0 || self.me.y % 2 === 0 || fartherAway) {
         let closestDist = 99999;
         let bestLoc = null;
         for (let i = 0; i < gameMap.length; i++) {

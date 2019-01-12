@@ -51,7 +51,7 @@ function mind(self){
     //self.finalTarget = [exploreTarget[0], exploreTarget[1]];
     
   }
-  if (self.me.turn === 3) {
+  if (self.me.turn === 5) {
     pathing.initializePlanner(self);
     self.setFinalTarget(self.finalTarget);
   }
