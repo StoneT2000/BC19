@@ -48,7 +48,7 @@ function mind(self) {
     
     
     
-    self.target = [self.me.x,self.me.y]
+    self.target = [self.me.x,self.me.y];
     self.finalTarget = [self.me.x, self.me.y];
   }
   
