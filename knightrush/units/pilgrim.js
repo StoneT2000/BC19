@@ -8,7 +8,7 @@ function mind(self) {
   const choices = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
   const choice = choices[Math.floor(Math.random() * choices.length)]
   
-  self.log(`Pilgrim (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
+  //self.log(`Pilgrim (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
   let fuelMap = self.getFuelMap();
   let karboniteMap = self.getKarboniteMap();
   
@@ -54,7 +54,7 @@ function mind(self) {
   
   //initializing planner
   if (self.me.turn === 3) {
-    self.log('Trying to plan');
+    //self.log('Trying to plan');
     pathing.initializePlanner(self);
     self.setFinalTarget(self.finalTarget);
     self.status = 'searchForKarbDeposit';

@@ -21,7 +21,7 @@ function mind(self){
     self.initializeCastleLocations();
     let enemyCastle = self.knownStructures[otherTeamNum][0]
     //rally means crusader goes to a rally point
-    self.status = 'rally';
+    self.status = 'searchAndAttack';
 
     let rels = base.relToPos(self.me.x, self.me.y, enemyCastle[0], enemyCastle[1], self);
     self.finalTarget = [self.me.x + rels.dx, self.me.y+rels.dy];

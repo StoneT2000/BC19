@@ -1,13 +1,13 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
-import castle from './bot1/units/castle.js';
-import church from './bot1/units/church.js';
-import pilgrim from './bot1/units/pilgrim.js';
-import crusader from './bot1/units/crusader.js';
-import prophet from './bot1/units/prophet.js';
-import preacher from './bot1/units/preacher.js';
-import qmath from './bot1/math.js';
-import search from './bot1/search.js'
-import base from './bot1/base.js';
+import castle from './knightrush/units/castle.js';
+import church from './knightrush/units/church.js';
+import pilgrim from './knightrush/units/pilgrim.js';
+import crusader from './knightrush/units/crusader.js';
+import prophet from './knightrush/units/prophet.js';
+import preacher from './knightrush/units/preacher.js';
+import qmath from './knightrush/math.js';
+import search from './knightrush/search.js'
+import base from './knightrush/base.js';
 
 
 //REMEMBER, NO GLOBAL VARIABLES

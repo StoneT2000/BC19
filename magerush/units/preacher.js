@@ -14,50 +14,29 @@ function mind(self){
   
   let robotMap = self.getVisibleRobotMap();
   
-  self.log(`Preacher (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
+  //self.log(`Preacher (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
   //STRATS:
   //3 preacher defence. build a pilgrim then 3 preachers
   
   
   //INITIALIZATION
-  if (self.me.turn === 3) {
-    pathing.initializePlanner(self);
-    self.setFinalTarget(self.finalTarget);
-  }
   if (self.me.turn === 1) {
     self.castleTalk(self.me.unit);
     self.allowedToMove = true;
     self.finalTarget = [self.me.x, self.me.y];
-    self.status = 'rally';
+    self.status = 'searchAndAttack';
     self.lastAttackedUnit = null;
     
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
     
     self.initializeCastleLocations();
-    let myCastleLocation = self.knownStructures[self.me.team][0]
     let enemyCastleLocation = self.knownStructures[otherTeamNum][0]
     //DETERMINE RALLY POSITION
-    
-    //pathing.initializePlanner(self);
-    self.setFinalTarget([enemyCastleLocation.x, enemyCastleLocation.y]);
-    //self.log(self.path + ': ' + enemyCastleLocation.x + ', ' + enemyCastleLocation.y);
-    //check path, and follow it until you are at least a distance away
-    let finalNode = [];
-    for (let i = 0; i < self.path.length; i+=2) {
-      if (qmath.dist(myCastleLocation.x,myCastleLocation.y,self.path[i],self.path[i+1]) >= 10) {
-        finalNode = [self.path[i],self.path[i+1]];
-        break;
-      }
-    }
-    if (self.path.length === 0) {
-      finalNode = [enemyCastleLocation.x, enemyCastleLocation.y];
-    }
-    //self.log('First here:' + finalNode);
-    let rels = base.relToPos(self.me.x, self.me.y, finalNode[0], finalNode[1], self);
-    //self.log(rels);
-    let rels2 = base.relToPos(self.me.x + rels.dx, self.me.y+rels.dy, finalNode[0], finalNode[1], self);
-    let rels3 = base.relToPos(self.me.x + rels.dx + rels2.dx, self.me.y+rels.dy + rels2.dy, finalNode[0], finalNode[1], self);
+    let rels = base.relToPos(self.me.x, self.me.y, enemyCastleLocation[0], enemyCastleLocation[1], self);
+    let rels2 = base.relToPos(self.me.x + rels.dx, self.me.y+rels.dy, enemyCastleLocation[0], enemyCastleLocation[1], self);
+    let rels3 = base.relToPos(self.me.x + rels.dx + rels2.dx, self.me.y+rels.dy + rels2.dy, enemyCastleLocation[0], enemyCastleLocation[1], self);
     let relsx = self.me.x + rels.dx + rels2.dx + rels3.x
+    
     /*
     pathing.initializePlanner(self);
     self.setFinalTarget(exploreTarget[0],exploreTarget[1]);
@@ -67,13 +46,15 @@ function mind(self){
     */
     
     
-    self.rallyTarget = [self.me.x + rels.dx + rels2.dx, self.me.y + rels.dy + rels2.dy];
-    self.finalTarget = [self.me.x + rels.dx + rels2.dx, self.me.y + rels.dy + rels2.dy];
-    self.log(`Rally Point: ${self.rallyTarget}`)
+    self.rallyTarget = [self.me.x + rels.dx + rels2.dx + rels3.dx, self.me.y + rels.dy + rels2.dy + rels3.dy];
+    //self.log(`Rally Point: ${self.rallyTarget}`)
     //self.finalTarget = [exploreTarget[0], exploreTarget[1]];
     
   }
-  
+  if (self.me.turn === 3) {
+    pathing.initializePlanner(self);
+    self.setFinalTarget(self.finalTarget);
+  }
   
   let robotsInVision = self.getVisibleRobots();
   
@@ -89,10 +70,10 @@ function mind(self){
         self.finalTarget = [newTarget.x, newTarget.y];
         self.status = 'exploreAndAttack';
         self.allowedToMove = true;
-        self.log(`New target: ${self.finalTarget} from message:${msg}`);
+        //self.log(`New target: ${self.finalTarget} from message:${msg}`);
       }
       if (msg === 5) {
-        self.log(`Received ${msg} from ${robotsInVision[i].id}`);
+        //self.log(`Received ${msg} from ${robotsInVision[i].id}`);
       }
     }
   }
@@ -164,7 +145,7 @@ function mind(self){
         }
         if (bestLoc !== null) {
           self.finalTarget = bestLoc;
-          self.log('New location near rally point :' + self.finalTarget);
+          //self.log(self.finalTarget);
         }
     }
   }
@@ -179,7 +160,7 @@ function mind(self){
   
   //robot is waiting for enough fuel to start another war charge
   if (self.status === 'waitingForFuelStack') {
-    self.log(`Waiting for fuel stack:${self.fuelNeeded}`);
+    //self.log(`Waiting for fuel stack:${self.fuelNeeded}`);
     let unitsInVincinity = search.unitsInRadius(self, 36);
     
     moveApart(self);
@@ -307,15 +288,17 @@ function mind(self){
         }
       }
     }
-    if (self.lastAttackedUnit !== null) {
+    
+    //disbaled for mage rush strats
+    /*if (self.lastAttackedUnit !== null) {
       
       //This batch of code determins whether or not a castle was just killed. If so, we make the robot find a new target to run towards, preferably the furthest distance away that likely has a blue enemy, and then tell the other units to go there as well.
       if (self.lastAttackedUnit.unit  === SPECS.CASTLE) {
-        self.log(`checking if castle is still there`)
+        //self.log(`checking if castle is still there`)
         
         let unitIdThere = robotMap[self.lastAttackedUnit.y][self.lastAttackedUnit.x];
         if (unitIdThere !== self.lastAttackedUnit.id) {
-          self.log(`Killed castle`);
+          //self.log(`Killed castle`);
           //destroyed the castle, now have all units move elsewhere
           //randomly search for location. if horizontal symmetry, search along a common y pos
           let longestDistance = 0;
@@ -352,7 +335,7 @@ function mind(self){
             distToTarget2 = qmath.unitDist(self.me.x, self.me.y, newLoc[0], newLoc[1]);
           }
           let fuelNeededForAttack = (distToTarget2/2) * 16 * 8 + 250;
-          self.log(`Just killed castle, need ${fuelNeededForAttack}`);
+          //self.log(`Just killed castle, need ${fuelNeededForAttack}`);
           let compressedLocationHash = self.compressLocation(newLoc[0], newLoc[1]);
           //padding hash by 6
           self.status = 'waitingForFuelStack';
@@ -368,13 +351,13 @@ function mind(self){
           self.lastAttackedUnit = null;
         }
       }
-    }
+    }*/
     //enemy nearby, attack it?
     if (isEnemy === true) {
       //let rels = base.relToPos(self.me.x, self.me.y, target[0], target[1], self);
       let rels = base.rel(self.me.x, self.me.y, attackLoc.x, attackLoc.y);
       //self.log(`Attack ${rels.dx},${rels.dy}`);
-      self.log(`Preacher Attacks ${rels.dx},${rels.dy}`);
+      //self.log(`Preacher Attacks ${rels.dx},${rels.dy}`);
       if (self.readyAttack()){
         self.lastAttackedUnit = enemyToAttack
         action = self.attack(rels.dx,rels.dy)
