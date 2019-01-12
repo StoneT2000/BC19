@@ -82,6 +82,10 @@ Each turn, each preacher checks if there are at least 8 preachers in its vincini
 
 Once the preachers have enough fuel, they target the enemy castle and run for it. If the castle is destroyed (as determined by a really ratched method of checking for whether the last attacked unit id is still there), the preachers go on ```defend``` mode or ```waitingForFuelStack``` mode. Preachers on ```waitingForFuelStack``` mode wait until there is enough fuel for preachers to run to the new target that was determined after the castle was destroyed. Preachers on defend or waitingForFuelStack mode will run ```moveApart(self)``` to try and not clump together to avoid getting easily destroyed by enemy preachers.
 
+##### ALSO
+
+Pilgrims that follow a preacher army, should tell the preacher army when to run as fast as possible or when to take it slower (to save fuel, by 4~2 fold). if there are enemies near, especially prophets, run at them. If we near the enemey castle, run at them.
+
 #### Pilgrim Mining
 
 Pilgrims by default search and mine for karbonite. When they return to a castle and give it karbonite and fuel, it sends a signal = 5 to the castle, telling the castle it returned. This way, castles can then give the pilgrim that just delivered resources a new status through signalling a 2 or a 3 (mine karbonite or mine fuel). (ALSO is there an another way for castles to check if a unit nearby is a pilgrim and just gave it karbonite and fuel?).
@@ -95,6 +99,18 @@ Let pilgrims sit at a mining spot and just mine. Let crusaders deliver resources
 TODO: Implement code to make pilgrims that scout the map for enemy castles. Once it finds them, it finds our army of preachers, probably waiting at some rally point, (hopefully they are alive), and signals them the location of the enemy castle.
 
 TODO: Implement code for a pilgrim to follow an army of preachers. The pilgrim acts as a telescope for the preachers, looks out for enemy castles along the way and also helps defend against enemy prophets (long range units). If it sees prophets that can attack our units, it should send a signal for the army to attack the prophets.
+
+#### Signalling!!!! (TODO)
+
+How can castles communicate each other their locations? We already know which unit ids are which types
+
+Through castle talk, last bits of data is reserved for sending enemy castle locations
+
+We send through 2 messages
+
+If the sender is an castle, we process as so
+
+If the message is
 
 # TODO
 

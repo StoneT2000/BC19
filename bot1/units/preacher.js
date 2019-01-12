@@ -87,16 +87,31 @@ function mind(self){
         //- 6 for padding
         let newTarget = self.getLocation(msg - 6);
         self.finalTarget = [newTarget.x, newTarget.y];
-        self.status = 'exploreAndAttack';
+        self.status = 'searchAndAttack';
         self.allowedToMove = true;
         self.log(`New target: ${self.finalTarget} from message:${msg}`);
       }
+      if (msg >= 5002 && msg <= 9997) {
+        //-5002 for padding
+        
+        let enemyCastleLoc = self.getLocation(msg - 5002);
+        base.logStructure(self,enemyCastleLoc.x, enemyCastleLoc.y, otherTeamNum, 0);
+        self.log(`Received location of enemy castle: ${enemyCastleLoc.x}, ${enemyCastleLoc.y} from message:${msg}`);
+      }
+      
       if (msg === 5) {
         self.log(`Received ${msg} from ${robotsInVision[i].id}`);
       }
     }
   }
   
+  //always update our locations
+  base.updateKnownStructures(self);
+  /*
+  for (let i = 0; i < self.knownStructures[otherTeamNum].length; i++) {
+    self.log(`ENEMY Castle at ${self.knownStructures[otherTeamNum][i].x}, ${self.knownStructures[otherTeamNum][i].y}`);
+  }
+  */
   //defenders and units that are have no final target. If they did, then they must be waiting for a fuel stack to go that target
   if (self.status === 'defend') {
     self.finalTarget = null;
@@ -124,7 +139,7 @@ function mind(self){
     //self.log(`To attack, we need ${fuelNeededForAttack}`);
     //less fuel is needed if we let preachers move slowly, and then rush in once near target
     
-    if (unitsInVincinity[5].length >= 8) {
+    if (unitsInVincinity[5].length >= 7) {
       if (self.fuel >= fuelNeededForAttack){
         self.status = 'searchAndAttack';
         //once we send the warcry, on average each turn the preachers spend 72 fuel to move
@@ -149,10 +164,10 @@ function mind(self){
     //if we are farther from enemy castle than our own castle, recalc.
     let fartherAway = false;
     if (qmath.dist(self.knownStructures[self.me.team][0].x,self.knownStructures[self.me.team][0].y,self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y) <= qmath.dist(self.me.x, self.me.y,self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y)){
-      self.log(`Im far`);
+      //self.log(`Im far`);
       fartherAway = true;
     }
-    if (self.me.x % 2 === 0 || self.me.y % 2 === 0 || fartherAway) {
+    if (self.me.x % 2 === 0 || self.me.y % 2 === 0) {
         let closestDist = 99999;
         let bestLoc = null;
         for (let i = 0; i < gameMap.length; i++) {
@@ -181,7 +196,9 @@ function mind(self){
   
   
   if (self.status === 'searchAndAttack') {
-    self.finalTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
+    if (self.knownStructures[otherTeamNum].length > 0){
+      self.finalTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
+    }
   }
   
   //robot is waiting for enough fuel to start another war charge
@@ -204,7 +221,7 @@ function mind(self){
     */
     if (self.fuelNeeded <= self.fuel) {
       self.signal(self.signalToSendAfterFuelIsMet, 36);
-      self.status = 'exploreAndAttack';
+      self.status = 'searchAndAttack';
       self.allowedToMove = true;
       forcedAction = '';
       //self.castleTalk(7);
@@ -324,32 +341,20 @@ function mind(self){
         if (unitIdThere !== self.lastAttackedUnit.id) {
           self.log(`Killed castle`);
           //destroyed the castle, now have all units move elsewhere
-          //randomly search for location. if horizontal symmetry, search along a common y pos
+
           let longestDistance = 0;
-          let newLoc = [self.me.x,self.me.y];
-          if (self.mapIsHorizontal){
-            
-            for (let k = 0; k < gameMap[self.me.y].length; k++) {
-              if (gameMap[self.me.y][k] === true){
-                let td = qmath.unitDist(self.me.x, self.me.y, k, self.me.y);
-                if (td > longestDistance) {
-                  newLoc = [k, self.me.y];
-                  longestDistance = td;
-                }
-              }
-            }
+          let newLoc = [self.knownStructures[self.me.team][0].x,self.knownStructures[self.me.team][0].y];
+          //self.lastAttackedUnit = null;
+          //self.status = 'searchAndAttack';
+          
+          if (self.knownStructures[otherTeamNum].length) {
+            let ln = self.knownStructures[otherTeamNum].length;
+            newLoc = [self.knownStructures[otherTeamNum][1].x, self.knownStructures[otherTeamNum][1].y];
           }
           else {
-            for (let k = 0; k < gameMap.length; k++) {
-              if (gameMap[k][self.me.x] === true){
-                let td = qmath.unitDist(self.me.x, self.me.y, self.me.x, k);
-                if (td > longestDistance) {
-                  newLoc = [self.me.x, k];
-                  longestDistance = td;
-                }
-              }
-            }
+            //IMPLEMENT TODO: if there is no next enemy left, go back home and defend
           }
+          self.log('Next enemy: ' + newLoc);
           let path2 = [];
           let distToTarget2 = 0;
           if (self.planner !== null){
@@ -358,7 +363,7 @@ function mind(self){
           else {
             distToTarget2 = qmath.unitDist(self.me.x, self.me.y, newLoc[0], newLoc[1]);
           }
-          let fuelNeededForAttack = (distToTarget2/2) * 16 * 8 + 250;
+          let fuelNeededForAttack = (distToTarget2/2) * 16 * 7 + 250;
           self.log(`Just killed castle, need ${fuelNeededForAttack}`);
           let compressedLocationHash = self.compressLocation(newLoc[0], newLoc[1]);
           //padding hash by 6
@@ -373,6 +378,7 @@ function mind(self){
           self.signal(5, 36);
           //self.log(`Initial New target: ${self.finalTarget}`);
           self.lastAttackedUnit = null;
+          
         }
       }
     }

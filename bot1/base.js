@@ -115,7 +115,7 @@ function relToPos(p1x, p1y, p2x, p2y, self) {
 }
 
 //Log the structureBot into known structures if it hasn't been put there already
-function logStructure(self, structureBot) {
+function logStructureBot(self, structureBot) {
   let teamNum = structureBot.team;
   let exists = false;
   for (let k = 0; k < self.knownStructures[teamNum]; k++) {
@@ -127,14 +127,64 @@ function logStructure(self, structureBot) {
   }
   //log structure
   if (exists === false) {
-    self.knownStructures.push({x:structureBot.x,y:structureBot.y,unit:structureBot.unit});
+    self.knownStructures[structureBot.team].push({x:structureBot.x,y:structureBot.y,unit:structureBot.unit});
+  }
+}
+
+/*
+* Logs a structure of unit type unit at x,y of team: team. Stores it in self.knownStructures if it doesn't exist already
+* 
+*/
+function logStructure(self, x, y, team, unit) {
+  let exists = false;
+  for (let k = 0; k < self.knownStructures[team].length; k++) {
+    let knownStructure = self.knownStructures[team][k];
+    self.log(`${knownStructure.x}, ${knownStructure.y}`);
+    if (x === knownStructure.x && y === knownStructure.y) {
+      exists = true;
+      break;
+    }
+  }
+  //log structure
+  if (exists === false) {
+    self.knownStructures[team].push({x:x,y:y,unit:unit});
   }
 }
 
 //Checks within vision and updates itself whether or not a structure still exists
 function updateKnownStructures(self) {
+  let robotMap = self.getVisibleRobotMap();
+  //self.log(`ORIG ENEMY CASTLE: ${self.knownStructures[1][0].x},${self.knownStructures[1][0].y}`);
+  //self.log(`NEW ENEMY CASTLE: ${self.knownStructures[1][1].x},${self.knownStructures[1][1].y}`);
+  
+  for (let teamNum = 0; teamNum < 2; teamNum++){
+    let newKnownStructures = [];
+    for (let k = 0; k < self.knownStructures[teamNum].length; k++) {
+      let knownStructure = self.knownStructures[teamNum][k];
+      let id = robotMap[knownStructure.y][knownStructure.x];
+      let orobot = self.getRobot(id);
+      //self.log(`${teamNum}: Struct at ${knownStructure.x},${knownStructure.y} is ${orobot}`);
+      if (orobot === null){
+        //we dont know about the structure's whereabouts
+        newKnownStructures.push(knownStructure);
+      }
+      else if (orobot.unit === knownStructure.unit) {
+        //structure is still there
+        newKnownStructures.push(knownStructure);
+      }
+      else {
+        //structure is def. gone
+      }
+      
+
+    }
+    self.knownStructures[teamNum] = newKnownStructures;
+  }
+  for (let i = 0; i < self.knownStructures[1].length; i++) {
+    //self.log(`Enemy structs: ${self.knownStructures[1][1].x}, ${self.knownStructures[1][1].y}`);
+  }
   
 }
 
 
-export default {rel, relToPos, unitMoveDeltas};
+export default {rel, relToPos, unitMoveDeltas, logStructure, updateKnownStructures};

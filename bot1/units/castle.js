@@ -61,20 +61,40 @@ function mind(self) {
     
     self.status = 'build';
     
+    self.initialCastleLocationMessages = {};
     
     //Here, we initialize self.AllUnits to contain ids of all the castles
     let locCastleNum = 0;
+    //we store castle ids here to check if id of robot sending msg in castle talk is an castle or not
+    self.castleIds = []
     for (let i = 0; i < robotsInVision.length; i++) {
       let msg = robotsInVision[i].castle_talk;
-      self.log(`Received from ${robotsInVision[i].id} castle msg: ${msg}`);
+      //self.log(`Received from ${robotsInVision[i].id} castle msg: ${msg}`);
       
       //because we receive castle information first, locCastleNum < self.castles makes sure the messages received are just castles sending 0's or alive signals
-      if (msg === 0 && locCastleNum < self.castles) {
+      if (msg >= 0 && locCastleNum < self.castles) {
         self.allUnits[robotsInVision[i].id] = 0;
         locCastleNum +=1;
+        self.castleIds.push(robotsInVision[i].id);
+        
+        //initialize location messages objects
+        self.initialCastleLocationMessages[robotsInVision[i].id] = {};
+        self.initialCastleLocationMessages[robotsInVision[i].id].x = -1;
+        self.initialCastleLocationMessages[robotsInVision[i].id].y = -1;
       }
+      
+      //SPECIAL MICRO MANAGE TO SEND CASTLE LOCATION BY TURN 1
+      
+      //SEND OUR X LOCATION TO OTHER CASTLES!
+      
+      
+      //IN TURN 1 WE PROCESS CASTLE TALK AS FOLLOWS
+      //MSG contains X POSITION OF FRIENDLY CASTLE PADDED by 191. 192 -> x:0, 193-> x:1,..., 255-> x:63;
+
+      
     }
-    
+    self.initialCastleLocationMessages[self.me.id].x = self.me.x;
+    self.initialCastleLocationMessages[self.me.id].y = self.me.y;
     
     //INITIAL BUILDING STRATEGIES
     //only first castle builds pilgrim in 3 preacher defence strategy
@@ -103,18 +123,7 @@ function mind(self) {
     }
     
     
-    //find enemy castle
-    self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
-    let enemyCastle = null;
-    if (self.mapIsHorizontal) {
-      enemyCastle = [self.me.x, gameMap.length - self.me.y - 1];
-    }
-    else {
-      enemyCastle = [gameMap[0].length - self.me.x - 1, self.me.y];
-    }
-    self.knownStructures[otherTeamNum].push({x:enemyCastle[0], y:enemyCastle[1], unit: 0});
-    
-    
+    let enemyCastle = [self.knownStructures[otherTeamNum][0].x,self.knownStructures[otherTeamNum][0].y];
     //here we prioritize building directions
     let allAdjacentPos = search.circle(self, self.me.x, self.me.y, 2);
     let desiredX = enemyCastle[0];
@@ -159,6 +168,75 @@ function mind(self) {
     self.log('Pilgrim build pos: ' + self.buildingPilgrimPositions);
   }
   
+  //CODE FOR DETERMINING FRIENDLY CASTLE LOCATIONS!
+  if (self.me.turn <= 3) {
+    if (self.me.turn === 1) {
+      let xposPadded = self.me.x + 192;
+      self.castleTalk(xposPadded);
+    }
+    else if (self.me.turn === 2){
+      let yposPadded = self.me.y + 192;
+      self.castleTalk(yposPadded);
+    }
+    for (let i = 0; i < robotsInVision.length; i++) {
+      let msg = robotsInVision[i].castle_talk;
+      let botId = robotsInVision[i].id;
+      let robotIsCastle = false;
+      for (let k = 0; k < self.castleIds.length; k++) {
+        if (botId === self.castleIds[i]) {
+          robotIsCastle = true;
+          break;
+        }
+      } 
+      if (robotIsCastle){
+        
+        if (msg >= 192 && botId !== self.me.id) {
+          
+          if (self.initialCastleLocationMessages[botId].x === -1){
+            self.log(`Received x pos from castle-${botId}  msg: ${msg}=${msg-192}`);
+            self.initialCastleLocationMessages[botId].x = (msg - 192);
+          }
+          else {
+            self.log(`Received y pos from castle-${botId}  msg: ${msg}=${msg-192}`);
+            self.initialCastleLocationMessages[botId].y = (msg - 192);
+          }
+        }
+
+      }
+    }
+  }
+
+  if (self.me.turn === 3) {
+    for (let i = 0; i < self.castleIds.length; i++){
+      let castleId = self.castleIds[i];
+      let nx = self.initialCastleLocationMessages[castleId].x;
+      let ny = self.initialCastleLocationMessages[castleId].y;
+      self.log(`Castle Location Data Received for castle-${castleId}: ${self.initialCastleLocationMessages[castleId].x}, ${self.initialCastleLocationMessages[castleId].y}`);
+    
+      //NOW STORE ALL ENEMY CASTLE LOCATION DATA AND ALL FRIENDLY CASTLE LOC DATA
+      
+      //LOG FRIENDLY
+      base.logStructure(self,nx,ny,self.me.team, 0);
+      
+      //LOG ENEMY
+      let ex = nx;
+      let ey = self.map.length - ny - 1;
+      
+      if (!self.mapIsHorizontal) {
+        ex = self.map[0].length - nx - 1;
+        ey = ny;
+      }
+      base.logStructure(self,ex,ey,otherTeamNum, 0);
+    }
+    for (let i = 0; i < self.knownStructures[self.me.team].length; i++) {
+      self.log(`Castle at ${self.knownStructures[self.me.team][i].x}, ${self.knownStructures[self.me.team][i].y}`);
+    }
+    for (let i = 0; i < self.knownStructures[otherTeamNum].length; i++) {
+      self.log(`ENEMY Castle at ${self.knownStructures[otherTeamNum][i].x}, ${self.knownStructures[otherTeamNum][i].y}`);
+    }
+    
+  }
+  
   
   //BY DEFAULT CASTLE ALWAYS BUILDS UNLESS TOLD OTHERWISE:
   self.status = 'build';
@@ -178,6 +256,7 @@ function mind(self) {
     if (signalmsg === 4) {
       //pilgrim is nearby, assign it new mining stuff if needed
       if (self.status === 'pause') {
+        self.log(`Castle tried to tell nearby pilgrims to mine fuel`);
         self.signal(3,2)
       }
     }
@@ -294,8 +373,16 @@ function mind(self) {
             else {
               self.buildQueue.push(5,5);
             }
-            if (unit === 3) {
-              //send an initial signal?
+            if (unit === 5) {
+              //if unit to be built is a preacher, send signal telling the preacher the other castle locations
+              //the one it doesn't know is self.knownStructures[otherTeamNum][1];
+              if (self.castles >= 2){
+                if (self.knownStructures[otherTeamNum].length > 1){
+                  let compressedLocNum = self.compressLocation(self.knownStructures[otherTeamNum][1].x, self.knownStructures[otherTeamNum][1].y);
+                  //padding of 5002;
+                  self.signal(5002 + compressedLocNum,  2);
+                }
+              }
             }
             let rels = base.rel(self.me.x, self.me.y, checkPos[0], checkPos[1]);
             action = self.buildUnit(unit, rels.dx, rels.dy);
