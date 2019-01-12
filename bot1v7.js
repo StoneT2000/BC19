@@ -667,6 +667,11 @@ function mind(self) {
     //self.log(`We have ${robotsInVision.length - offsetVal} castles`);
     self.castles = robotsInVision.length - offsetVal;
     
+    self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
+    
+    self.initializeCastleLocations();
+    
+    
     let fuelMap = self.getFuelMap();
     let karboniteMap = self.getKarboniteMap();
     let closestKarbonitePos = null;
@@ -770,9 +775,7 @@ function mind(self) {
     self.buildingAttackUnitPositions = tempPos.map(function(a){
       return a.pos;
     });
-    self.log(self.buildingAttackUnitPositions);
-    
-    
+    self.log('Attack build pos: '+ self.buildingAttackUnitPositions);
     
     tempPos = [];
     desiredX = closestKarbonitePos[0];
@@ -790,7 +793,7 @@ function mind(self) {
     self.buildingPilgrimPositions = tempPos.map(function(a){
       return a.pos;
     });
-    self.log(self.buildingPilgrimPositions);
+    self.log('Pilgrim build pos: ' + self.buildingPilgrimPositions);
   }
   
   
@@ -4501,15 +4504,14 @@ function mind$2(self) {
   
   let robotMap = self.getVisibleRobotMap();
   //we can improve the speed here by using bfs
-  let gameMap = self.map;
+  
   let action = '';
+  let gameMap = self.map;
   
   //INITIALIZATION
   if (self.me.turn === 1) {
     //for pilgrims, search first
     self.status = 'searchForKarbDeposit';
-    //let origCastle = search.findNearestStructure(self)
-    //self.knownStructures[self.me.team].push(origCastle);
     
     //self.log(`${self.knownStructures[self.me.team][0].x}`);
     /*
@@ -4518,6 +4520,17 @@ function mind$2(self) {
     self.log(`Signal from born castle-${castleId}: ${castleSignal}`)
     */
     self.castleTalk(self.me.unit);
+    
+    for (let i = 0; i < fuelMap.length; i++) {
+      for (let j = 0; j < fuelMap[0].length; j++) {
+        if (fuelMap[i][j] === true){
+          self.fuelSpots.push({x:j, y:i});
+        }
+        if (karboniteMap[i][j] === true){
+          self.karboniteSpots.push({x:j, y:i});
+        }
+      }
+    }
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
     self.initializeCastleLocations();
     
@@ -4528,7 +4541,7 @@ function mind$2(self) {
   }
   
   //initializing planner
-  if (self.me.turn === 3) {
+  if (self.me.turn === 5) {
     self.log('Trying to plan');
     pathing.initializePlanner(self);
     self.setFinalTarget(self.finalTarget);
@@ -4660,19 +4673,14 @@ function mind$3(self){
     //broadcast your unit number for castles to add to their count of units
     self.castleTalk(self.me.unit);
     
-    let exploreTarget = [gameMap[0].length - self.me.x - 1, gameMap.length - self.me.y - 1];
-    if (search.horizontalSymmetry(gameMap)) {
-      exploreTarget = [self.me.x, gameMap.length - self.me.y - 1];
-    }
-    else {
-      exploreTarget = [gameMap[0].length - self.me.x - 1, self.me.y];
-    }
+    self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
     
-    self.knownStructures[otherTeamNum].push({x:exploreTarget[0], y:exploreTarget[1], unit: 0});
+    self.initializeCastleLocations();
+    let enemyCastle = self.knownStructures[otherTeamNum][0];
     //rally means crusader goes to a rally point
     self.status = 'rally';
 
-    let rels = base.relToPos(self.me.x, self.me.y, exploreTarget[0], exploreTarget[1], self);
+    let rels = base.relToPos(self.me.x, self.me.y, enemyCastle[0], enemyCastle[1], self);
     self.finalTarget = [self.me.x + rels.dx, self.me.y+rels.dy];
   }
   if (self.me.turn === 3) {
@@ -4858,6 +4866,10 @@ function mind$5(self){
   
   
   //INITIALIZATION
+  if (self.me.turn === 5) {
+    pathing.initializePlanner(self);
+    self.setFinalTarget(self.finalTarget);
+  }
   if (self.me.turn === 1) {
     self.castleTalk(self.me.unit);
     self.allowedToMove = true;
@@ -4868,13 +4880,30 @@ function mind$5(self){
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
     
     self.initializeCastleLocations();
+    let myCastleLocation = self.knownStructures[self.me.team][0];
     let enemyCastleLocation = self.knownStructures[otherTeamNum][0];
     //DETERMINE RALLY POSITION
-    let rels = base.relToPos(self.me.x, self.me.y, enemyCastleLocation[0], enemyCastleLocation[1], self);
-    let rels2 = base.relToPos(self.me.x + rels.dx, self.me.y+rels.dy, enemyCastleLocation[0], enemyCastleLocation[1], self);
-    let rels3 = base.relToPos(self.me.x + rels.dx + rels2.dx, self.me.y+rels.dy + rels2.dy, enemyCastleLocation[0], enemyCastleLocation[1], self);
-    let relsx = self.me.x + rels.dx + rels2.dx + rels3.x;
     
+    //pathing.initializePlanner(self);
+    self.setFinalTarget([enemyCastleLocation.x, enemyCastleLocation.y]);
+    //self.log(self.path + ': ' + enemyCastleLocation.x + ', ' + enemyCastleLocation.y);
+    //check path, and follow it until you are at least a distance away
+    let finalNode = [];
+    for (let i = 0; i < self.path.length; i+=2) {
+      if (qmath$1.dist(myCastleLocation.x,myCastleLocation.y,self.path[i],self.path[i+1]) >= 10) {
+        finalNode = [self.path[i],self.path[i+1]];
+        break;
+      }
+    }
+    if (self.path.length === 0) {
+      finalNode = [enemyCastleLocation.x, enemyCastleLocation.y];
+    }
+    //self.log('First here:' + finalNode);
+    let rels = base.relToPos(self.me.x, self.me.y, finalNode[0], finalNode[1], self);
+    //self.log(rels);
+    let rels2 = base.relToPos(self.me.x + rels.dx, self.me.y+rels.dy, finalNode[0], finalNode[1], self);
+    let rels3 = base.relToPos(self.me.x + rels.dx + rels2.dx, self.me.y+rels.dy + rels2.dy, finalNode[0], finalNode[1], self);
+    let relsx = self.me.x + rels.dx + rels2.dx + rels3.x;
     /*
     pathing.initializePlanner(self);
     self.setFinalTarget(exploreTarget[0],exploreTarget[1]);
@@ -4884,15 +4913,13 @@ function mind$5(self){
     */
     
     
-    self.rallyTarget = [self.me.x + rels.dx + rels2.dx + rels3.dx, self.me.y + rels.dy + rels2.dy + rels3.dy];
+    self.rallyTarget = [self.me.x + rels.dx + rels2.dx, self.me.y + rels.dy + rels2.dy];
+    self.finalTarget = [self.me.x + rels.dx + rels2.dx, self.me.y + rels.dy + rels2.dy];
     self.log(`Rally Point: ${self.rallyTarget}`);
     //self.finalTarget = [exploreTarget[0], exploreTarget[1]];
     
   }
-  if (self.me.turn === 3) {
-    pathing.initializePlanner(self);
-    self.setFinalTarget(self.finalTarget);
-  }
+  
   
   let robotsInVision = self.getVisibleRobots();
   
@@ -4962,7 +4989,14 @@ function mind$5(self){
     else if (self.me.turn !== 1);
     //self.log('c:' + self.finalTarget );
     //We force the unit to stay away from each other
-    if (self.me.x % 2 === 0 || self.me.y % 2 === 0) {
+    
+    //if we are farther from enemy castle than our own castle, recalc.
+    let fartherAway = false;
+    if (qmath$1.dist(self.knownStructures[self.me.team][0].x,self.knownStructures[self.me.team][0].y,self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y) <= qmath$1.dist(self.me.x, self.me.y,self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y)){
+      self.log(`Im far`);
+      fartherAway = true;
+    }
+    if (self.me.x % 2 === 0 || self.me.y % 2 === 0 || fartherAway) {
         let closestDist = 99999;
         let bestLoc = null;
         for (let i = 0; i < gameMap.length; i++) {
@@ -4981,7 +5015,7 @@ function mind$5(self){
         }
         if (bestLoc !== null) {
           self.finalTarget = bestLoc;
-          self.log(self.finalTarget);
+          self.log('New location near rally point :' + self.finalTarget);
         }
     }
   }
@@ -5438,7 +5472,7 @@ class MyRobot extends BCAbstractRobot {
   initializeCastleLocations() {
     let possibleCastlePositions = search.circle(this, this.me.x, this.me.y, 2);
     let robotMap = this.getVisibleRobotMap();
-    for (let i = 1; i < possibleCastlePositions.length; i++) {
+    for (let i = 0; i < possibleCastlePositions.length; i++) {
       let px = possibleCastlePositions[i][0];
       let py = possibleCastlePositions[i][1];
 
@@ -5448,6 +5482,7 @@ class MyRobot extends BCAbstractRobot {
         break;
       }
     }
+    
     let cx = this.knownStructures[this.me.team][0].x;
     let cy = this.knownStructures[this.me.team][0].y;
     let exploreTarget = [this.map[0].length - this.me.x - 1, this.map.length - this.me.y - 1];
@@ -5459,7 +5494,6 @@ class MyRobot extends BCAbstractRobot {
     }
     
     this.knownStructures[(this.me.team + 1) % 2].push({x:exploreTarget[0], y:exploreTarget[1], unit: 0});
-    this.log(`ENEMY CASTLE AT ${this.knownStructures[1][0].x}, ${this.knownStructures[1][0].y}`);
   }
 }
 
