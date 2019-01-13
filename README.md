@@ -66,7 +66,8 @@ The values ...
 - 2,3 for castle to tell pilgrim to search for karbonite (2) or fuel (3)
 - 4 for pilgrim to tell castle it just gave out its fuel and karbonite and is ready to receive new instructions if needed
 - 
-- 5, ... 5000 are for sending new target locations for preachers
+- 6, ... 5001 are for sending new target locations for preachers
+- 5002,... 9997 are for send new castle locations for preachers
 
 
 ## STRATEGIES
@@ -118,3 +119,6 @@ Check todos in strategy
 
 Strategy pls.
 
+SIGNAL TO CASTLE THE DESTRUCTION OF A CASTLE
+
+(Reserve)
