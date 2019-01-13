@@ -486,13 +486,15 @@ function processMessageCastleTalk(self, msg, id) {
       break;
     case 7:
       //this means castle opposing the very first castle in turnqueue is gone
-
-
+      //let pmsg = msg - 7;
+      //self.knownStructures[self.me.team].shift();
     case 8:
       //this means castle opposing the 2nd caslte in queue is gone
+      //self.knownStructures[self.me.team].shift();
       break;
     case 9:
       //this means castle oppoisng the 3rd caslte in queue is gone
+      //self.knownStructures[self.me.team].shift();
       break;
     default:
       break;
@@ -526,8 +528,8 @@ function processMessagePreacher(self, msg){
         self.status = 'defend';
       }
       break;
-    //if message is from 6 to 5001, this is a map location, with 6 units of padding
-      //if message is from 5002, to 9997, this is a map location that a castle tells the unit, it is the map location of an enemy castle.
+    //if message is from 6 to 4101, this is a map location, with 6 units of padding
+      //if message is from 4102, to 8197, this is a map location that a castle tells the unit, it is the map location of an enemy castle.
   }
 }
 function processMessageProphet(self, msg){
@@ -648,11 +650,11 @@ function relToPos(p1x, p1y, p2x, p2y, self) {
 * Logs a structure of unit type unit at x,y of team: team. Stores it in self.knownStructures if it doesn't exist already
 * 
 */
-function logStructure(self, x, y, team, unit) {
+function logStructure(self, x, y, team, unit, push = true) {
   let exists = false;
   for (let k = 0; k < self.knownStructures[team].length; k++) {
     let knownStructure = self.knownStructures[team][k];
-    self.log(`${knownStructure.x}, ${knownStructure.y}`);
+    //self.log(`${knownStructure.x}, ${knownStructure.y}`);
     if (x === knownStructure.x && y === knownStructure.y) {
       exists = true;
       break;
@@ -660,7 +662,12 @@ function logStructure(self, x, y, team, unit) {
   }
   //log structure
   if (exists === false) {
-    self.knownStructures[team].push({x:x,y:y,unit:unit});
+    if (push === true){
+      self.knownStructures[team].push({x:x,y:y,unit:unit});
+    }
+    else {
+      self.knownStructures[team].unshift({x:x,y:y,unit:unit});
+    }
   }
 }
 
@@ -724,11 +731,12 @@ function mind(self) {
     
     //self.log(`We have ${robotsInVision.length - offsetVal} castles`);
     self.castles = robotsInVision.length - offsetVal;
-    
+    self.castleCount = self.castles;
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
     
     self.initializeCastleLocations();
     
+    self.oppositeCastleDestroyed = false;
     
     let fuelMap = self.getFuelMap();
     let karboniteMap = self.getKarboniteMap();
@@ -902,6 +910,9 @@ function mind(self) {
   }
 
   if (self.me.turn === 3) {
+    
+    //STORE A SORTED ENEEMY LOCATION ARRAY
+    self.enemyCastlesSorted = [];
     for (let i = 0; i < self.castleIds.length; i++){
       let castleId = self.castleIds[i];
       let nx = self.initialCastleLocationMessages[castleId].x;
@@ -924,11 +935,28 @@ function mind(self) {
       base.logStructure(self,ex,ey,otherTeamNum, 0);
     }
     for (let i = 0; i < self.knownStructures[self.me.team].length; i++) {
-      self.log(`Castle at ${self.knownStructures[self.me.team][i].x}, ${self.knownStructures[self.me.team][i].y}`);
+      //self.log(`Castle at ${self.knownStructures[self.me.team][i].x}, ${self.knownStructures[self.me.team][i].y}`);
     }
     for (let i = 0; i < self.knownStructures[otherTeamNum].length; i++) {
-      self.log(`ENEMY Castle at ${self.knownStructures[otherTeamNum][i].x}, ${self.knownStructures[otherTeamNum][i].y}`);
+      //self.log(`ENEMY Castle at ${self.knownStructures[otherTeamNum][i].x}, ${self.knownStructures[otherTeamNum][i].y}`);
+      self.enemyCastlesSorted.push(self.knownStructures[otherTeamNum][i]);
     }
+    self.enemyCastlesSorted.sort(function(a,b){
+      return a.x - b.x;
+    });
+    for (let i = 0; i < self.enemyCastlesSorted.length; i++){
+      self.log(`Enemy Castle: ${i}, at ${self.enemyCastlesSorted[i].x}, ${self.enemyCastlesSorted[i].y}`);
+      for (let k = 0; k < self.knownStructures[otherTeamNum].length; k++) {
+        let kx = self.knownStructures[otherTeamNum][k].x;
+        let ky = self.knownStructures[otherTeamNum][k].y;
+        if (kx === self.enemyCastlesSorted[i].x && ky === self.enemyCastlesSorted[i].y) {
+          self.knownStructures[otherTeamNum][k].index = i;
+        }
+      }
+    }
+    self.knownStructures[otherTeamNum].forEach(function(a){
+      self.log(`Index for ${a.x}, ${a.y}: ${a.index}`);
+    });
     
   }
   
@@ -955,6 +983,40 @@ function mind(self) {
         self.signal(3,2);
       }
     }
+    
+    if (msg >= 7 && msg <= 70) {
+      let enemyCastlePosDestroyed = msg - 7;
+      self.log(`Castle knows that enemy castle: ${enemyCastlePosDestroyed} was destroyed`);
+      
+      //TODO, create a better hash from enemy castle position, that is more likely to be correct
+      for (let i = 0; i < self.knownStructures[otherTeamNum].length; i++) {
+        if (self.mapIsHorizontal) {
+          //check xpos for almost unique castle identifier;
+          if (self.knownStructures[otherTeamNum][i].x === enemyCastlePosDestroyed) {
+            if (i === 0) {
+              self.oppositeCastleDestroyed = true;
+            }
+            self.knownStructures[otherTeamNum].splice(i,1);
+            
+            break;
+          }
+        }
+        else {
+          if (self.knownStructures[otherTeamNum][i].y === enemyCastlePosDestroyed) {
+            if (self.knownStructures[otherTeamNum][i].x === self.me.x && self.knownStructures[otherTeamNum][i].y === self.me.y) {
+              self.oppositeCastleDestroyed = true;
+            }
+            self.knownStructures[otherTeamNum].splice(i,1);
+            break;
+          }
+        }
+      }
+      for (let i = 0; i < self.knownStructures[otherTeamNum].length; i++) {
+        self.log(`New known structures: ${self.knownStructures[otherTeamNum][i].x}, ${self.knownStructures[otherTeamNum][i].y}`);
+      }
+    }
+    
+    
   }
   
   
@@ -1049,12 +1111,31 @@ function mind(self) {
             }
             if (unit === 5) {
               //if unit to be built is a preacher, send signal telling the preacher the other castle locations
-              //the one it doesn't know is self.knownStructures[otherTeamNum][1];
-              if (self.castles >= 2){
-                if (self.knownStructures[otherTeamNum].length > 1){
+              if (self.castleCount >= 2){
+                
+                self.log(`There are ${self.knownStructures[otherTeamNum].length} enemy castlesleft, opposite castle is currently dead: ${self.oppositeCastleDestroyed}`);
+                
+                //IF There are at least 2 known structures alive, and the opposite castle isn't dead yet, send the new location the preacher with padding = 4102. Preacher will process the location and will continue to prioritize the opposite castle
+                if (self.knownStructures[otherTeamNum].length > 1 && self.oppositeCastleDestroyed === false){
+                  //if 
                   let compressedLocNum = self.compressLocation(self.knownStructures[otherTeamNum][1].x, self.knownStructures[otherTeamNum][1].y);
-                  //padding of 5002;
-                  self.signal(5002 + compressedLocNum,  2);
+                  //padding of 4102;
+                  //DETERMINE THE PADDING
+                  let padding = 4102;
+                  padding = 4102; //+ self.knownStructures[otherTeamNum][1].index * 4096;
+                  
+                  //TELL NEW UNIT IF THE KNOWN TARGET UNIT AUTOMATICALLY KNOWS IS DETROYED OR NOT
+                  
+                  self.signal(padding + compressedLocNum,  2);
+                }
+                
+                //if there is at least one known structure alive, and the opposite castle is gone, this castle produces units to attack the other locations.
+                else if (self.knownStructures[otherTeamNum].length >= 1)  {
+                  if (self.oppositeCastleDestroyed === true) {
+                    let padding = 8198;
+                    let compressedLocNum = self.compressLocation(self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y);
+                    self.signal(padding + compressedLocNum,  2);
+                  }
                 }
               }
             }
@@ -4779,7 +4860,7 @@ function mind$2(self) {
     let currRels = base.rel(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
     if (Math.abs(currRels.dx) <= 1 && Math.abs(currRels.dy) <= 1){
       self.status = 'searchForKarbDeposit';
-      if (self.fuel <= 100) {
+      if (self.fuel <= 100 || self.karbonite >= 100) {
         self.status = 'searchForFuelDeposit';
       }
       else {
@@ -5019,6 +5100,8 @@ function mind$5(self){
     self.setFinalTarget(self.finalTarget);
   }
   if (self.me.turn === 1) {
+    self.originalCastleTarget = [-1, -1];
+    
     self.castleTalk(self.me.unit);
     self.allowedToMove = true;
     self.finalTarget = [self.me.x, self.me.y];
@@ -5077,7 +5160,7 @@ function mind$5(self){
     signal.processMessagePreacher(self, msg);
     if(robotsInVision[i].id !== self.me.id){
       //process new target location
-      if (msg >= 6 && msg <= 5001) {
+      if (msg >= 6 && msg <= 4101) {
         //- 6 for padding
         let newTarget = self.getLocation(msg - 6);
         self.finalTarget = [newTarget.x, newTarget.y];
@@ -5085,14 +5168,39 @@ function mind$5(self){
         self.allowedToMove = true;
         self.log(`New target: ${self.finalTarget} from message:${msg}`);
       }
-      if (msg >= 5002 && msg <= 9997) {
-        //-5002 for padding
-        
-        let enemyCastleLoc = self.getLocation(msg - 5002);
-        base.logStructure(self,enemyCastleLoc.x, enemyCastleLoc.y, otherTeamNum, 0);
+      if (msg >= 4102 && msg <= 16389){
+        let padding = 4102;
+        let pushToEndOfKnownStructures = true;
+        //self.enemyCastleSortedIndex = 0;
+        if (msg >= 4102 && msg <= 8197) {
+          //-4102 for padding
+          //this caslte location is the first castle in any castle robots self.enemyCastlesSorted array.
+          padding = 4102;
+          //self.enemyCastleSortedIndex = 0;
+          
+        }
+        else if (msg >= 8198 && msg <= 12293) {
+          //this caslte location is the first castle in any castle robots self.enemyCastlesSorted array.
+          padding = 8198;
+          pushToEndOfKnownStructures = false;
+          //we know opposite castle was destroyed...
+          
+          
+          //self.enemyCastleSortedIndex = 1;
+        }
+        /*
+        else if (msg >= 12294 && msg <= 16389) {
+          //this caslte location is the first castle in any castle robots self.enemyCastlesSorted array.
+          padding = self.knownStructures[otherTeamNum][k]
+          //this index is what we send back to castles when we destroy this enemy castle
+          self.enemyCastleSortedIndex = 2;
+        }
+        */
+        let enemyCastleLoc = self.getLocation(msg - padding);
+        base.logStructure(self,enemyCastleLoc.x, enemyCastleLoc.y, otherTeamNum, 0, pushToEndOfKnownStructures);
+        self.originalCastleTarget = [enemyCastleLoc.x, enemyCastleLoc.y];
         self.log(`Received location of enemy castle: ${enemyCastleLoc.x}, ${enemyCastleLoc.y} from message:${msg}`);
       }
-      
       if (msg === 5) {
         self.log(`Received ${msg} from ${robotsInVision[i].id}`);
       }
@@ -5181,6 +5289,7 @@ function mind$5(self){
   
   if (self.status === 'searchAndAttack') {
     if (self.knownStructures[otherTeamNum].length > 0){
+      
       self.finalTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
     }
   }
@@ -5323,7 +5432,7 @@ function mind$5(self){
           //self.lastAttackedUnit = null;
           //self.status = 'searchAndAttack';
           
-          if (self.knownStructures[otherTeamNum].length) {
+          if (self.knownStructures[otherTeamNum].length > 1) {
             let ln = self.knownStructures[otherTeamNum].length;
             newLoc = [self.knownStructures[otherTeamNum][1].x, self.knownStructures[otherTeamNum][1].y];
           }
@@ -5350,6 +5459,17 @@ function mind$5(self){
           //send signal to tell bots to stop moving and wait for fuel stack
           self.signal(5, 36);
           //self.log(`Initial New target: ${self.finalTarget}`);
+         
+          
+          //Send through castle talk the xpos and ypos of the enemy castle destroyed if it was the original target
+          
+          if (self.mapIsHorizontal){
+            self.castleTalk(7 + self.lastAttackedUnit.x);
+          }
+          else {
+            self.castleTalk(7 + self.lastAttackedUnit.y);
+          }
+          
           self.lastAttackedUnit = null;
           
         }
