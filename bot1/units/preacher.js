@@ -25,6 +25,8 @@ function mind(self){
     self.setFinalTarget(self.finalTarget);
   }
   if (self.me.turn === 1) {
+    self.originalCastleTarget = [-1, -1];
+    
     self.castleTalk(self.me.unit);
     self.allowedToMove = true;
     self.finalTarget = [self.me.x, self.me.y];
@@ -83,7 +85,7 @@ function mind(self){
     signal.processMessagePreacher(self, msg);
     if(robotsInVision[i].id !== self.me.id){
       //process new target location
-      if (msg >= 6 && msg <= 5001) {
+      if (msg >= 6 && msg <= 4101) {
         //- 6 for padding
         let newTarget = self.getLocation(msg - 6);
         self.finalTarget = [newTarget.x, newTarget.y];
@@ -91,14 +93,39 @@ function mind(self){
         self.allowedToMove = true;
         self.log(`New target: ${self.finalTarget} from message:${msg}`);
       }
-      if (msg >= 5002 && msg <= 9997) {
-        //-5002 for padding
-        
-        let enemyCastleLoc = self.getLocation(msg - 5002);
-        base.logStructure(self,enemyCastleLoc.x, enemyCastleLoc.y, otherTeamNum, 0);
+      if (msg >= 4102 && msg <= 16389){
+        let padding = 4102;
+        let pushToEndOfKnownStructures = true;
+        //self.enemyCastleSortedIndex = 0;
+        if (msg >= 4102 && msg <= 8197) {
+          //-4102 for padding
+          //this caslte location is the first castle in any castle robots self.enemyCastlesSorted array.
+          padding = 4102;
+          //self.enemyCastleSortedIndex = 0;
+          
+        }
+        else if (msg >= 8198 && msg <= 12293) {
+          //this caslte location is the first castle in any castle robots self.enemyCastlesSorted array.
+          padding = 8198;
+          pushToEndOfKnownStructures = false;
+          //we know opposite castle was destroyed...
+          
+          
+          //self.enemyCastleSortedIndex = 1;
+        }
+        /*
+        else if (msg >= 12294 && msg <= 16389) {
+          //this caslte location is the first castle in any castle robots self.enemyCastlesSorted array.
+          padding = self.knownStructures[otherTeamNum][k]
+          //this index is what we send back to castles when we destroy this enemy castle
+          self.enemyCastleSortedIndex = 2;
+        }
+        */
+        let enemyCastleLoc = self.getLocation(msg - padding);
+        base.logStructure(self,enemyCastleLoc.x, enemyCastleLoc.y, otherTeamNum, 0, pushToEndOfKnownStructures);
+        self.originalCastleTarget = [enemyCastleLoc.x, enemyCastleLoc.y];
         self.log(`Received location of enemy castle: ${enemyCastleLoc.x}, ${enemyCastleLoc.y} from message:${msg}`);
       }
-      
       if (msg === 5) {
         self.log(`Received ${msg} from ${robotsInVision[i].id}`);
       }
@@ -197,6 +224,7 @@ function mind(self){
   
   if (self.status === 'searchAndAttack') {
     if (self.knownStructures[otherTeamNum].length > 0){
+      
       self.finalTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
     }
   }
@@ -340,6 +368,9 @@ function mind(self){
         let unitIdThere = robotMap[self.lastAttackedUnit.y][self.lastAttackedUnit.x];
         if (unitIdThere !== self.lastAttackedUnit.id) {
           self.log(`Killed castle`);
+          
+          //CASTLE DESTROYED!
+          
           //destroyed the castle, now have all units move elsewhere
 
           let longestDistance = 0;
@@ -347,7 +378,7 @@ function mind(self){
           //self.lastAttackedUnit = null;
           //self.status = 'searchAndAttack';
           
-          if (self.knownStructures[otherTeamNum].length) {
+          if (self.knownStructures[otherTeamNum].length > 1) {
             let ln = self.knownStructures[otherTeamNum].length;
             newLoc = [self.knownStructures[otherTeamNum][1].x, self.knownStructures[otherTeamNum][1].y];
           }
@@ -377,6 +408,17 @@ function mind(self){
           //send signal to tell bots to stop moving and wait for fuel stack
           self.signal(5, 36);
           //self.log(`Initial New target: ${self.finalTarget}`);
+         
+          
+          //Send through castle talk the xpos and ypos of the enemy castle destroyed if it was the original target
+          
+          if (self.mapIsHorizontal){
+            self.castleTalk(7 + self.lastAttackedUnit.x);
+          }
+          else {
+            self.castleTalk(7 + self.lastAttackedUnit.y);
+          }
+          
           self.lastAttackedUnit = null;
           
         }

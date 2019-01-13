@@ -29,11 +29,12 @@ function mind(self) {
     
     //self.log(`We have ${robotsInVision.length - offsetVal} castles`);
     self.castles = robotsInVision.length - offsetVal;
-    
+    self.castleCount = self.castles;
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
     
     self.initializeCastleLocations();
     
+    self.oppositeCastleDestroyed = false;
     
     let fuelMap = self.getFuelMap();
     let karboniteMap = self.getKarboniteMap();
@@ -207,6 +208,9 @@ function mind(self) {
   }
 
   if (self.me.turn === 3) {
+    
+    //STORE A SORTED ENEEMY LOCATION ARRAY
+    self.enemyCastlesSorted = [];
     for (let i = 0; i < self.castleIds.length; i++){
       let castleId = self.castleIds[i];
       let nx = self.initialCastleLocationMessages[castleId].x;
@@ -229,11 +233,28 @@ function mind(self) {
       base.logStructure(self,ex,ey,otherTeamNum, 0);
     }
     for (let i = 0; i < self.knownStructures[self.me.team].length; i++) {
-      self.log(`Castle at ${self.knownStructures[self.me.team][i].x}, ${self.knownStructures[self.me.team][i].y}`);
+      //self.log(`Castle at ${self.knownStructures[self.me.team][i].x}, ${self.knownStructures[self.me.team][i].y}`);
     }
     for (let i = 0; i < self.knownStructures[otherTeamNum].length; i++) {
-      self.log(`ENEMY Castle at ${self.knownStructures[otherTeamNum][i].x}, ${self.knownStructures[otherTeamNum][i].y}`);
+      //self.log(`ENEMY Castle at ${self.knownStructures[otherTeamNum][i].x}, ${self.knownStructures[otherTeamNum][i].y}`);
+      self.enemyCastlesSorted.push(self.knownStructures[otherTeamNum][i]);
     }
+    self.enemyCastlesSorted.sort(function(a,b){
+      return a.x - b.x;
+    })
+    for (let i = 0; i < self.enemyCastlesSorted.length; i++){
+      self.log(`Enemy Castle: ${i}, at ${self.enemyCastlesSorted[i].x}, ${self.enemyCastlesSorted[i].y}`);
+      for (let k = 0; k < self.knownStructures[otherTeamNum].length; k++) {
+        let kx = self.knownStructures[otherTeamNum][k].x
+        let ky = self.knownStructures[otherTeamNum][k].y;
+        if (kx === self.enemyCastlesSorted[i].x && ky === self.enemyCastlesSorted[i].y) {
+          self.knownStructures[otherTeamNum][k].index = i;
+        }
+      }
+    }
+    self.knownStructures[otherTeamNum].forEach(function(a){
+      self.log(`Index for ${a.x}, ${a.y}: ${a.index}`)
+    })
     
   }
   
@@ -260,6 +281,40 @@ function mind(self) {
         self.signal(3,2)
       }
     }
+    
+    if (msg >= 7 && msg <= 70) {
+      let enemyCastlePosDestroyed = msg - 7;
+      self.log(`Castle knows that enemy castle: ${enemyCastlePosDestroyed} was destroyed`);
+      
+      //TODO, create a better hash from enemy castle position, that is more likely to be correct
+      for (let i = 0; i < self.knownStructures[otherTeamNum].length; i++) {
+        if (self.mapIsHorizontal) {
+          //check xpos for almost unique castle identifier;
+          if (self.knownStructures[otherTeamNum][i].x === enemyCastlePosDestroyed) {
+            if (i === 0) {
+              self.oppositeCastleDestroyed = true;
+            }
+            self.knownStructures[otherTeamNum].splice(i,1);
+            
+            break;
+          }
+        }
+        else {
+          if (self.knownStructures[otherTeamNum][i].y === enemyCastlePosDestroyed) {
+            if (self.knownStructures[otherTeamNum][i].x === self.me.x && self.knownStructures[otherTeamNum][i].y === self.me.y) {
+              self.oppositeCastleDestroyed = true;
+            }
+            self.knownStructures[otherTeamNum].splice(i,1);
+            break;
+          }
+        }
+      }
+      for (let i = 0; i < self.knownStructures[otherTeamNum].length; i++) {
+        self.log(`New known structures: ${self.knownStructures[otherTeamNum][i].x}, ${self.knownStructures[otherTeamNum][i].y}`);
+      }
+    }
+    
+    
   }
   
   
@@ -375,12 +430,31 @@ function mind(self) {
             }
             if (unit === 5) {
               //if unit to be built is a preacher, send signal telling the preacher the other castle locations
-              //the one it doesn't know is self.knownStructures[otherTeamNum][1];
-              if (self.castles >= 2){
-                if (self.knownStructures[otherTeamNum].length > 1){
+              if (self.castleCount >= 2){
+                
+                self.log(`There are ${self.knownStructures[otherTeamNum].length} enemy castlesleft, opposite castle is currently dead: ${self.oppositeCastleDestroyed}`);
+                
+                //IF There are at least 2 known structures alive, and the opposite castle isn't dead yet, send the new location the preacher with padding = 4102. Preacher will process the location and will continue to prioritize the opposite castle
+                if (self.knownStructures[otherTeamNum].length > 1 && self.oppositeCastleDestroyed === false){
+                  //if 
                   let compressedLocNum = self.compressLocation(self.knownStructures[otherTeamNum][1].x, self.knownStructures[otherTeamNum][1].y);
-                  //padding of 5002;
-                  self.signal(5002 + compressedLocNum,  2);
+                  //padding of 4102;
+                  //DETERMINE THE PADDING
+                  let padding = 4102;
+                  padding = 4102 //+ self.knownStructures[otherTeamNum][1].index * 4096;
+                  
+                  //TELL NEW UNIT IF THE KNOWN TARGET UNIT AUTOMATICALLY KNOWS IS DETROYED OR NOT
+                  
+                  self.signal(padding + compressedLocNum,  2);
+                }
+                
+                //if there is at least one known structure alive, and the opposite castle is gone, this castle produces units to attack the other locations.
+                else if (self.knownStructures[otherTeamNum].length >= 1)  {
+                  if (self.oppositeCastleDestroyed === true) {
+                    let padding = 8198
+                    let compressedLocNum = self.compressLocation(self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y);
+                    self.signal(padding + compressedLocNum,  2);
+                  }
                 }
               }
             }

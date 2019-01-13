@@ -25,13 +25,15 @@ function processMessageCastleTalk(self, msg, id) {
       break;
     case 7:
       //this means castle opposing the very first castle in turnqueue is gone
-
-
+      //let pmsg = msg - 7;
+      //self.knownStructures[self.me.team].shift();
     case 8:
       //this means castle opposing the 2nd caslte in queue is gone
+      //self.knownStructures[self.me.team].shift();
       break;
     case 9:
       //this means castle oppoisng the 3rd caslte in queue is gone
+      //self.knownStructures[self.me.team].shift();
       break;
     default:
       break;
@@ -70,8 +72,8 @@ function processMessagePreacher(self, msg){
         self.status = 'defend';
       }
       break;
-    //if message is from 6 to 5001, this is a map location, with 6 units of padding
-      //if message is from 5002, to 9997, this is a map location that a castle tells the unit, it is the map location of an enemy castle.
+    //if message is from 6 to 4101, this is a map location, with 6 units of padding
+      //if message is from 4102, to 8197, this is a map location that a castle tells the unit, it is the map location of an enemy castle.
   }
 }
 function processMessageProphet(self, msg){

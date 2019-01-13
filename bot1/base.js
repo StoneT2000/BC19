@@ -135,11 +135,11 @@ function logStructureBot(self, structureBot) {
 * Logs a structure of unit type unit at x,y of team: team. Stores it in self.knownStructures if it doesn't exist already
 * 
 */
-function logStructure(self, x, y, team, unit) {
+function logStructure(self, x, y, team, unit, push = true) {
   let exists = false;
   for (let k = 0; k < self.knownStructures[team].length; k++) {
     let knownStructure = self.knownStructures[team][k];
-    self.log(`${knownStructure.x}, ${knownStructure.y}`);
+    //self.log(`${knownStructure.x}, ${knownStructure.y}`);
     if (x === knownStructure.x && y === knownStructure.y) {
       exists = true;
       break;
@@ -147,7 +147,12 @@ function logStructure(self, x, y, team, unit) {
   }
   //log structure
   if (exists === false) {
-    self.knownStructures[team].push({x:x,y:y,unit:unit});
+    if (push === true){
+      self.knownStructures[team].push({x:x,y:y,unit:unit});
+    }
+    else {
+      self.knownStructures[team].unshift({x:x,y:y,unit:unit});
+    }
   }
 }
 

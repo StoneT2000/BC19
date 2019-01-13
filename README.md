@@ -59,6 +59,7 @@ Send signals to other bots depending on self.status, received signals etc.
 The values ...
 - 0, ... 5 are reserved for units to tell all castles which unit got spawned.
 - 6 is reserved for units to tell all castles to pause building that turn.
+- 7,8,9 are used by preachers to tell castles if the (7-6)st, (8-6)nd, castle was destroyed.
 
 ## Signal Encoding
 The values ...
@@ -67,7 +68,9 @@ The values ...
 - 4 for pilgrim to tell castle it just gave out its fuel and karbonite and is ready to receive new instructions if needed
 - 
 - 6, ... 5001 are for sending new target locations for preachers
-- 5002,... 9997 are for send new castle locations for preachers
+- 5002,... 9997 are for sending the 1st new castle location for preachers
+- 9998,... 14993 are for sendign the 2nd new castle location (This also says that this new caslte location is the 2nd castle in the castles self.sortedEnemyCastles array)
+- 14994, ...19989 are for sending the third new castle location
 
 
 ## STRATEGIES
@@ -120,5 +123,7 @@ Check todos in strategy
 Strategy pls.
 
 SIGNAL TO CASTLE THE DESTRUCTION OF A CASTLE
+
+- This is to stop castles from producing preachers that attack enemy castles that are already flagged as "dead"
 
 (Reserve)

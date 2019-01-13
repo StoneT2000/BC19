@@ -143,7 +143,7 @@ function mind(self) {
     let currRels = base.rel(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
     if (Math.abs(currRels.dx) <= 1 && Math.abs(currRels.dy) <= 1){
       self.status = 'searchForKarbDeposit';
-      if (self.fuel <= 100) {
+      if (self.fuel <= 100 || self.karbonite >= 100) {
         self.status = 'searchForFuelDeposit';
       }
       else {
