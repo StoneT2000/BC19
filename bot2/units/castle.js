@@ -9,7 +9,7 @@ function mind(self) {
   let robotsInVision = self.getVisibleRobots();
   
   
-  self.log(`Castle (${self.me.x}, ${self.me.y}); Status: ${self.status}; Castles:${self.castles}, Churches: ${self.churches}, Pilgrims: ${self.pilgrims}, Crusaders: ${self.crusaders}`);
+  //self.log(`Castle (${self.me.x}, ${self.me.y}); Status: ${self.status}; Castles:${self.castles}, Churches: ${self.churches}, Pilgrims: ${self.pilgrims}, Crusaders: ${self.crusaders}`);
   
   //Initialization code for the castle
   if (self.me.turn === 1){
@@ -24,7 +24,7 @@ function mind(self) {
     else if (self.karbonite === 80) {
       offsetVal = 2;
     }
-    self.log(`We have ${robotsInVision.length - offsetVal} castles`);
+    //self.log(`We have ${robotsInVision.length - offsetVal} castles`);
     self.castles = robotsInVision.length - offsetVal;
     
     let fuelMap = self.getFuelMap();
@@ -79,7 +79,7 @@ function mind(self) {
           //build the first unit put into the build queue
           let unit = self.buildQueue.shift(); //remove that unit
 
-          self.log(`Building a ${unit} at ${checkPos[0]}, ${checkPos[1]}`);
+          //self.log(`Building a ${unit} at ${checkPos[0]}, ${checkPos[1]}`);
           if (unit === 2){
             self.buildQueue.push(3,3);
           }

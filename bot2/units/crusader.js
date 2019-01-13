@@ -8,7 +8,7 @@ function mind(self){
   let target = self.target;
   let gameMap = self.map;
   
-  self.log(`Crusader (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
+  //self.log(`Crusader (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
   if (self.status === 'justBuilt') {
     //broadcast your unit number for castles to add to their count of units
     self.castleTalk(self.me.unit);
@@ -108,7 +108,7 @@ function mind(self){
     }
   }
   
-  self.log(`Randomly moving`)
+  //self.log(`Randomly moving`)
   const choices = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
   const choice = choices[Math.floor(Math.random() * choices.length)]
   return {action: self.move(...choice), status: 'searchAndAttack', target: []};
