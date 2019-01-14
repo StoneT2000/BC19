@@ -96,7 +96,7 @@ Pilgrims by default search and mine for karbonite. When they return to a castle 
 
 #### PILGRIM + CRUSADER MINING (TODO)
 
-Let pilgrims sit at a mining spot and just mine. Let crusaders deliver resources to castles from pilgrims.
+Let pilgrims sit at a mining spot and just mine. Let crusaders deliver resources to castles from pilgrims if the pilgrim is not close.
 
 #### Pilgrim Scouting (TODO)
 
@@ -104,17 +104,9 @@ TODO: Implement code to make pilgrims that scout the map for enemy castles. Once
 
 TODO: Implement code for a pilgrim to follow an army of preachers. The pilgrim acts as a telescope for the preachers, looks out for enemy castles along the way and also helps defend against enemy prophets (long range units). If it sees prophets that can attack our units, it should send a signal for the army to attack the prophets.
 
-#### Signalling!!!! (TODO)
+#### Prophet defense (TODO)
 
-How can castles communicate each other their locations? We already know which unit ids are which types
 
-Through castle talk, last bits of data is reserved for sending enemy castle locations
-
-We send through 2 messages
-
-If the sender is an castle, we process as so
-
-If the message is
 
 # TODO
 

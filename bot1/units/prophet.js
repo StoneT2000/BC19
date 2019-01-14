@@ -32,9 +32,13 @@ function mind(self){
   }
   
   //DECISIONS
-  if (self.status) {
+  if (self.status === 'defend') {
     
   }
+  if (self.status === 'attackTarget') {
+    
+  }
+  
   if (self.status === 'searchAndAttack' || self.status === 'rally' || self.status === 'defend') {
     //watch for enemies, then chase them
     //call out friends to chase as well?, well enemy might only send scout, so we might get led to the wrong place
@@ -54,12 +58,6 @@ function mind(self){
         if (distToThisTarget < leastDistToTarget && distToThisTarget >= 16) {
           leastDistToTarget = distToThisTarget;
           
-          if (self.status === 'rally' || self.status === 'defend') {
-            //if rallying, don't reset target
-          }
-          else {
-            self.finalTarget = [obot.x, obot.y];
-          }
           isEnemy = true;
           enemyBot = obot;
         }

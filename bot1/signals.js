@@ -72,7 +72,7 @@ function processMessagePreacher(self, msg){
         self.status = 'defend';
       }
       break;
-    //if message is from 6 to 4101, this is a map location, with 6 units of padding
+    //if message is from 6 to 4101, this is a map location, with 6 units of padding. Used to tell attacking units to target a location
       //if message is from 4102, to 8197, this is a map location that a castle tells the unit, it is the map location of an enemy castle.
   }
 }

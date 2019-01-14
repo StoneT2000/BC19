@@ -4,6 +4,9 @@ import base from '../base.js';
 import qmath from '../math.js';
 import signal from '../signals.js';
 import pathing from '../pathing/pathing-bundled.js';
+import attack from '../attack.js';
+
+
 
 function mind(self){
   let gameMap = self.map;
@@ -132,7 +135,7 @@ function mind(self){
     }
   }
   
-  //always update our locations
+  //always update our locations and send death of enemy castle signal if possible
   base.updateKnownStructures(self);
   /*
   for (let i = 0; i < self.knownStructures[otherTeamNum].length; i++) {
@@ -265,179 +268,72 @@ function mind(self){
   if (self.status === 'searchAndAttack' || self.status === 'rally' || self.status === 'defend' || self.status === 'exploreAndAttack' || self.status === 'waitingForFuelStack') {
     //watch for enemies, then chase them
     //call out friends to chase as well?, well enemy might only send scout, so we might get led to the wrong place
-    let leastDistToTarget = 99999999;
-    let isEnemy = false;
-    let attackLoc = {};
     
-    let mostUnitsAttacked = -100;
+    let attackLoc = attack.attackNearestAOE(self);
     
-    //search through all locations we can hit
-    //IMPROVE: Don't need to search through whole map, just search within vision
     
-    //Code for choosing attack with AOE if robot is allowed to attack empty spaces, which isn't the case ATM, listen for dev updates on this
-    /* 
-    for (let i = 0; i < robotMap.length; i++) {
-      for (let j = 0; j < robotMap[i].length; j++) {
-        if (robotMap[i][j] >= 0) {
-          
-          //i = y value, j =  value;
-          //let oRobot = self.getRobot(oRobotId);
-          //location in vision and attackble because preacher vision = attack radius
-          //check units that will get hit, maximize damage
-          let checkPositions = search.circle(self, j, i, 2);
-          let unitsAttacked = 0;
-          for (let k = 0; k < checkPositions.length; k++) {
-            let checkPos = checkPositions[k];
-            let oRobotId = robotMap[checkPos[1]][checkPos[0]];
-            if (oRobotId > 0) {
-              let oRobot = self.getRobot(oRobotId);
-              //if other team, add to number of affected enemies
-              //Strategy is to hit as many enemies as possible and as little friendlies as possible
-              if (oRobot.team !== self.me.team) {
-                unitsAttacked += 1; //enemy team hit
-              }
-              else {
-                unitsAttacked -= 1;
-              }
-              
-            }
-          }
-          if (mostUnitsAttacked < unitsAttacked) {
-            attackLoc = {x:j,y:i};
-            mostUnitsAttacked = unitsAttacked;
-            isEnemy = true;
-          }
-        }
+    //check if castle is destroyed
+    if (self.destroyedCastle === true) {
+      self.log(`Killed castle`);
+      self.destroyedCastle = false;
+      //CASTLE DESTROYED!
+
+      //destroyed the castle, now have all units move elsewhere
+
+      let longestDistance = 0;
+      let newLoc = [self.knownStructures[self.me.team][0].x,self.knownStructures[self.me.team][0].y];
+      //self.lastAttackedUnit = null;
+      //self.status = 'searchAndAttack';
+
+      if (self.knownStructures[otherTeamNum].length > 1) {
+        let ln = self.knownStructures[otherTeamNum].length;
+        newLoc = [self.knownStructures[otherTeamNum][1].x, self.knownStructures[otherTeamNum][1].y];
       }
-    }
-    */
-    
-    let existEnemy = false;
-    let enemyToAttack = null;
-    for (let i = 0; i < robotsInVision.length; i++) {
-      let oVisRobot = robotsInVision[i];
-  
-      //check if they defined or not, because of some bugs with bc19 i think
-      if (oVisRobot.x !== undefined && oVisRobot.y !== undefined){
-        let checkPositions = search.circle(self, oVisRobot.x, oVisRobot.y, 2);
-        let unitsAttacked = 0;
-        if (oVisRobot.id !== self.me.id){
-          for (let k = 0; k < checkPositions.length; k++) {
-            let checkPos = checkPositions[k];
-            if (search.inArr(checkPos[0], checkPos[1], robotMap)){
-              //self.log(`Check xy: ${checkPos}`);
-              let oRobotId = robotMap[checkPos[1]][checkPos[0]];
-              //self.log(`id:${oRobotId}`);
-              //ok if hit self
-              if (oRobotId > 0) {
-                let oRobot = self.getRobot(oRobotId);
-                //if other team, add to number of affected enemies
-                //Strategy is to hit as many enemies as possible and as little friendlies as possible
-                if (oRobot.team !== self.me.team) {
-                  unitsAttacked += 1; //enemy team hit
-                  existEnemy = true;
-                  enemyToAttack = oRobot;
-                }
-                else {
-                  if (oRobotId === self.me.id) {
-
-                  }
-                  else {
-                    unitsAttacked -= 1;
-                  }
-                }
-
-              }
-            }
-          }
-
-          if (mostUnitsAttacked < unitsAttacked && existEnemy === true) {
-            attackLoc = {x:oVisRobot.x,y:oVisRobot.y};
-            mostUnitsAttacked = unitsAttacked;
-            isEnemy = true;
-          }
-        }
+      else {
+        //IMPLEMENT TODO: if there is no next enemy left, go back home and defend
       }
-    }
-    if (self.lastAttackedUnit !== null) {
-      
-      //This batch of code determins whether or not a castle was just killed. If so, we make the robot find a new target to run towards, preferably the furthest distance away that likely has a blue enemy, and then tell the other units to go there as well.
-      if (self.lastAttackedUnit.unit  === SPECS.CASTLE) {
-        self.log(`checking if castle is still there`)
-        
-        let unitIdThere = robotMap[self.lastAttackedUnit.y][self.lastAttackedUnit.x];
-        if (unitIdThere !== self.lastAttackedUnit.id) {
-          self.log(`Killed castle`);
-          
-          //CASTLE DESTROYED!
-          
-          //destroyed the castle, now have all units move elsewhere
-
-          let longestDistance = 0;
-          let newLoc = [self.knownStructures[self.me.team][0].x,self.knownStructures[self.me.team][0].y];
-          //self.lastAttackedUnit = null;
-          //self.status = 'searchAndAttack';
-          
-          if (self.knownStructures[otherTeamNum].length > 1) {
-            let ln = self.knownStructures[otherTeamNum].length;
-            newLoc = [self.knownStructures[otherTeamNum][1].x, self.knownStructures[otherTeamNum][1].y];
-          }
-          else {
-            //IMPLEMENT TODO: if there is no next enemy left, go back home and defend
-          }
-          self.log('Next enemy: ' + newLoc);
-          let path2 = [];
-          let distToTarget2 = 0;
-          if (self.planner !== null){
-            distToTarget2 = self.planner.search(self.me.y,self.me.x,newLoc[1], newLoc[0],path2);
-          }
-          else {
-            distToTarget2 = qmath.unitDist(self.me.x, self.me.y, newLoc[0], newLoc[1]);
-          }
-          let fuelNeededForAttack = (distToTarget2/2) * 16 * 7 + 250;
-          self.log(`Just killed castle, need ${fuelNeededForAttack}`);
-          let compressedLocationHash = self.compressLocation(newLoc[0], newLoc[1]);
-          //padding hash by 6
-          self.status = 'waitingForFuelStack';
-          self.signalToSendAfterFuelIsMet = 6 + compressedLocationHash;
-          self.fuelNeeded = fuelNeededForAttack;
-          //self.signal(5 + compressedLocationHash, 36);
-          self.finalTarget = newLoc;
-          self.allowedToMove = false;
-          
-          //send signal to tell bots to stop moving and wait for fuel stack
-          self.signal(5, 36);
-          //self.log(`Initial New target: ${self.finalTarget}`);
-         
-          
-          //Send through castle talk the xpos and ypos of the enemy castle destroyed if it was the original target
-          
-          if (self.mapIsHorizontal){
-            self.castleTalk(7 + self.lastAttackedUnit.x);
-          }
-          else {
-            self.castleTalk(7 + self.lastAttackedUnit.y);
-          }
-          
-          self.lastAttackedUnit = null;
-          
-        }
+      self.log('Next enemy: ' + newLoc);
+      let path2 = [];
+      let distToTarget2 = 0;
+      if (self.planner !== null){
+        distToTarget2 = self.planner.search(self.me.y,self.me.x,newLoc[1], newLoc[0],path2);
       }
+      else {
+        distToTarget2 = qmath.unitDist(self.me.x, self.me.y, newLoc[0], newLoc[1]);
+      }
+      let fuelNeededForAttack = (distToTarget2/2) * 16 * 7 + 250;
+      self.log(`Just killed castle, need ${fuelNeededForAttack}`);
+      let compressedLocationHash = self.compressLocation(newLoc[0], newLoc[1]);
+      //padding hash by 6
+      self.status = 'waitingForFuelStack';
+      self.signalToSendAfterFuelIsMet = 6 + compressedLocationHash;
+      self.fuelNeeded = fuelNeededForAttack;
+      //self.signal(5 + compressedLocationHash, 36);
+      self.finalTarget = newLoc;
+      self.allowedToMove = false;
+
+      //send signal to tell bots to stop moving and wait for fuel stack
+      //self.signal(5, 36);
+      //self.log(`Initial New target: ${self.finalTarget}`);
+
+      //Send through castle talk the xpos and ypos of the enemy castle destroyed if it was the original target
+
+
     }
     //enemy nearby, attack it?
-    if (isEnemy === true) {
+    if (attackLoc !== null) {
       //let rels = base.relToPos(self.me.x, self.me.y, target[0], target[1], self);
       let rels = base.rel(self.me.x, self.me.y, attackLoc.x, attackLoc.y);
       //self.log(`Attack ${rels.dx},${rels.dy}`);
       self.log(`Preacher Attacks ${rels.dx},${rels.dy}`);
       if (self.readyAttack()){
-        self.lastAttackedUnit = enemyToAttack
+        //self.lastAttackedUnit = robotToAttack
         action = self.attack(rels.dx,rels.dy)
         return {action:action};
       }
     }
   }
-  
+
   
   
   //PROCESSING FINAL TARGET

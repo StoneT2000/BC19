@@ -179,6 +179,15 @@ function updateKnownStructures(self) {
       }
       else {
         //structure is def. gone
+        //destroyed structure, send signal to castle about its death
+        self.log(`Killed castle`);
+        if (self.mapIsHorizontal){
+          self.castleTalk(7 + knownStructure.x);
+        }
+        else {
+          self.castleTalk(7 + knownStructure.y);
+        }
+        self.destroyedCastle = true;
       }
       
 
@@ -190,6 +199,7 @@ function updateKnownStructures(self) {
   }
   
 }
+function destroyedCastle(self) {
+}
 
-
-export default {rel, relToPos, unitMoveDeltas, logStructure, updateKnownStructures};
+export default {rel, relToPos, unitMoveDeltas, logStructure, updateKnownStructures, destroyedCastle};
