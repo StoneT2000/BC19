@@ -10,7 +10,7 @@ function mind(self){
   let otherTeamNum = (self.me.team + 1) % 2;
   let forcedAction = null;
   self.log(`Church (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
-  
+  let action = '';
   //INITIALIZATION
   if (self.me.turn === 1) {
     self.castleTalk(self.me.unit);

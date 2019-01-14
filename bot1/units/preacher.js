@@ -14,7 +14,8 @@ function mind(self){
   let action = '';
   
   let forcedAction = null;
-  
+  let fuelMap = self.getFuelMap();
+  let karboniteMap = self.getKarboniteMap();
   let robotMap = self.getVisibleRobotMap();
   
   self.log(`Preacher (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
@@ -73,7 +74,10 @@ function mind(self){
     
     
     self.rallyTarget = [self.me.x + rels.dx + rels2.dx, self.me.y + rels.dy + rels2.dy];
+    
     self.finalTarget = [self.me.x + rels.dx + rels2.dx, self.me.y + rels.dy + rels2.dy];
+    //self.rallyTarget = [self.me.x, self.me.y];
+    //self.finalTarget = [self.me.x, self.me.y];
     self.log(`Rally Point: ${self.rallyTarget}`)
     //self.finalTarget = [exploreTarget[0], exploreTarget[1]];
     
@@ -96,7 +100,7 @@ function mind(self){
         self.allowedToMove = true;
         self.log(`New target: ${self.finalTarget} from message:${msg}`);
       }
-      if (msg >= 4102 && msg <= 16389){
+      if (msg >= 4102 && msg <= 12293){
         let padding = 4102;
         let pushToEndOfKnownStructures = true;
         //self.enemyCastleSortedIndex = 0;
@@ -129,9 +133,17 @@ function mind(self){
         self.originalCastleTarget = [enemyCastleLoc.x, enemyCastleLoc.y];
         self.log(`Received location of enemy castle: ${enemyCastleLoc.x}, ${enemyCastleLoc.y} from message:${msg}`);
       }
+      if (msg >= 12294 && msg <= 16389) {
+        self.status = 'attackTarget';
+        let padding = 12294;
+        let targetLoc = self.getLocation(msg - padding);
+        self.finalTarget = [targetLoc.x, targetLoc.y];
+        self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
+      }
       if (msg === 5) {
         self.log(`Received ${msg} from ${robotsInVision[i].id}`);
       }
+      
     }
   }
   
@@ -149,7 +161,7 @@ function mind(self){
     moveApart(self);
   }
   //units rallying go to a rally point sort of, and will end up trying to attack the first known enemy structure
-  if (self.status === 'rally'){
+  if (self.status === 'rally' || self.status === 'defend'){
     let unitsInVincinity = search.unitsInRadius(self, 36)
     
     
@@ -197,13 +209,13 @@ function mind(self){
       //self.log(`Im far`);
       fartherAway = true;
     }
-    if (self.me.x % 2 === 0 || self.me.y % 2 === 0) {
+    if (self.me.x % 2 === 0 || self.me.y % 2 === 0 || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true) {
         let closestDist = 99999;
         let bestLoc = null;
         for (let i = 0; i < gameMap.length; i++) {
           for (let j = 0; j < gameMap[0].length; j++) {
             if (i % 2 === 1 && j % 2 === 1){
-              if (search.emptyPos(j, i , robotMap, gameMap)){
+              if (search.emptyPos(j, i , robotMap, gameMap) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
                 //assuming final target when rallying is the rally targt
                 let thisDist = qmath.dist(self.rallyTarget[0], self.rallyTarget[1], j, i);
                 if (thisDist < closestDist) {
@@ -224,6 +236,9 @@ function mind(self){
   
   //DECISIONS
   
+  if (self.status === 'attackTarget') {
+    
+  }
   
   if (self.status === 'searchAndAttack') {
     if (self.knownStructures[otherTeamNum].length > 0){
@@ -265,7 +280,7 @@ function mind(self){
   }
   
   
-  if (self.status === 'searchAndAttack' || self.status === 'rally' || self.status === 'defend' || self.status === 'exploreAndAttack' || self.status === 'waitingForFuelStack') {
+  if (self.status === 'searchAndAttack' || self.status === 'rally' || self.status === 'defend' || self.status === 'exploreAndAttack' || self.status === 'waitingForFuelStack' || self.status === 'attackTarget') {
     //watch for enemies, then chase them
     //call out friends to chase as well?, well enemy might only send scout, so we might get led to the wrong place
     
@@ -334,7 +349,16 @@ function mind(self){
     }
   }
 
-  
+  if (self.status === 'attackTarget') {
+    //finaltarget is enemy target pos.
+    let distToEnemy = qmath.dist(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
+    if (distToEnemy >= 60) {
+      //stay put
+    }
+    else {
+      return '';
+    }
+  }
   
   //PROCESSING FINAL TARGET
   

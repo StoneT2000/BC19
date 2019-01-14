@@ -65,6 +65,10 @@ function mind(self) {
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
     signal.processMessagePilgrim(self, msg);
+    if (msg === 16391) {
+      self.log(`Going to build church`);
+      self.status = 'searchForBuildLocation'
+    }
   }
 
   //DECISION MAKING
@@ -155,10 +159,95 @@ function mind(self) {
     }
   }
   
+  if (self.status === 'searchForBuildLocation') {
+    self.castleTalk(6);
+    let newTarget = null;
+    let moveTarget = null;
+    let cd = 9999990;
+    for (let i = 0; i < self.fuelSpots.length; i++) {
+      let nx = self.fuelSpots[i].x;
+      let ny = self.fuelSpots[i].y;
+      if (qmath.dist(self.me.x, self.me.y, nx, ny) >= 10){
+        let patharr = [];
+        let distToThere = 0;
+        if (self.planner !== null) {
+          distToThere = self.planner.search(self.me.y,self.me.x,ny,nx,patharr);
+        }
+        else {
+          distToThere = qmath.dist(self.me.x,self.me.y,nx,ny);
+        }
+
+        if (distToThere < cd) {
+          cd = distToThere;
+          moveTarget = [nx, ny];
+          //newTarget = [nx,ny];
+          let mostSpots = 0;
+          let checkPositions = search.circle(self, nx, ny, 2);
+          for (let k = 0; k < checkPositions.length; k++) {
+            let checkPos = checkPositions[k];
+            if (fuelMap[checkPos[1]][checkPos[0]] === false && fuelMap[checkPos[1]][checkPos[0]] === false) {
+              let positionsAround = search.circle(self, checkPos[0], checkPos[1], 2);
+              let spotsHere = 0;
+              for (let j = 0; j < positionsAround.length; j++) {
+                let px = positionsAround[j][0];
+                let py = positionsAround[j][1];
+                if (fuelMap[py][px] === true || karboniteMap[py][px] === true) {
+                  spotsHere += 1;
+                }
+              }
+              if (spotsHere > mostSpots) {
+                newTarget = [checkPos[0], checkPos[1]];
+                mostSpots = spotsHere;
+              }
+            }
+          }
+          
+        }
+      }
+    }
+    self.buildTarget = null;
+    if (newTarget !== null){
+      self.buildTarget = newTarget;
+      self.finalTarget = moveTarget;
+      self.status = 'building';
+    }
+    else {
+      
+    }
+    self.log(`Trying to build at ${self.buildTarget}`)
+  }
+  if (self.status === 'building') {
+    self.castleTalk(6);
+    let robotThere = self.getRobot(robotMap[self.buildTarget[1]][self.buildTarget[0]]);
+    if (robotThere !== null && robotThere.unit === SPECS.CHURCH){
+      self.status = 'searchForKarbDeposit';
+      self.log(`Church built already`);
+    }
+    else {
+      if (self.me.x === self.finalTarget[0] && self.me.y === self.finalTarget[1]) {
+        let rels = base.rel(self.me.x, self.me.y, self.buildTarget[0], self.buildTarget[1]);
+        self.log(`TRIED TO BUILD: ${rels.dx}, ${rels.dy}`);
+        if (self.fuel >= 200 && self.karbonite >= 50){
+          if (self.fuel <= 600){
+            self.status = 'searchForFuelDeposit';
+          }
+          else {
+            self.status = 'searchForKarbDeposit';
+          }
+          return {action:self.buildUnit(SPECS.CHURCH, rels.dx, rels.dy)}
+        }
+        else {
+          self.log(`NOT ENOUGH RESOURCES: fuel:${self.fuel}; karb: ${self.karbonite}`);
+        }
+      }
+    }
+  }
   //forever mine
   if (fuelMap[self.me.y][self.me.x] === true && (self.status === 'goingToFuelDeposit' || self.status === 'mine')) {
     action = self.mine();
     self.status = 'mine';
+    //self.build(SPECS.CHURCH, 0, 1);
+    //ADD CHURCH CODE
     return {action:action}; 
   }
   else if (karboniteMap[self.me.y][self.me.x] === true && (self.status === 'goingToKarbDeposit' || self.status === 'mine')) {

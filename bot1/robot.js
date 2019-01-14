@@ -127,6 +127,7 @@ class MyRobot extends BCAbstractRobot {
   */
   readyAttack() {
     let fuelCost = SPECS.UNITS[this.me.unit].ATTACK_FUEL_COST;
+    this.log(`I have ${this.fuel} fuel, need ${fuelCost}`);
     if (this.fuel >= fuelCost) {
       return true;
     }
