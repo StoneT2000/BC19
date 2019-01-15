@@ -39,46 +39,56 @@ function mind(self){
     
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
     
-    self.initializeCastleLocations();
-    let myCastleLocation = self.knownStructures[self.me.team][0]
-    let enemyCastleLocation = self.knownStructures[otherTeamNum][0]
-    //DETERMINE RALLY POSITION
-    
-    //pathing.initializePlanner(self);
-    self.setFinalTarget([enemyCastleLocation.x, enemyCastleLocation.y]);
-    //self.log(self.path + ': ' + enemyCastleLocation.x + ', ' + enemyCastleLocation.y);
-    //check path, and follow it until you are at least a distance away
-    let finalNode = [];
-    for (let i = 0; i < self.path.length; i+=2) {
-      if (qmath.dist(myCastleLocation.x,myCastleLocation.y,self.path[i],self.path[i+1]) >= 10) {
-        finalNode = [self.path[i],self.path[i+1]];
-        break;
+    let initializedCastles = self.initializeCastleLocations();
+    self.log(`initialized castles: ${initializedCastles}`);
+    if (initializedCastles){
+      let myCastleLocation = self.knownStructures[self.me.team][0]
+      let enemyCastleLocation = self.knownStructures[otherTeamNum][0]
+      //DETERMINE RALLY POSITION
+
+      //pathing.initializePlanner(self);
+      self.setFinalTarget([enemyCastleLocation.x, enemyCastleLocation.y]);
+      //self.log(self.path + ': ' + enemyCastleLocation.x + ', ' + enemyCastleLocation.y);
+      //check path, and follow it until you are at least a distance away
+      let finalNode = [];
+      for (let i = 0; i < self.path.length; i+=2) {
+        if (qmath.dist(myCastleLocation.x,myCastleLocation.y,self.path[i],self.path[i+1]) >= 10) {
+          finalNode = [self.path[i],self.path[i+1]];
+          break;
+        }
       }
+      if (self.path.length === 0) {
+        finalNode = [enemyCastleLocation.x, enemyCastleLocation.y];
+      }
+      //self.log('First here:' + finalNode);
+      let rels = base.relToPos(self.me.x, self.me.y, finalNode[0], finalNode[1], self);
+      //self.log(rels);
+      let rels2 = base.relToPos(self.me.x + rels.dx, self.me.y+rels.dy, finalNode[0], finalNode[1], self);
+      let rels3 = base.relToPos(self.me.x + rels.dx + rels2.dx, self.me.y+rels.dy + rels2.dy, finalNode[0], finalNode[1], self);
+      let relsx = self.me.x + rels.dx + rels2.dx + rels3.x
+      /*
+      pathing.initializePlanner(self);
+      self.setFinalTarget(exploreTarget[0],exploreTarget[1]);
+      let path = [];
+      planner.search(self.me.y,self.me.x,self.finalTarget[1],self.finalTarget[0],path);
+      self.log(path);
+      */
+
+
+      self.rallyTarget = [self.me.x + rels.dx + rels2.dx, self.me.y + rels.dy + rels2.dy];
+
+      self.finalTarget = [self.me.x + rels.dx + rels2.dx, self.me.y + rels.dy + rels2.dy];
+      //self.rallyTarget = [self.me.x, self.me.y];
+      //self.finalTarget = [self.me.x, self.me.y];
+      self.log(`Rally Point: ${self.rallyTarget}`)
+      self.defendTarget = [self.me.x, self.me.y];
     }
-    if (self.path.length === 0) {
-      finalNode = [enemyCastleLocation.x, enemyCastleLocation.y];
+    else {
+      //set defending target
+      self.status = 'defend';
+      self.defendTarget = [self.me.x, self.me.y];
+      self.finalTarget = [self.me.x, self.me.y];
     }
-    //self.log('First here:' + finalNode);
-    let rels = base.relToPos(self.me.x, self.me.y, finalNode[0], finalNode[1], self);
-    //self.log(rels);
-    let rels2 = base.relToPos(self.me.x + rels.dx, self.me.y+rels.dy, finalNode[0], finalNode[1], self);
-    let rels3 = base.relToPos(self.me.x + rels.dx + rels2.dx, self.me.y+rels.dy + rels2.dy, finalNode[0], finalNode[1], self);
-    let relsx = self.me.x + rels.dx + rels2.dx + rels3.x
-    /*
-    pathing.initializePlanner(self);
-    self.setFinalTarget(exploreTarget[0],exploreTarget[1]);
-    let path = [];
-    planner.search(self.me.y,self.me.x,self.finalTarget[1],self.finalTarget[0],path);
-    self.log(path);
-    */
-    
-    
-    self.rallyTarget = [self.me.x + rels.dx + rels2.dx, self.me.y + rels.dy + rels2.dy];
-    
-    self.finalTarget = [self.me.x + rels.dx + rels2.dx, self.me.y + rels.dy + rels2.dy];
-    //self.rallyTarget = [self.me.x, self.me.y];
-    //self.finalTarget = [self.me.x, self.me.y];
-    self.log(`Rally Point: ${self.rallyTarget}`)
     //self.finalTarget = [exploreTarget[0], exploreTarget[1]];
     
   }
@@ -156,12 +166,11 @@ function mind(self){
   */
   //defenders and units that are have no final target. If they did, then they must be waiting for a fuel stack to go that target
   if (self.status === 'defend') {
-    self.finalTarget = null;
     
     moveApart(self);
   }
   //units rallying go to a rally point sort of, and will end up trying to attack the first known enemy structure
-  if (self.status === 'rally' || self.status === 'defend'){
+  if (self.status === 'rally'){
     let unitsInVincinity = search.unitsInRadius(self, 36)
     
     
@@ -177,7 +186,7 @@ function mind(self){
     //qmath.unitDist(self.me.x, self.me.y, self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y);
     
     //path distance / 2 movement * 12 for fuel cost * 8 for num units
-    let fuelNeededForAttack = (distToTarget2/2) * 16 * unitsInVincinity[5].length + 250;
+    let fuelNeededForAttack = (distToTarget2/2) * 12 * unitsInVincinity[5].length;
     //self.log(`To attack, we need ${fuelNeededForAttack}`);
     //less fuel is needed if we let preachers move slowly, and then rush in once near target
     
@@ -280,7 +289,7 @@ function mind(self){
   }
   
   
-  if (self.status === 'searchAndAttack' || self.status === 'rally' || self.status === 'defend' || self.status === 'exploreAndAttack' || self.status === 'waitingForFuelStack' || self.status === 'attackTarget') {
+  if (self.status === 'searchAndAttack' || self.status === 'rally' || self.status === 'defend' || self.status === 'exploreAndAttack' || self.status === 'waitingForFuelStack' || self.status === 'attackTarget' || self.status === 'goToTarget') {
     //watch for enemies, then chase them
     //call out friends to chase as well?, well enemy might only send scout, so we might get led to the wrong place
     
@@ -320,13 +329,16 @@ function mind(self){
       self.log(`Just killed castle, need ${fuelNeededForAttack}`);
       let compressedLocationHash = self.compressLocation(newLoc[0], newLoc[1]);
       //padding hash by 6
+      /*
       self.status = 'waitingForFuelStack';
       self.signalToSendAfterFuelIsMet = 6 + compressedLocationHash;
       self.fuelNeeded = fuelNeededForAttack;
       //self.signal(5 + compressedLocationHash, 36);
       self.finalTarget = newLoc;
       self.allowedToMove = false;
-
+      */
+      self.status = 'defend';
+      
       //send signal to tell bots to stop moving and wait for fuel stack
       //self.signal(5, 36);
       //self.log(`Initial New target: ${self.finalTarget}`);
@@ -358,6 +370,9 @@ function mind(self){
     else {
       return '';
     }
+  }
+  if (self.status === 'goToTarget') {
+    
   }
   
   //PROCESSING FINAL TARGET

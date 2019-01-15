@@ -58,7 +58,12 @@ function processMessageCrusader(self, msg){
       self.status = 'searchAndAttack';
       break;
     case 16390:
+      self.status = 'rally';
+      self.finalTarget = self.rallyTarget;
+      break;
+    case 16391:
       self.status = 'defend';
+      self.finalTarget = self.defendTarget;
       break;
   }
 }
@@ -83,6 +88,10 @@ function processMessagePreacher(self, msg){
       self.status = 'rally';
       self.finalTarget = self.rallyTarget;
       break;
+    case 16391:
+      self.status = 'defend';
+      self.finalTarget = self.defendTarget;
+      break;
   }
 }
 function processMessageProphet(self, msg){
@@ -99,6 +108,10 @@ function processMessageProphet(self, msg){
       }
       break;
     case 16390:
+      self.status = 'defend';
+      self.finalTarget = self.defendTarget;
+      break;
+    case 16391:
       self.status = 'defend';
       self.finalTarget = self.defendTarget;
       break;

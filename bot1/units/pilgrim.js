@@ -46,7 +46,7 @@ function mind(self) {
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
     self.initializeCastleLocations();
     
-    
+    self.originalCastleLocation = [self.knownStructures[self.me.team][0].x, self.knownStructures[self.me.team][0].y]
     
     self.target = [self.me.x,self.me.y];
     self.finalTarget = [self.me.x, self.me.y];
@@ -57,7 +57,7 @@ function mind(self) {
     self.log('Trying to plan');
     pathing.initializePlanner(self);
     self.setFinalTarget(self.finalTarget);
-    self.status = 'searchForKarbDeposit';
+    //self.status = 'searchForKarbDeposit';
   }
   
   //SIGNAL PROCESSION
@@ -65,10 +65,6 @@ function mind(self) {
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
     signal.processMessagePilgrim(self, msg);
-    if (msg === 16391) {
-      self.log(`Going to build church`);
-      self.status = 'searchForBuildLocation'
-    }
   }
 
   //DECISION MAKING
@@ -112,12 +108,13 @@ function mind(self) {
         }
       }
       self.status = 'goingToFuelDeposit';
+      self.finalTarget = [newTarget[0],newTarget[1]];
     }
     if (self.status === 'searchForKarbDeposit'){
       for (let i = 0; i < self.karboniteSpots.length; i++) {
         let nx = self.karboniteSpots[i].x;
         let ny = self.karboniteSpots[i].y;
-        if (robotMap[ny][nx] <= 0){
+        if (robotMap[ny][nx] <= 0 || robotMap[ny][nx] === self.me.id){
           let patharr = [];
           let distToThere = 0;
           if (self.planner !== null) {
@@ -132,13 +129,43 @@ function mind(self) {
           }
         }
       }
-      self.status = 'goingToKarbDeposit';
+      let nearestStructure = search.findNearestStructure(self);
+      if (cd > qmath.dist(newTarget[0], newTarget[1],nearestStructure.x, nearestStructure.y) + 5) {
+        //if far enough, try to build church there
+        self.status = 'building';
+        //search all around karb deposit
+        let mostDeposits = 0;
+        let buildLoc = null;
+        let positionsAroundDeposit = search.circle(self, newTarget[0], newTarget[1], 2);
+        for (let k = 0; k < positionsAroundDeposit.length; k++) {
+          let px = positionsAroundDeposit[k][0];
+          let py = positionsAroundDeposit[k][1];
+          if (fuelMap[py][px] === false && karboniteMap[py][px] === false) {
+            let numDepositsHere = numberOfDeposits(self, px, py);
+            if (numDepositsHere > mostDeposits) {
+              mostDeposits = numDepositsHere;
+              buildLoc = [px, py];
+            }
+          }
+        }
+        if (buildLoc !== null) {
+          self.buildTarget = buildLoc;
+          
+        }
+        else {
+          self.status = 'goingToKarbDeposit';
+        }
+      }
+      else {
+        self.status = 'goingToKarbDeposit';
+      }
+      self.finalTarget = [newTarget[0],newTarget[1]];
     }
     
-    self.finalTarget = [newTarget[0],newTarget[1]];
+    
   }
 
-  if ((self.me.fuel >= 100 || self.me.karbonite >= 20) || self.status === 'return') {
+  if (((self.me.fuel >= 100 || self.me.karbonite >= 20) || self.status === 'return') && self.status !== 'building') {
     //send karbo
     let bestTarget = search.findNearestStructure(self);
     self.finalTarget = [bestTarget.x, bestTarget.y];
@@ -217,7 +244,10 @@ function mind(self) {
     self.log(`Trying to build at ${self.buildTarget}`)
   }
   if (self.status === 'building') {
-    self.castleTalk(6);
+    if (self.me.turn > 1){
+      //make sure we don't confuddle the signal for counting units
+      self.castleTalk(71);
+    }
     let robotThere = self.getRobot(robotMap[self.buildTarget[1]][self.buildTarget[0]]);
     if (robotThere !== null && robotThere.unit === SPECS.CHURCH){
       self.status = 'searchForKarbDeposit';
@@ -243,19 +273,25 @@ function mind(self) {
     }
   }
   //forever mine
-  if (fuelMap[self.me.y][self.me.x] === true && (self.status === 'goingToFuelDeposit' || self.status === 'mine')) {
+  if (karboniteMap[self.me.y][self.me.x] === true && (self.status === 'goingToKarbDeposit' || self.status === 'mine' || self.status === 'building')) {
     action = self.mine();
-    self.status = 'mine';
+    if (self.status !== 'building') {
+    
+      self.status = 'mine';
+    }
+    return {action:action}; 
+  }
+  else if (fuelMap[self.me.y][self.me.x] === true && (self.status === 'goingToFuelDeposit' || self.status === 'mine')) {
+    action = self.mine();
+    if (self.status !== 'building') {
+    
+      self.status = 'mine';
+    }
     //self.build(SPECS.CHURCH, 0, 1);
     //ADD CHURCH CODE
     return {action:action}; 
   }
-  else if (karboniteMap[self.me.y][self.me.x] === true && (self.status === 'goingToKarbDeposit' || self.status === 'mine')) {
-    action = self.mine();
-    self.status = 'mine';
-    return {action:action}; 
-  }
-  
+  else 
   
   //PROCESSING FINAL TARGET
   if (forcedAction !== null) {
@@ -266,5 +302,21 @@ function mind(self) {
 
   //return self.move(0,0);
 }
+
+function numberOfDeposits(self, nx, ny) {
+  let checkPositions = search.circle(self, nx, ny, 2);
+  let numDeposits = 0;
+  let fuelMap = self.getFuelMap();
+  let karbMap = self.getKarboniteMap();
+  for (let i = 0; i < checkPositions.length; i++) {
+    let cx = checkPositions[i][0];
+    let cy = checkPositions[i][1];
+    if (fuelMap[cy][cx] === true || karbMap[cy][cx] === true) {
+      numDeposits += 1;
+    }
+  }
+  return numDeposits;
+}
+
 
 export default {mind}
