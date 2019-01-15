@@ -102,7 +102,7 @@ function mind(self) {
     if (self.castles === 3) {
       //only first castle builds pilgrim in 3 preacher defence strategy
       if (offsetVal === 0) {
-        self.buildQueue.push(2);
+        self.buildQueue.push(2, 5);
       }
       else if (offsetVal === 1){
         //self.buildQueue.push();
@@ -113,14 +113,14 @@ function mind(self) {
     }
     else if (self.castles === 2) {
       if (offsetVal === 0) {
-        self.buildQueue.push(2);
+        self.buildQueue.push(2, 5);
       }
       else if (offsetVal === 1) {
-        //self.buildQueue.push();
+        self.buildQueue.push(2);
       }
     }
     else if (self.castles === 1) {
-      self.buildQueue.push(2);
+      self.buildQueue.push(2, 5);
     }
     
     
@@ -383,6 +383,7 @@ function mind(self) {
   let sawEnemyThisTurn = false;
   let nearestEnemyLoc = null
   let closestEnemyDist = 1000;
+  let sawProphet = false;
   for (let i = 0; i < robotsInVision.length; i++) {
     let obot = robotsInVision[i];
     if (obot.unit === SPECS.CRUSADER) {
@@ -399,7 +400,11 @@ function mind(self) {
       //sees enemy unit, send our units to defend spot
       if (obot.unit !== SPECS.PILGRIM){
         let distToUnit = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
+        
         if (distToUnit < closestEnemyDist) {
+          if (obot.unit === SPECS.PROPHET) {
+            sawProphet = true;
+          }
           nearestEnemyLoc = {x: obot.x, y: obot.y};
           closestEnemyDist = distToUnit
           self.log(`Nearest to castle is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
@@ -411,13 +416,32 @@ function mind(self) {
       
     }
   }
+  
+  //code for determing when castle sends its local army out.
+  if (self.preachers >= 3) {
+    
+    let unitsInVincinity = search.unitsInRadius(self, 36);
+    //self.log(`${unitsInVincinity[5]}`);
+    if (unitsInVincinity[SPECS.PREACHER].length >= 6){
+      self.status = 'pause';
+      let distToTarget = qmath.unitDist(self.me.x, self.me.y, self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y);
+      let fuelNeededForAttack = (distToTarget/2) * 12 * unitsInVincinity[SPECS.PREACHER].length + (distToTarget/2) * 12 * unitsInVincinity[SPECS.PROPHET].length;
+      self.log(`Still need ${fuelNeededForAttack} fuel before attacking ${self.knownStructures[otherTeamNum][0].x}, ${self.knownStructures[otherTeamNum][0].y}`);
+      if (self.fuel >= fuelNeededForAttack){
+        let targetLoc = self.knownStructures[otherTeamNum][0];
+        let compressedLocationHash = self.compressLocation(targetLoc.x, targetLoc.y);
+        let padding = 16392;
+        self.signal (padding + compressedLocationHash, 36);
+      }
+    }
+  }
   if (sawEnemyThisTurn === false) {
     //keep karbonite in stock so we can spam mages out when needed
     if ((self.karbonite >= 100 || self.pilgrims <= 0) && self.me.turn >= 2 && self.canBuildPilgrims === true && self.pilgrims <= self.maxPilgrims) {
       self.buildQueue.push(2);
     }
     if (self.sawEnemyLastTurn === true) {
-      self.signal(16390, 36); //tell everyone to defend
+      self.signal(16391, 36); //tell everyone to defend
       if (self.canBuildPilgrims === true){
         self.buildQueue = [2];
       }
@@ -426,7 +450,7 @@ function mind(self) {
       }
     }
     if (self.karbonite >= 150) {
-      self.buildQueue.push(4, 5);
+      self.buildQueue.push(4, 4, 5);
     }
     else {
       
@@ -435,7 +459,11 @@ function mind(self) {
   }
   else {
     let compressedLocationHash = self.compressLocation(nearestEnemyLoc.x, nearestEnemyLoc.y);
-    self.signal(12294 + compressedLocationHash, 36);
+    let padding = 12294;
+    if (sawProphet === true) {
+      padding = 16392;
+    }
+    self.signal(padding + compressedLocationHash, 36);
     //self.log(`Nearest to castle is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
     self.sawEnemyLastTurn = true;
     self.buildQueue.unshift(5);

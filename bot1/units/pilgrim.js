@@ -14,7 +14,7 @@ function mind(self) {
   
   let robotMap = self.getVisibleRobotMap();
   //we can improve the speed here by using bfs
-  
+  let otherTeamNum = (self.me.team + 1) % 2;
   let action = '';
   let gameMap = self.map;
   
@@ -68,6 +68,49 @@ function mind(self) {
   }
 
   //DECISION MAKING
+  
+  //regardless, pilgrim tries to stay out of shooting range
+  let farthestdist;
+  let enemyPositionsToAvoid = [];
+  for (let i = 0; i < robotsInVision.length; i++) {
+    let obot = robotsInVision[i];
+    
+    //find position that is the farthest away from all enemies
+    if (obot.team === otherTeamNum) {
+      let distToEnemy = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
+      if (obot.unit === SPECS.PROPHET && distToEnemy <= 80) {
+        enemyPositionsToAvoid.push([obot.x, obot.y]);
+      }
+      else if (obot.unit === SPECS.PREACHER && distToEnemy <= 36) {
+        enemyPositionsToAvoid.push([obot.x, obot.y]);
+      }
+      
+    }
+  }
+  let largestSumDist = null;
+  let avoidLoc = null;
+  if (enemyPositionsToAvoid.length > 0){
+    self.log(`Pilgrim sees enemies nearby`)
+    let positionsToGoTo = search.circle(self, self.me.x, self.me.y, 4);
+    for (let i = 0; i < positionsToGoTo.length; i++) {
+      let thisSumDist = 0;
+      let pos = positionsToGoTo[i];
+      for (let j = 0; j < enemyPositionsToAvoid.length; j++) {
+        thisSumDist += qmath.dist(pos[0], pos[1], enemyPositionsToAvoid[j][0], enemyPositionsToAvoid[j][1]);
+      }
+      //
+      if (largestSumDist === null || largestSumDist < thisSumDist) {
+        largestSumDist = thisSumDist;
+        avoidLoc = pos;
+      }
+    }
+  }
+  if (avoidLoc !== null) {
+    //FORCE A MOVE AWAY
+    self.log(`Pilgrim running away from enemy`)
+    let rels = base.rel(self.me.x, self.me.y, avoidLoc[0], avoidLoc[1]);
+    return {action:self.move(rels.dx,rels.dy)}
+  }
   
   //if robot is going to deposit but it is taken up, search for new deposit loc.
   if (self.status === 'goingToKarbDeposit' || self.status === 'goingToFuelDeposit') {
@@ -130,7 +173,8 @@ function mind(self) {
         }
       }
       let nearestStructure = search.findNearestStructure(self);
-      if (cd > qmath.dist(newTarget[0], newTarget[1],nearestStructure.x, nearestStructure.y) + 5) {
+      self.log(`nearest struct is ${nearestStructure.x}, ${nearestStructure.y}, karb target is ${newTarget}`);
+      if (qmath.dist(newTarget[0], newTarget[1],nearestStructure.x, nearestStructure.y) > 10) {
         //if far enough, try to build church there
         self.status = 'building';
         //search all around karb deposit

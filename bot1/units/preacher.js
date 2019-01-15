@@ -34,7 +34,7 @@ function mind(self){
     self.castleTalk(self.me.unit);
     self.allowedToMove = true;
     self.finalTarget = [self.me.x, self.me.y];
-    self.status = 'rally';
+    self.status = 'defend';
     self.lastAttackedUnit = null;
     
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
@@ -81,7 +81,7 @@ function mind(self){
       //self.rallyTarget = [self.me.x, self.me.y];
       //self.finalTarget = [self.me.x, self.me.y];
       self.log(`Rally Point: ${self.rallyTarget}`)
-      self.defendTarget = [self.me.x, self.me.y];
+      self.defendTarget = self.rallyTarget;
     }
     else {
       //set defending target
@@ -150,6 +150,13 @@ function mind(self){
         self.finalTarget = [targetLoc.x, targetLoc.y];
         self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
       }
+      if (msg >= 16392 && msg <= 20487) {
+        self.status = 'goToTarget';
+        let padding = 16392;
+        let targetLoc = self.getLocation(msg - padding);
+        self.finalTarget = [targetLoc.x, targetLoc.y];
+        self.log(`Preparing to attack enemy at ${self.finalTarget}`);
+      }
       if (msg === 5) {
         self.log(`Received ${msg} from ${robotsInVision[i].id}`);
       }
@@ -166,11 +173,32 @@ function mind(self){
   */
   //defenders and units that are have no final target. If they did, then they must be waiting for a fuel stack to go that target
   if (self.status === 'defend') {
-    
-    moveApart(self);
+    if (self.me.x % 2 === 0 || self.me.y % 2 === 0 || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true) {
+      let closestDist = 99999;
+      let bestLoc = null;
+      for (let i = 0; i < gameMap.length; i++) {
+        for (let j = 0; j < gameMap[0].length; j++) {
+          if (i % 2 === 1 && j % 2 === 1){
+            if (search.emptyPos(j, i , robotMap, gameMap) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
+              //assuming final target when rallying is the rally targt
+              let thisDist = qmath.dist(self.defendTarget[0], self.defendTarget[1], j, i);
+              if (thisDist < closestDist) {
+                closestDist = thisDist;
+                bestLoc = [j, i];
+              }
+            }
+          }
+        }
+      }
+      if (bestLoc !== null) {
+        self.finalTarget = bestLoc;
+        self.log('New location near defend point :' + self.finalTarget);
+      }
+    }
   }
   //units rallying go to a rally point sort of, and will end up trying to attack the first known enemy structure
   if (self.status === 'rally'){
+    /*
     let unitsInVincinity = search.unitsInRadius(self, 36)
     
     
@@ -240,6 +268,7 @@ function mind(self){
           self.log('New location near rally point :' + self.finalTarget);
         }
     }
+    */
   }
   
   
@@ -248,7 +277,9 @@ function mind(self){
   if (self.status === 'attackTarget') {
     
   }
-  
+  if (self.status === 'goToTarget') {
+    
+  }
   if (self.status === 'searchAndAttack') {
     if (self.knownStructures[otherTeamNum].length > 0){
       
@@ -364,7 +395,7 @@ function mind(self){
   if (self.status === 'attackTarget') {
     //finaltarget is enemy target pos.
     let distToEnemy = qmath.dist(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
-    if (distToEnemy >= 60) {
+    if (distToEnemy >= 50) {
       //stay put
     }
     else {

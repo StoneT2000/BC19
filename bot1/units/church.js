@@ -73,7 +73,7 @@ function mind(self){
     if (self.sawEnemyLastTurn === true) {
       self.signal(16391, 36); //tell everyone to defend
     }
-    if (self.karbonite >= 150) {
+    if (self.karbonite >= 200) {
       self.buildQueue.push(4, 4, 5);
     }
     else {
