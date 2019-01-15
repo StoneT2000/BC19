@@ -3509,23 +3509,63 @@ function initializePlanner(self) {
   let h = self.map.length;
   let mapArr = new Int8Array(w * h);
   self.log('Width: ' + w + ' Height: ' + h);
+  let surrounding = [[-1,-1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]];
+  //[[0,-1], [1,-1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
+  //FIRST WE REDUCE MAP TO SAVE PLANNING TIME
   for (let i = 0; i < h; i++) {
     for (let j = 0; j < w; j++) {
       //x:j, y:i
       let indexInMap = j + i * w;
       if (gameMap[i][j] === false){
+        /*
+        let numObstacles = 0;
+        let remove = false;
+        let surroundingTileInfo = [];
+        for (let k = 0; k < surrounding.length; k++) {
+          let tileRel = surrounding[k];
+          let ny = i + tileRel[1];
+          let nx = j + tileRel[0];
+          if (nx < 0 || ny < 0 || nx >= gameMap[0].length || ny >= gameMap.length){
+            surroundingTileInfo.push(true);
+          }
+          else {
+            let passable = gameMap[i + tileRel[1]][j + tileRel[0]];
+            if (passable === false) {
+              numObstacles += 1;
+              surroundingTileInfo.push(false);
+            }
+            else {
+              surroundingTileInfo.push(true);
+            }
+          }
+        }
+        if (numObstacles <= 2) {
+          //remove all wals that are singular
+          mapArr[indexInMap] = 0;
+        }
+        else if (surroundingTileInfo[1] === false && surroundingTileInfo[6] === false) {
+          mapArr[indexInMap] = 0;
+        }
+        else if (surroundingTileInfo[3] === false && surroundingTileInfo[4] === false) {
+          mapArr[indexInMap] = 0;
+        }
+        else {
+          mapArr[indexInMap] = 1;
+        }
+        */
         mapArr[indexInMap] = 1;
       }
     }
   }
+  self.log(`Map Reduction took ${new Date() - t1} ms`);
   //self.log('Obstacles maze: ' + maze.get(0,1));
+  let t2 = new Date();
   let gMap = ndarray(mapArr, [w, h]);
   let planner = createPlanner(gMap)
   self.planner = planner;
-  let t2 = new Date();
-  let planningTime = t2 - t1;
-  self.log(`Planner took ${planningTime} ms`);
-
+  
+  self.log(`Planner took ${new Date() - t2} ms`);
+  self.log(`51,10:${gMap.get(10,51)}`);
   //var path = [];
   //var dist = planner.search(19,7, 23,7,  path);
   //self.log(`Dist: ${dist}; path:${path}`);

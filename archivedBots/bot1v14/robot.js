@@ -127,6 +127,7 @@ class MyRobot extends BCAbstractRobot {
   */
   readyAttack() {
     let fuelCost = SPECS.UNITS[this.me.unit].ATTACK_FUEL_COST;
+    this.log(`I have ${this.fuel} fuel, need ${fuelCost}`);
     if (this.fuel >= fuelCost) {
       return true;
     }
@@ -159,7 +160,7 @@ class MyRobot extends BCAbstractRobot {
   * @param{[x,y]} finalTarget - An array of the position of the target the bot wants to navigate to
   *
   */
-  navigate(finalTarget) {
+  navigate(finalTarget, avoidFriends = false) {
     if (finalTarget !== null){
       this.setFinalTarget(finalTarget);
       let action = '';
@@ -171,7 +172,7 @@ class MyRobot extends BCAbstractRobot {
         }
       }
       if (this.target) {
-        let rels = base.relToPos(this.me.x, this.me.y, this.target[0], this.target[1], this);
+        let rels = base.relToPos(this.me.x, this.me.y, this.target[0], this.target[1], this, avoidFriends);
         if (rels.dx === 0 && rels.dy === 0) {
           action = ''
         }
@@ -216,6 +217,7 @@ class MyRobot extends BCAbstractRobot {
   initializeCastleLocations() {
     let possibleCastlePositions = search.circle(this, this.me.x, this.me.y, 2);
     let robotMap = this.getVisibleRobotMap();
+    let nextToCastle = false;
     for (let i = 0; i < possibleCastlePositions.length; i++) {
       let px = possibleCastlePositions[i][0];
       let py = possibleCastlePositions[i][1];
@@ -223,21 +225,32 @@ class MyRobot extends BCAbstractRobot {
       let castleRobot = this.getRobot(robotMap[py][px]);
       if (castleRobot !== null && castleRobot.unit === SPECS.CASTLE) {
         this.knownStructures[this.me.team].push({x:castleRobot.x, y:castleRobot.y, unit: 0});
+        nextToCastle = true;
         break;
       }
     }
-    
+    if (nextToCastle === false ){
+      this.knownStructures = {0:[], 1:[]};
+      return false;
+    }
     let cx = this.knownStructures[this.me.team][0].x;
     let cy = this.knownStructures[this.me.team][0].y;
-    let exploreTarget = [this.map[0].length - this.me.x - 1, this.map.length - this.me.y - 1];
+    
+    let exploreTarget = null;
     if (this.mapIsHorizontal) {
       exploreTarget = [cx, this.map.length - cy - 1];
     }
     else {
       exploreTarget = [this.map[0].length - cx - 1, cy];
     }
+    if (exploreTarget !== null) {
+      this.knownStructures[(this.me.team + 1) % 2].push({x:exploreTarget[0], y:exploreTarget[1], unit: 0});
+      return true;
+    }
+    else {
+      return false; //not at castle
+    }
     
-    this.knownStructures[(this.me.team + 1) % 2].push({x:exploreTarget[0], y:exploreTarget[1], unit: 0});
   }
 }
 

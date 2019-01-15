@@ -57,6 +57,14 @@ function processMessageCrusader(self, msg){
     case 1:
       self.status = 'searchAndAttack';
       break;
+    case 16390:
+      self.status = 'rally';
+      self.finalTarget = self.rallyTarget;
+      break;
+    case 16391:
+      self.status = 'defend';
+      self.finalTarget = self.defendTarget;
+      break;
   }
 }
 function processMessagePreacher(self, msg){
@@ -72,8 +80,18 @@ function processMessagePreacher(self, msg){
         self.status = 'defend';
       }
       break;
-    //if message is from 6 to 4101, this is a map location, with 6 units of padding
+    //if message is from 6 to 4101, this is a map location, with 6 units of padding. Used to tell attacking units to target a location
       //if message is from 4102, to 8197, this is a map location that a castle tells the unit, it is the map location of an enemy castle.
+      //if message is from 8198 12293
+      //if message is from 12294 to 16389, attack target
+    case 16390:
+      self.status = 'rally';
+      self.finalTarget = self.rallyTarget;
+      break;
+    case 16391:
+      self.status = 'defend';
+      self.finalTarget = self.defendTarget;
+      break;
   }
 }
 function processMessageProphet(self, msg){
@@ -82,6 +100,20 @@ function processMessageProphet(self, msg){
       break;
     case 1:
       self.status = 'searchAndAttack';
+      break;
+    case 5:
+      //preachers waiting for stack of fuel to engage in next venture stay as that status
+      if (self.status !== 'waitingForFuelStack'){
+        self.status = 'defend';
+      }
+      break;
+    case 16390:
+      self.status = 'defend';
+      self.finalTarget = self.defendTarget;
+      break;
+    case 16391:
+      self.status = 'defend';
+      self.finalTarget = self.defendTarget;
       break;
   }
 }
