@@ -31,7 +31,7 @@ function mind(self){
   
   let robotsInVision = self.getVisibleRobots();
   
-  self.status = 'defend';
+  //self.status = 'defend';
   
   //SIGNAL PROCESSION
   for (let i = 0; i < robotsInVision.length; i++) {
@@ -122,13 +122,22 @@ function mind(self){
         return {action:action};
       }
     }
+    
+    
+    if (self.destroyedCastle === true) {
+      self.destroyedCastle = false;
+      let newLoc = [self.knownStructures[self.me.team][0].x,self.knownStructures[self.me.team][0].y];
+      self.log('Next enemy: ' + newLoc);
+      self.status = 'defend';
+    }
+    
   }
   
   
   if (self.status === 'attackTarget') {
     //finaltarget is enemy target pos.
     let distToEnemy = qmath.dist(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
-    if (distToEnemy >= 80) {
+    if (distToEnemy >= 82) {
       //stay put
     }
     else {

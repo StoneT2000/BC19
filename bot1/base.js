@@ -91,11 +91,12 @@ const unitAttackFuelCosts = {
 * @param {number} p2x - x
 * @param {number} p2y - x
 * @param {self} self - self
+* @param {boolean} avoidFriends - whether or not avoid friendly units to avoid clumping
 */
-function relToPos(p1x, p1y, p2x, p2y, self) {
+function relToPos(p1x, p1y, p2x, p2y, self, avoidFriends = false) {
   let vals = rel(p1x, p1y, p2x, p2y);
   let deltas = unitMoveDeltas[self.me.unit];
-  
+  let robotMap = self.getVisibleRobotMap();
   let closestDist = qmath.dist(p2x,p2y,p1x, p1y);
   let bestDelta = [0,0];
   for (let i = 0; i < deltas.length; i++) {
@@ -104,10 +105,26 @@ function relToPos(p1x, p1y, p2x, p2y, self) {
     let ny = p1y+deltas[i][1]
     let pass = self.canMove(deltas[i][0],deltas[i][1])
     if (pass === true){
-      let distLeft = qmath.dist(nx,ny,p2x,p2y);
-      if (distLeft < closestDist) {
-        closestDist = distLeft;
-        bestDelta = deltas[i];
+      let validPlace = true;
+      if (avoidFriends) {
+        
+        let checkPositions = search.circle(self, nx, ny, 2);
+        for (let k = 1; k < checkPositions.length; k++) {
+          let pos = checkPositions[k];
+          //self.log(`Check for friends at ${pos}`)
+          let robotThere = self.getRobot(robotMap[pos[1]][pos[0]]);
+          if (robotThere !== null && robotThere.team === self.me.team && robotThere.id !== self.me.id) {
+            validPlace = false;
+          }
+        }
+      }
+      //self.log(`${nx}, ${ny} is valid?:${validPlace}`);
+      if (validPlace){
+        let distLeft = qmath.dist(nx,ny,p2x,p2y);
+        if (distLeft < closestDist) {
+          closestDist = distLeft;
+          bestDelta = deltas[i];
+        }
       }
     }
   }

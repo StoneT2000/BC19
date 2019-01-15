@@ -456,7 +456,7 @@ function mind(self) {
         self.buildQueue = [];
       }
     }
-    if (self.karbonite >= 150) {
+    if (self.karbonite >= 150 && self.stackFuel === false) {
       self.buildQueue.push(4, 4, 5);
     }
     else {
@@ -475,6 +475,8 @@ function mind(self) {
     self.sawEnemyLastTurn = true;
     //spam mages if we dont have any, otherwise prophets!
     //let unitsInVincinity = search.unitsInRadius(self, 36);
+    
+    //we start building up prophets after their rush is done
     if (unitsInVincinity[SPECS.PREACHER].length >= 3){
       self.buildQueue.unshift(4);
     }

@@ -296,7 +296,7 @@ function mind(self) {
       self.castleTalk(71);
     }
     let robotThere = self.getRobot(robotMap[self.buildTarget[1]][self.buildTarget[0]]);
-    if (robotThere !== null && robotThere.unit === SPECS.CHURCH){
+    if (robotThere !== null && (robotThere.unit === SPECS.CHURCH)){
       self.status = 'searchForKarbDeposit';
       self.log(`Church built already`);
     }
@@ -304,7 +304,7 @@ function mind(self) {
       if (self.me.x === self.finalTarget[0] && self.me.y === self.finalTarget[1]) {
         let rels = base.rel(self.me.x, self.me.y, self.buildTarget[0], self.buildTarget[1]);
         self.log(`TRIED TO BUILD: ${rels.dx}, ${rels.dy}`);
-        if (self.fuel >= 200 && self.karbonite >= 50){
+        if (self.fuel >= 200 && self.karbonite + self.me.karbonite >= 50){
           if (self.fuel <= 100){
             self.status = 'searchForFuelDeposit';
           }
@@ -317,6 +317,30 @@ function mind(self) {
           self.log(`NOT ENOUGH RESOURCES: fuel:${self.fuel}; karb: ${self.karbonite}`);
         }
       }
+      //dont stand on the build target, leave it if the final target has a pilgrim on it already
+      let pilgrimOnFinalTarget = self.getRobot(robotMap[self.finalTarget[1]][self.finalTarget[0]]);
+      if (pilgrimOnFinalTarget !== null && pilgrimOnFinalTarget.team === self.me.team && pilgrimOnFinalTarget.unit === SPECS.PILGRIM && self.me.id !== pilgrimOnFinalTarget.id){
+        self.log(`already a unit building there`);
+          self.status = 'searchForFuelDeposit';
+      }
+      /*
+      self.log(`Checking`)
+      let pilgrimOnFinalTarget = self.getRobot(robotMap[self.finalTarget[1]][self.finalTarget[0]]);
+      if (pilgrimOnFinalTarget !== null && pilgrimOnFinalTarget.team === self.me.team && pilgrimOnFinalTarget.unit === SPECS.PILGRIM){
+        if (self.me.x === self.buildTarget[0] && self.me.y === self.buildTarget[1]) {
+          let leavePositions = search.circle(self, self.me.x, self.me.y, 2);
+          for (let i = 0; i < leavePositions.length; i++) {
+            let pos = leavePositions[i];
+            let orobot = self.getRobot(robotMap[pos[1]][pos[0]]);
+            if (orobot === null && gameMap[pos[1]][pos[0]] === true) {
+              self.log(`Moved away from build target`)
+              let rels = base.rel(self.me.x, self.me.y, pos[0], pos[1]);
+              return {action:self.move(rels.dx, rels.dy)};
+            }
+          }
+        }
+      }
+      */
     }
   }
   //forever mine

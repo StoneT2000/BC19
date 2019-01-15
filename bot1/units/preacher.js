@@ -396,9 +396,10 @@ function mind(self){
     //finaltarget is enemy target pos.
     let distToEnemy = qmath.dist(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
     if (distToEnemy >= 50) {
-      //stay put
+      
     }
     else {
+      //stay put
       return '';
     }
   }
@@ -412,7 +413,12 @@ function mind(self){
     return {action:forcedAction};
   }
   if (self.allowedToMove === true){
-    action = self.navigate(self.finalTarget);
+    let avoidFriends = false;
+    if (self.status === 'defend'){
+      avoidFriends = true;
+    }
+    self.log(`STAUS:${self.status}`)
+    action = self.navigate(self.finalTarget, true);
   }
   else {
     action = '';
