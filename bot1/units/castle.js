@@ -34,6 +34,8 @@ function mind(self) {
     
     self.initializeCastleLocations();
     
+    self.stackFuel = false;
+    
     self.oppositeCastleDestroyed = false;
     
     let fuelMap = self.getFuelMap();
@@ -268,6 +270,7 @@ function mind(self) {
   self.status = 'build';
   self.canBuildPilgrims = true;
   self.canBuildPreachers = true;
+  self.stackFuel = false;
   
   let idsWeCanHear = [];
   for (let i = 0; i < robotsInVision.length; i++) {
@@ -281,7 +284,7 @@ function mind(self) {
     signal.processMessageCastleTalk(self, msg, robotsInVision[i].id);
     if (signalmsg === 4) {
       //pilgrim is nearby, assign it new mining stuff if needed
-      if (self.status === 'pause' || (self.prophets >= 4 && self.fuel <= 400)) {
+      if (self.status === 'pause' || (self.fuel <= self.preachers * 60 + self.prophets * 70) || self.stackFuel === true) {
         self.log(`Castle tried to tell nearby pilgrims to mine fuel`);
         self.signal(3,2)
       }
@@ -410,23 +413,23 @@ function mind(self) {
           self.log(`Nearest to castle is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
           sawEnemyThisTurn = true;
         }
-        
-        
       }
       
     }
   }
   
   //code for determing when castle sends its local army out.
-  if (self.preachers >= 3) {
+  let unitsInVincinity = search.unitsInRadius(self, 36);
+  if (true) {
     
-    let unitsInVincinity = search.unitsInRadius(self, 36);
+    
     //self.log(`${unitsInVincinity[5]}`);
-    if (unitsInVincinity[SPECS.PREACHER].length >= 6){
+    if (unitsInVincinity[SPECS.PREACHER].length + unitsInVincinity[SPECS.PROPHET].length >= 12){
       self.status = 'pause';
       let distToTarget = qmath.unitDist(self.me.x, self.me.y, self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y);
-      let fuelNeededForAttack = (distToTarget/2) * 12 * unitsInVincinity[SPECS.PREACHER].length + (distToTarget/2) * 12 * unitsInVincinity[SPECS.PROPHET].length;
+      let fuelNeededForAttack = (distToTarget/2) * 8 * unitsInVincinity[SPECS.PREACHER].length + (distToTarget/2) * 10 * unitsInVincinity[SPECS.PROPHET].length;
       self.log(`Still need ${fuelNeededForAttack} fuel before attacking ${self.knownStructures[otherTeamNum][0].x}, ${self.knownStructures[otherTeamNum][0].y}`);
+      self.stackFuel = true;
       if (self.fuel >= fuelNeededForAttack){
         let targetLoc = self.knownStructures[otherTeamNum][0];
         let compressedLocationHash = self.compressLocation(targetLoc.x, targetLoc.y);
@@ -438,6 +441,10 @@ function mind(self) {
   if (sawEnemyThisTurn === false) {
     //keep karbonite in stock so we can spam mages out when needed
     if ((self.karbonite >= 100 || self.pilgrims <= 0) && self.me.turn >= 2 && self.canBuildPilgrims === true && self.pilgrims <= self.maxPilgrims) {
+      self.buildQueue.push(2);
+    }
+    else if (self.pilgrims <= self.maxPilgrims * 1.5 && unitsInVincinity[SPECS.PROPHET] + unitsInVincinity[SPECS.PREACHER] >= 8) {
+      //we are probably safe
       self.buildQueue.push(2);
     }
     if (self.sawEnemyLastTurn === true) {
@@ -466,10 +473,21 @@ function mind(self) {
     self.signal(padding + compressedLocationHash, 36);
     //self.log(`Nearest to castle is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
     self.sawEnemyLastTurn = true;
-    self.buildQueue.unshift(5);
+    //spam mages if we dont have any, otherwise prophets!
+    //let unitsInVincinity = search.unitsInRadius(self, 36);
+    if (unitsInVincinity[SPECS.PREACHER].length >= 3){
+      self.buildQueue.unshift(4);
+    }
+    else {
+      self.buildQueue.unshift(5);
+    }
     
   }
   //building code
+  //only build if we have sufficient fuel for our units to perform attack manuevers
+  if ((self.fuel <= self.preachers * 50 + self.prophets * 60) && sawEnemyThisTurn === false) {
+    self.status = 'pause';
+  }
   if (self.status === 'build') {
     
     self.log(`BuildQueue: ${self.buildQueue}`)

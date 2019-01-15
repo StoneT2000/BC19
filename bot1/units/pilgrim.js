@@ -172,36 +172,39 @@ function mind(self) {
           }
         }
       }
-      let nearestStructure = search.findNearestStructure(self);
-      self.log(`nearest struct is ${nearestStructure.x}, ${nearestStructure.y}, karb target is ${newTarget}`);
-      if (qmath.dist(newTarget[0], newTarget[1],nearestStructure.x, nearestStructure.y) > 10) {
-        //if far enough, try to build church there
-        self.status = 'building';
-        //search all around karb deposit
-        let mostDeposits = 0;
-        let buildLoc = null;
-        let positionsAroundDeposit = search.circle(self, newTarget[0], newTarget[1], 2);
-        for (let k = 0; k < positionsAroundDeposit.length; k++) {
-          let px = positionsAroundDeposit[k][0];
-          let py = positionsAroundDeposit[k][1];
-          if (fuelMap[py][px] === false && karboniteMap[py][px] === false) {
-            let numDepositsHere = numberOfDeposits(self, px, py);
-            if (numDepositsHere > mostDeposits) {
-              mostDeposits = numDepositsHere;
-              buildLoc = [px, py];
+      self.status = 'goingToKarbDeposit'
+      if (self.karbonite >= 30) {
+        let nearestStructure = search.findNearestStructure(self);
+        self.log(`nearest struct is ${nearestStructure.x}, ${nearestStructure.y}, karb target is ${newTarget}`);
+        if (qmath.dist(newTarget[0], newTarget[1],nearestStructure.x, nearestStructure.y) > 10) {
+          //if far enough, try to build church there
+          self.status = 'building';
+          //search all around karb deposit
+          let mostDeposits = 0;
+          let buildLoc = null;
+          let positionsAroundDeposit = search.circle(self, newTarget[0], newTarget[1], 2);
+          for (let k = 0; k < positionsAroundDeposit.length; k++) {
+            let px = positionsAroundDeposit[k][0];
+            let py = positionsAroundDeposit[k][1];
+            if (fuelMap[py][px] === false && karboniteMap[py][px] === false) {
+              let numDepositsHere = numberOfDeposits(self, px, py);
+              if (numDepositsHere > mostDeposits) {
+                mostDeposits = numDepositsHere;
+                buildLoc = [px, py];
+              }
             }
           }
-        }
-        if (buildLoc !== null) {
-          self.buildTarget = buildLoc;
-          
+          if (buildLoc !== null) {
+            self.buildTarget = buildLoc;
+
+          }
+          else {
+            self.status = 'goingToKarbDeposit';
+          }
         }
         else {
           self.status = 'goingToKarbDeposit';
         }
-      }
-      else {
-        self.status = 'goingToKarbDeposit';
       }
       self.finalTarget = [newTarget[0],newTarget[1]];
     }
@@ -218,7 +221,7 @@ function mind(self) {
     let currRels = base.rel(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
     if (Math.abs(currRels.dx) <= 1 && Math.abs(currRels.dy) <= 1){
       self.status = 'searchForKarbDeposit';
-      if (self.fuel <= 100 || self.karbonite >= 100) {
+      if (self.fuel <= 100) {
         self.status = 'searchForFuelDeposit';
       }
       else {
@@ -302,7 +305,7 @@ function mind(self) {
         let rels = base.rel(self.me.x, self.me.y, self.buildTarget[0], self.buildTarget[1]);
         self.log(`TRIED TO BUILD: ${rels.dx}, ${rels.dy}`);
         if (self.fuel >= 200 && self.karbonite >= 50){
-          if (self.fuel <= 600){
+          if (self.fuel <= 100){
             self.status = 'searchForFuelDeposit';
           }
           else {

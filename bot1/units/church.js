@@ -27,8 +27,9 @@ function mind(self){
     signal.processMessageChurch(self, msg);
     let signalmsg = robotsInVision[i].signal;
     if (msg === 4) {
+      self.log(`Church got a unit returned`);
       //pilgrim is nearby, assign it new mining stuff if needed
-      if (self.status === 'pause' || (self.fuel <= 400)) {
+      if (self.status === 'pause' || (self.fuel <= 600)) {
         self.log(`Church tried to tell nearby pilgrims to mine fuel`);
         self.signal(3,2)
       }
@@ -73,8 +74,15 @@ function mind(self){
     if (self.sawEnemyLastTurn === true) {
       self.signal(16391, 36); //tell everyone to defend
     }
-    if (self.karbonite >= 200) {
+    if (self.karbonite >= 200 && (self.fuel <= self.preachers * 60 + self.prophets * 70)) {
       self.buildQueue.push(4, 4, 5);
+    }
+    if ((self.fuel <= self.preachers * 60 + self.prophets * 70) && self.karbonite >= 100) {
+      //not enough fuel, build pilgrim
+      let unitsInVincinity = search.unitsInRadius(self, 8);
+      if (unitsInVincinity[SPECS.PILGRIM].length < numberOfDeposits(self, self.me.x, self.me.y)){
+        self.buildQueue.push(2);
+      }
     }
     else {
       
@@ -154,5 +162,18 @@ function enoughResourcesToBuild(self, unitType) {
   }
   return false;
 }
-
+function numberOfDeposits(self, nx, ny) {
+  let checkPositions = search.circle(self, nx, ny, 2);
+  let numDeposits = 0;
+  let fuelMap = self.getFuelMap();
+  let karbMap = self.getKarboniteMap();
+  for (let i = 0; i < checkPositions.length; i++) {
+    let cx = checkPositions[i][0];
+    let cy = checkPositions[i][1];
+    if (fuelMap[cy][cx] === true || karbMap[cy][cx] === true) {
+      numDeposits += 1;
+    }
+  }
+  return numDeposits;
+}
 export default {mind}
