@@ -93,9 +93,12 @@ const unitAttackFuelCosts = {
 * @param {self} self - self
 * @param {boolean} avoidFriends - whether or not avoid friendly units to avoid clumping
 */
-function relToPos(p1x, p1y, p2x, p2y, self, avoidFriends = false) {
+function relToPos(p1x, p1y, p2x, p2y, self, avoidFriends = false, fast = true) {
   let vals = rel(p1x, p1y, p2x, p2y);
   let deltas = unitMoveDeltas[self.me.unit];
+  if (fast === false) {
+    deltas = unitMoveDeltas[self.me.unit].slice(0, 8);
+  }
   let robotMap = self.getVisibleRobotMap();
   let closestDist = qmath.dist(p2x,p2y,p1x, p1y);
   let bestDelta = [0,0];

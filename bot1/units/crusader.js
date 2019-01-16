@@ -25,7 +25,7 @@ function mind(self){
     if (initialized){
       let enemyCastle = self.knownStructures[otherTeamNum][0]
       //rally means crusader goes to a rally point
-      self.status = 'rally';
+      self.status = 'defend';
 
       let rels = base.relToPos(self.me.x, self.me.y, enemyCastle[0], enemyCastle[1], self);
       self.finalTarget = [self.me.x + rels.dx, self.me.y+rels.dy];
@@ -59,29 +59,17 @@ function mind(self){
       self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
       //final target is wherever is max dist from final target
     }
+    if (msg >= 16392 && msg <= 20487) {
+        self.status = 'goToTarget';
+        let padding = 16392;
+        let targetLoc = self.getLocation(msg - padding);
+        self.finalTarget = [targetLoc.x, targetLoc.y];
+        self.log(`Preparing to attack enemy at ${self.finalTarget}`);
+      }
   }
   base.updateKnownStructures(self);
   //DECISION MAKING
-  if (self.status === 'rally') {
-    //self.finalTarget = [self.me.x, self.me.y];
-  }
-  if (self.status === 'rally'){
-    let crusadersInVincinity = [];
-    for (let i = 0; i < robotsInVision.length; i++) {
-      let obot = robotsInVision[i];
-      if (obot.unit === SPECS.CRUSADER) {
-        let distToUnit = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
-        if (distToUnit <= 9) {
-          crusadersInVincinity.push(obot);
-        }
-      }
-    }
-    if (crusadersInVincinity.length >= 3) {
-      self.status = 'searchAndAttack';
-      self.signal(1,9);
-      forcedAction = '';
-    }
-  }
+
   if (self.status === 'defend') {
     //follow lattice structure
     if ((self.me.x % 2 === 1 && self.me.y % 2 === 1 ) || (self.me.x % 2 === 0 && self.me.y % 2 === 0) || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true) {
@@ -112,12 +100,12 @@ function mind(self){
   }
   
   //at any time
-  if (self.status === 'searchAndAttack' || self.status === 'rally' || self.status === 'defend' || self.status === 'attackTarget') {
+  if (self.status === 'searchAndAttack' || self.status === 'rally' || self.status === 'defend' || self.status === 'attackTarget' || self.status === 'goToTarget') {
     //watch for enemies, then chase them
     //call out friends to chase as well?, well enemy might only send scout, so we might get led to the wrong place
     let leastDistToTarget = 99999999;
     let isEnemy = false;
-    let enemyBot;
+    let enemyBot = null;
     for (let i = 0; i < robotsInVision.length; i++) {
       let obot = robotsInVision[i];
       
@@ -133,6 +121,7 @@ function mind(self){
 
           isEnemy = true;
           enemyBot = obot;
+          
         }
         
       }
@@ -140,6 +129,11 @@ function mind(self){
         
           //self.log(`Crusader see's our own castle`);
         
+      }
+    }
+    if (enemyBot !== null) {
+      if (self.status === 'goToTarget') {
+        self.finalTarget = [enemyBot.x, enemyBot.y];
       }
     }
     //enemy nearby, attack it?
@@ -160,8 +154,10 @@ function mind(self){
       //stay put
     }
     else {
-      return '';
+      //return '';
     }
+  }
+  if (self.status === 'goToTarget') {
   }
   
   //PROCESSING FINAL TARGET

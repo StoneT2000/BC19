@@ -36,7 +36,7 @@ function mind(self) {
     
     self.stackFuel = false;
     
-    self.oppositeCastleDestroyed = false;
+    self.oppositeCastleDestroyed = false; //doesn't seem to be used
     
     let fuelMap = self.getFuelMap();
     let karboniteMap = self.getKarboniteMap();
@@ -118,7 +118,7 @@ function mind(self) {
         self.buildQueue.push(2, 5);
       }
       else if (offsetVal === 1) {
-        self.buildQueue.push(2);
+        //self.buildQueue.push(2);
       }
     }
     else if (self.castles === 1) {
@@ -299,7 +299,8 @@ function mind(self) {
         if (self.mapIsHorizontal) {
           //check xpos for almost unique castle identifier;
           if (self.knownStructures[otherTeamNum][i].x === enemyCastlePosDestroyed) {
-            if (i === 0) {
+            if (enemyCastlePosDestroyed === gameMap[0].length - self.me.x - 1) {
+              self.log(`Opposite castle destroyed`);
               self.oppositeCastleDestroyed = true;
             }
             self.knownStructures[otherTeamNum].splice(i,1);
@@ -309,8 +310,9 @@ function mind(self) {
         }
         else {
           if (self.knownStructures[otherTeamNum][i].y === enemyCastlePosDestroyed) {
-            if (self.knownStructures[otherTeamNum][i].x === self.me.x && self.knownStructures[otherTeamNum][i].y === self.me.y) {
+            if (enemyCastlePosDestroyed === gameMap.length - self.me.y - 1) {
               self.oppositeCastleDestroyed = true;
+              self.log(`Opposite castle destroyed`);
             }
             self.knownStructures[otherTeamNum].splice(i,1);
             break;
@@ -423,7 +425,6 @@ function mind(self) {
   if (true) {
     
     
-    //self.log(`${unitsInVincinity[5]}`);
     if (unitsInVincinity[SPECS.PREACHER].length + unitsInVincinity[SPECS.PROPHET].length >= 12){
       self.status = 'pause';
       let distToTarget = qmath.unitDist(self.me.x, self.me.y, self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y);

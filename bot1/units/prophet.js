@@ -58,7 +58,11 @@ function mind(self){
       self.log(`Preparing to attack enemy at ${self.finalTarget}`);
     }
   }
+  //each turn, we update our local self.knownStructures list.
+  //it also sets self.destroyedCastle to true if the castle that it knew about is no longer there anymore
   base.updateKnownStructures(self);
+  
+  
   //DECISIONS
   if (self.status === 'defend') {
     //follow lattice structure
@@ -68,7 +72,7 @@ function mind(self){
         for (let i = 0; i < gameMap.length; i++) {
           for (let j = 0; j < gameMap[0].length; j++) {
             if (i % 2 !== j % 2 ){
-              if (search.emptyPos(j, i , robotMap, gameMap) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
+              if (search.emptyPos(j, i , robotMap, gameMap, false) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
                 //assuming final target when rallying is the rally targt
                 let thisDist = qmath.dist(self.defendTarget[0], self.defendTarget[1], j, i);
                 if (thisDist < closestDist) {
@@ -81,7 +85,7 @@ function mind(self){
         }
         if (bestLoc !== null) {
           self.finalTarget = bestLoc;
-          self.log('New location near rally point :' + self.finalTarget);
+          self.log('New location near defend point :' + self.finalTarget);
         }
     }
   }
@@ -126,8 +130,10 @@ function mind(self){
     
     if (self.destroyedCastle === true) {
       self.destroyedCastle = false;
+      //go back home
+      
       let newLoc = [self.knownStructures[self.me.team][0].x,self.knownStructures[self.me.team][0].y];
-      self.log('Next enemy: ' + newLoc);
+      self.log('Destroyed castle, now going to: ' + newLoc);
       self.status = 'defend';
     }
     
@@ -149,7 +155,8 @@ function mind(self){
   if (forcedAction !== null) {
     return {action:forcedAction};
   }
-  action = self.navigate(self.finalTarget);
+  let moveFast = true;
+  action = self.navigate(self.finalTarget, false, moveFast);
   return {action:action}; 
 }
 

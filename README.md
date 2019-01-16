@@ -16,7 +16,7 @@ search.js - Functions for searching for data
 - Has a BFS algorithm thats really slow
 - horizontalSymmetry(gameMap) returns true if map is horizontally symmetric
 
-signals.js - Functions for processing signal data sent by bots to other bots
+signals.js - Functions for processing signal data sent by bots to other bots. Only has some of it
 - processMessage...(self, msg) updates self as needed
 
 units - Folder with all the code for processing self and returning an action, status update, and target
@@ -66,11 +66,12 @@ The values ...
 - 1 is reserved for units to tell other units with attacking abilities to go and attack the first known structure
 - 2,3 for castle to tell pilgrim to search for karbonite (2) or fuel (3)
 - 4 for pilgrim to tell castle it just gave out its fuel and karbonite and is ready to receive new instructions if needed
-- 
-- 6, ... 5001 are for sending new target locations for preachers
-- 5002,... 9997 are for sending the 1st new castle location for preachers
-- 9998,... 14993 are for sendign the 2nd new castle location (This also says that this new caslte location is the 2nd castle in the castles self.sortedEnemyCastles array)
-- 14994, ...19989 are for sending the third new castle location
+- 5??? **not sure if we need it**
+- 6, ... 4101 are for sending new target locations for units. **Doesn't seem to be used anymore??**
+- 4102,... 8197 are for sending the 1st new castle location for newly built units. **Also doesn't seem to be used anymore**, can be used for rush strats.
+- 8198,... 12293 **Also doesn't seem to be used anymore**
+- 12294, ...16389 are for setting unit statuses to 'attackTarget', used for defensive purposes to move units closer to enemy and farther away from own castle. Units only move such that they are outside attacking radius.
+- 16392, ... 20487 are for setting unit statuses to 'goToTarget', tells unit to always move to that target and then attack that target if possible. Sent by castle often to tell preachers to go attack enemy castle. Also sent often by castle to send preachers, crusaders to run at attacking prophets.
 
 
 ## STRATEGIES
@@ -78,7 +79,7 @@ The values ...
 #### Preacher Defence
 Defenders have a general advantage, so we start with stacking 3 preachers onto the first castle, then a pilgrim.
 
-Preachers move apart from each other in the direction of the enenmy castle, this way enemy preachers can't hit all our units at once. Preachers are initialized with mode ```rally``` and attempt to go to a rally target as determined at initialization
+Preachers move apart from each other in the direction of the enenmy castle, this way enemy preachers can't hit all our units at once. Preachers are initialized with mode ```defend``` . We also force a prophet to be built after there is sufficient karbonite and enough defending preachers. Once we stock up on prophets, the castle is basically unbeatable as long as we have tons of fuel.
 
 #### Preacher Attack
 
@@ -114,8 +115,4 @@ Check todos in strategy
 
 Strategy pls.
 
-SIGNAL TO CASTLE THE DESTRUCTION OF A CASTLE
-
-- This is to stop castles from producing preachers that attack enemy castles that are already flagged as "dead"
-
-(Reserve)
+SIGNAL TO CASTLE THE DESTRUCTION OF A CASTLE (We sort of do, we jsut need a better way to uniquely hash a castle location in a maximum 64x64 map into a number between )

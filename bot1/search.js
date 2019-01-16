@@ -30,9 +30,10 @@ function circle(self, xpos, ypos, radius) {
 function emptyPos(xpos, ypos, robotMap, passableMap, inVision = true) {
   if (inArr(xpos,ypos, robotMap)) {
     if (inVision === false){
-      //only check for impassable tile
-      if (passableMap[ypos][xpos] === true){
-        return true;
+      if (robotMap[ypos][xpos] <= 0) {
+        if (passableMap[ypos][xpos] === true){
+          return true;
+        }
       }
     }
     else {
