@@ -116,3 +116,5 @@ Check todos in strategy
 Strategy pls.
 
 SIGNAL TO CASTLE THE DESTRUCTION OF A CASTLE (We sort of do, we jsut need a better way to uniquely hash a castle location in a maximum 64x64 map into a number between )
+
+Improve the way pilgrims decide on where to build churches. Sometimes they just go to enenemy fuel locations

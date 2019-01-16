@@ -18,7 +18,7 @@ function mind(self){
   let karboniteMap = self.getKarboniteMap();
   let robotMap = self.getVisibleRobotMap();
   
-  self.log(`Preacher (${self.me.x}, ${self.me.y}); Status: ${self.status}; Final Target: ${self.finalTarget}`);
+  self.log(`Preacher (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
   //STRATS:
   //3 preacher defence. build a pilgrim then 3 preachers
   
@@ -34,7 +34,7 @@ function mind(self){
     self.castleTalk(self.me.unit);
     self.allowedToMove = true;
     self.finalTarget = [self.me.x, self.me.y];
-    self.status = 'defend';
+    self.status = 'searchAndAttack';
     self.lastAttackedUnit = null;
     
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
@@ -176,21 +176,15 @@ function mind(self){
     if (self.me.x % 2 === 0 || self.me.y % 2 === 0 || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true) {
       let closestDist = 99999;
       let bestLoc = null;
-      let nearestStructure = search.findNearestStructure(self);
       for (let i = 0; i < gameMap.length; i++) {
         for (let j = 0; j < gameMap[0].length; j++) {
           if (i % 2 === 1 && j % 2 === 1){
-            //position can also not be next to structure
-            if (search.emptyPos(j, i , robotMap, gameMap, false) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
+            if (search.emptyPos(j, i , robotMap, gameMap) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
               //assuming final target when rallying is the rally targt
-             
-              let distToStructure = qmath.dist(j, i, nearestStructure.x, nearestStructure.y);
-              if (distToStructure > 2){
-                let thisDist = qmath.dist(self.defendTarget[0], self.defendTarget[1], j, i);
-                if (thisDist < closestDist) {
-                  closestDist = thisDist;
-                  bestLoc = [j, i];
-                }
+              let thisDist = qmath.dist(self.defendTarget[0], self.defendTarget[1], j, i);
+              if (thisDist < closestDist) {
+                closestDist = thisDist;
+                bestLoc = [j, i];
               }
             }
           }
@@ -363,7 +357,7 @@ function mind(self){
         distToTarget2 = qmath.unitDist(self.me.x, self.me.y, newLoc[0], newLoc[1]);
       }
       let fuelNeededForAttack = (distToTarget2/2) * 16 * 7 + 250;
-      self.log(`Destroyed castle, now going to ${newLoc}`);
+      self.log(`Just killed castle, need ${fuelNeededForAttack}`);
       let compressedLocationHash = self.compressLocation(newLoc[0], newLoc[1]);
       //padding hash by 6
       /*
@@ -375,7 +369,7 @@ function mind(self){
       self.allowedToMove = false;
       */
       self.status = 'defend';
-      //through base.updateKnownStructures, bot sends signal throgh castleTalk to tell castle which castle was probably destroyed.
+      
       //send signal to tell bots to stop moving and wait for fuel stack
       //self.signal(5, 36);
       //self.log(`Initial New target: ${self.finalTarget}`);
@@ -420,21 +414,16 @@ function mind(self){
   }
   if (self.allowedToMove === true){
     let avoidFriends = false;
-    let moveFast = true;
-    if (self.status === 'attackTarget'){
+    if (self.status === 'defend'){
       avoidFriends = true;
     }
-    if (self.me.turn <= 3 && self.status === 'defend') {
-      //initially, allow bot to move freely if its not attackinga
-      avoidFriends = false;
-    }
-    self.log(`STAUS:${self.status}`);
-    action = self.navigate(self.finalTarget, avoidFriends, moveFast);
+    self.log(`STAUS:${self.status}`)
+    action = self.navigate(self.finalTarget, true);
   }
   else {
     action = '';
   }
-  return {action:action};
+  return {action:action}; 
 }
 
 function moveApart(self) {

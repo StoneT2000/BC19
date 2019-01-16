@@ -20,7 +20,7 @@ function mind(self){
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
     self.initializeCastleLocations();
     self.finalTarget = [self.me.x, self.me.y];
-    self.status = 'defend';
+    self.status = 'searchAndAttack';
     self.rallyTarget = [self.me.x, self.me.y];
     self.defendTarget = [self.me.x, self.me.y]
   }
@@ -58,31 +58,22 @@ function mind(self){
       self.log(`Preparing to attack enemy at ${self.finalTarget}`);
     }
   }
-  //each turn, we update our local self.knownStructures list.
-  //it also sets self.destroyedCastle to true if the castle that it knew about is no longer there anymore
   base.updateKnownStructures(self);
-  
-  
   //DECISIONS
   if (self.status === 'defend') {
     //follow lattice structure
     if ((self.me.x % 2 === 1 && self.me.y % 2 === 1 ) || (self.me.x % 2 === 0 && self.me.y % 2 === 0) || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true) {
         let closestDist = 99999;
         let bestLoc = null;
-        let nearestStructure = search.findNearestStructure(self);
-
         for (let i = 0; i < gameMap.length; i++) {
           for (let j = 0; j < gameMap[0].length; j++) {
             if (i % 2 !== j % 2 ){
-              if (search.emptyPos(j, i , robotMap, gameMap, false) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
+              if (search.emptyPos(j, i , robotMap, gameMap) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
                 //assuming final target when rallying is the rally targt
-                let distToStructure = qmath.dist(j, i, nearestStructure.x, nearestStructure.y);
-                if (distToStructure > 2){
-                  let thisDist = qmath.dist(self.defendTarget[0], self.defendTarget[1], j, i);
-                  if (thisDist < closestDist) {
-                    closestDist = thisDist;
-                    bestLoc = [j, i];
-                  }
+                let thisDist = qmath.dist(self.defendTarget[0], self.defendTarget[1], j, i);
+                if (thisDist < closestDist) {
+                  closestDist = thisDist;
+                  bestLoc = [j, i];
                 }
               }
             }
@@ -90,12 +81,18 @@ function mind(self){
         }
         if (bestLoc !== null) {
           self.finalTarget = bestLoc;
-          self.log('New location near defend point :' + self.finalTarget);
+          self.log('New location near rally point :' + self.finalTarget);
         }
     }
   }
   if (self.status === 'attackTarget') {
     
+  }
+  if (self.status === 'searchAndAttack') {
+    if (self.knownStructures[otherTeamNum].length > 0){
+      
+      self.finalTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
+    }
   }
   
   if (self.status === 'searchAndAttack' || self.status === 'rally' || self.status === 'defend' || self.status === 'attackTarget' || self.status === 'goToTarget') {
@@ -135,10 +132,8 @@ function mind(self){
     
     if (self.destroyedCastle === true) {
       self.destroyedCastle = false;
-      //go back home
-      
       let newLoc = [self.knownStructures[self.me.team][0].x,self.knownStructures[self.me.team][0].y];
-      self.log('Destroyed castle, now going to: ' + newLoc);
+      self.log('Next enemy: ' + newLoc);
       self.status = 'defend';
     }
     
@@ -160,8 +155,7 @@ function mind(self){
   if (forcedAction !== null) {
     return {action:forcedAction};
   }
-  let moveFast = true;
-  action = self.navigate(self.finalTarget, false, moveFast);
+  action = self.navigate(self.finalTarget);
   return {action:action}; 
 }
 
