@@ -104,7 +104,7 @@ function mind(self) {
     if (self.castles === 3) {
       //only first castle builds pilgrim in 3 preacher defence strategy
       if (offsetVal === 0) {
-        self.buildQueue.push(2, 5);
+        self.buildQueue.push(2,5,4,4, 2);
       }
       else if (offsetVal === 1){
         //self.buildQueue.push();
@@ -115,14 +115,14 @@ function mind(self) {
     }
     else if (self.castles === 2) {
       if (offsetVal === 0) {
-        self.buildQueue.push(2, 5);
+        self.buildQueue.push(2, 5,4,4,2);
       }
       else if (offsetVal === 1) {
         //self.buildQueue.push(2);
       }
     }
     else if (self.castles === 1) {
-      self.buildQueue.push(2, 5);
+      self.buildQueue.push(2,5,4,4,2);
     }
     
     

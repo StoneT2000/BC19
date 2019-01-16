@@ -122,7 +122,7 @@ function mind(self) {
       }
     }
     else if (self.castles === 1) {
-      self.buildQueue.push(4,4,5,3);
+      self.buildQueue.push(5,4,3,4,3);
     }
     
     
