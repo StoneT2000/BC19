@@ -104,7 +104,7 @@ function mind(self) {
     if (self.castles === 3) {
       //only first castle builds pilgrim in 3 preacher defence strategy
       if (offsetVal === 0) {
-        self.buildQueue.push(4,4,4,4,4);
+        self.buildQueue.push(5,4,3,4,3);
       }
       else if (offsetVal === 1){
         //self.buildQueue.push();
@@ -115,14 +115,20 @@ function mind(self) {
     }
     else if (self.castles === 2) {
       if (offsetVal === 0) {
-        self.buildQueue.push(4,4,4,4);
+        self.buildQueue.push(5,4,3,4,3);
       }
       else if (offsetVal === 1) {
-        self.buildQueue.push(2);
+        //self.buildQueue.push(2);
       }
     }
     else if (self.castles === 1) {
-      self.buildQueue.push(5,4,3,4,3);
+      //on small map, building a 4,4,4,4 can't defend against this
+      //3,4,4,4 wont work for small maps, large yes
+      //self.buildQueue.push(5,4,3,4,3);
+      
+      //building 3,4,4,4 works against enemy, archer rush, and crusader rush on all maps
+      //ocassionally fails against mage rush on small map
+      self.buildQueue.push(5,5,5,5,5);
     }
     
     

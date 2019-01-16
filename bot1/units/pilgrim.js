@@ -128,7 +128,7 @@ function mind(self) {
   //search for deposit, set new finalTarget and set path
   if (self.status === 'searchForKarbDeposit' || self.status === 'searchForFuelDeposit') {
     //perform search for closest deposit
-    let newTarget;
+    let newTarget = null;
     let cd = 9999990;
     if (self.status === 'searchForFuelDeposit'){
     
@@ -173,41 +173,43 @@ function mind(self) {
           }
         }
       }
-      self.status = 'goingToKarbDeposit'
-      if (self.karbonite >= 30) {
-        let nearestStructure = search.findNearestStructure(self);
-        self.log(`nearest struct is ${nearestStructure.x}, ${nearestStructure.y}, karb target is ${newTarget}`);
-        if (qmath.dist(newTarget[0], newTarget[1],nearestStructure.x, nearestStructure.y) > 10) {
-          //if far enough, try to build church there
-          self.status = 'building';
-          //search all around karb deposit
-          let mostDeposits = 0;
-          let buildLoc = null;
-          let positionsAroundDeposit = search.circle(self, newTarget[0], newTarget[1], 2);
-          for (let k = 0; k < positionsAroundDeposit.length; k++) {
-            let px = positionsAroundDeposit[k][0];
-            let py = positionsAroundDeposit[k][1];
-            if (fuelMap[py][px] === false && karboniteMap[py][px] === false) {
-              let numDepositsHere = numberOfDeposits(self, px, py);
-              if (numDepositsHere > mostDeposits) {
-                mostDeposits = numDepositsHere;
-                buildLoc = [px, py];
+      if (newTarget !== null){
+        self.status = 'goingToKarbDeposit'
+        if (self.karbonite >= 30) {
+          let nearestStructure = search.findNearestStructure(self);
+          self.log(`nearest struct is ${nearestStructure.x}, ${nearestStructure.y}, karb target is ${newTarget}`);
+          if (qmath.dist(newTarget[0], newTarget[1],nearestStructure.x, nearestStructure.y) > 10) {
+            //if far enough, try to build church there
+            self.status = 'building';
+            //search all around karb deposit
+            let mostDeposits = 0;
+            let buildLoc = null;
+            let positionsAroundDeposit = search.circle(self, newTarget[0], newTarget[1], 2);
+            for (let k = 0; k < positionsAroundDeposit.length; k++) {
+              let px = positionsAroundDeposit[k][0];
+              let py = positionsAroundDeposit[k][1];
+              if (fuelMap[py][px] === false && karboniteMap[py][px] === false) {
+                let numDepositsHere = numberOfDeposits(self, px, py);
+                if (numDepositsHere > mostDeposits) {
+                  mostDeposits = numDepositsHere;
+                  buildLoc = [px, py];
+                }
               }
             }
-          }
-          if (buildLoc !== null) {
-            self.buildTarget = buildLoc;
+            if (buildLoc !== null) {
+              self.buildTarget = buildLoc;
 
+            }
+            else {
+              self.status = 'goingToKarbDeposit';
+            }
           }
           else {
             self.status = 'goingToKarbDeposit';
           }
         }
-        else {
-          self.status = 'goingToKarbDeposit';
-        }
+        self.finalTarget = [newTarget[0],newTarget[1]];
       }
-      self.finalTarget = [newTarget[0],newTarget[1]];
     }
     
     

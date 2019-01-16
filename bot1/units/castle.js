@@ -123,6 +123,7 @@ function mind(self) {
     }
     else if (self.castles === 1) {
       self.buildQueue.push(2,5,4,4,2);
+      //self.buildQueue.push(2,4,4,4);
     }
     
     
@@ -478,13 +479,14 @@ function mind(self) {
     //let unitsInVincinity = search.unitsInRadius(self, 36);
     
     //we start building up prophets after their rush is done
-    if (unitsInVincinity[SPECS.PREACHER].length >= 3){
-      self.buildQueue.unshift(4);
+    if (self.me.turn > 5){
+      if (unitsInVincinity[SPECS.PREACHER].length >= 3){
+        self.buildQueue.unshift(4);
+      }
+      else {
+        self.buildQueue.unshift(5);
+      }
     }
-    else {
-      self.buildQueue.unshift(5);
-    }
-    
   }
   //building code
   //only build if we have sufficient fuel for our units to perform attack manuevers

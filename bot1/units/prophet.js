@@ -154,8 +154,20 @@ function mind(self){
     else {
       return '';
     }
+    
   }
-  
+  /* TODO: RESERVE A NEW SET OF SIGNALS FOR SENDING BOT TO FIGHT CASTLE. RESERVE A SET OF SIGNALS for SENDING BOT TO DEFEND AAGINST PROPHET
+  if (self.status === 'goToTarget') {
+    //finaltarget is enemy target pos.
+    let distToEnemy = qmath.dist(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
+    if (distToEnemy >= 100) {
+      //stay put
+    }
+    else {
+      return '';
+    }
+  }
+  */
   //PROCESSING FINAL TARGET
   if (forcedAction !== null) {
     return {action:forcedAction};
