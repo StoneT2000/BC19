@@ -9,39 +9,48 @@ function mind(self){
   let gameMap = self.map;
   let otherTeamNum = (self.me.team + 1) % 2;
   let action = '';
+  self.log(`Crusader (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
   let forcedAction = null;
-  self.log(`Prophet (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
   let robotMap = self.getVisibleRobotMap();
   let fuelMap = self.getFuelMap();
   let karboniteMap = self.getKarboniteMap();
   //INITIALIZATION
   if (self.me.turn === 1) {
+    //broadcast your unit number for castles to add to their count of units
     self.castleTalk(self.me.unit);
+    
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
-    self.initializeCastleLocations();
-    self.finalTarget = [self.me.x, self.me.y];
-    self.status = 'defend';
-    self.rallyTarget = [self.me.x, self.me.y];
-    self.defendTarget = [self.me.x, self.me.y]
+    
+    let initialized = self.initializeCastleLocations();
+    if (initialized){
+      let enemyCastle = self.knownStructures[otherTeamNum][0]
+      //rally means crusader goes to a rally point
+      self.status = 'defend';
+
+      let rels = base.relToPos(self.me.x, self.me.y, enemyCastle[0], enemyCastle[1], self);
+      self.finalTarget = [self.me.x + rels.dx, self.me.y+rels.dy];
+      self.defendTarget = [self.me.x, self.me.y];
+    }
+    else {
+      //set defending target
+      self.status = 'defend';
+      self.defendTarget = [self.me.x, self.me.y];
+      self.finalTarget = [self.me.x, self.me.y];
+    }
   }
   if (self.me.turn === 3) {
     pathing.initializePlanner(self);
     self.setFinalTarget(self.finalTarget);
   }
   
-  let robotsInVision = self.getVisibleRobots();
   
-  //self.status = 'defend';
+  let robotsInVision = self.getVisibleRobots();
   
   //SIGNAL PROCESSION
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
-    signal.processMessageProphet(self, msg);
-    if (msg >= 6 && msg <= 4101) {
-      let newTarget = self.getLocation(msg - 6);
-      self.finalTarget = [newTarget.x, newTarget.y];
-      self.status = 'searchAndAttack';
-    }
+    //self.log(`Received from ${robotsInVision[i].id}  msg: ${msg}`);
+    signal.processMessageCrusader(self, msg);
     if (msg >= 12294 && msg <= 16389) {
       self.status = 'attackTarget';
       let padding = 12294;
@@ -51,15 +60,16 @@ function mind(self){
       //final target is wherever is max dist from final target
     }
     if (msg >= 16392 && msg <= 20487) {
-      self.status = 'goToTarget';
-      let padding = 16392;
-      let targetLoc = self.getLocation(msg - padding);
-      self.finalTarget = [targetLoc.x, targetLoc.y];
-      self.log(`Preparing to attack enemy at ${self.finalTarget}`);
-    }
+        self.status = 'goToTarget';
+        let padding = 16392;
+        let targetLoc = self.getLocation(msg - padding);
+        self.finalTarget = [targetLoc.x, targetLoc.y];
+        self.log(`Preparing to attack enemy at ${self.finalTarget}`);
+      }
   }
   base.updateKnownStructures(self);
-  //DECISIONS
+  //DECISION MAKING
+
   if (self.status === 'defend') {
     //follow lattice structure
     if ((self.me.x % 2 === 1 && self.me.y % 2 === 1 ) || (self.me.x % 2 === 0 && self.me.y % 2 === 0) || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true) {
@@ -85,70 +95,69 @@ function mind(self){
         }
     }
   }
-  if (self.status === 'attackTarget') {
-    
-  }
   if (self.status === 'searchAndAttack') {
-    if (self.knownStructures[otherTeamNum].length > 0){
-      
-      self.finalTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
-    }
+    self.finalTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
   }
   
+  //at any time
   if (self.status === 'searchAndAttack' || self.status === 'rally' || self.status === 'defend' || self.status === 'attackTarget' || self.status === 'goToTarget') {
     //watch for enemies, then chase them
     //call out friends to chase as well?, well enemy might only send scout, so we might get led to the wrong place
     let leastDistToTarget = 99999999;
     let isEnemy = false;
-    let enemyBot;
+    let enemyBot = null;
     for (let i = 0; i < robotsInVision.length; i++) {
       let obot = robotsInVision[i];
       
       if (obot.team !== self.me.team) {
         
+        //if bot sees enemy structures, log it, and send to castle
+        if (obot.unit === SPECS.CASTLE || obot.unit === SPECS.CHURCH) {
+          //base.logStructure(self, obot);
+        }
         let distToThisTarget = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
-        if (distToThisTarget < leastDistToTarget && distToThisTarget >= 16) {
+        if (distToThisTarget < leastDistToTarget) {
           leastDistToTarget = distToThisTarget;
-          
+
           isEnemy = true;
           enemyBot = obot;
+          
         }
         
       }
       else {
+        
+          //self.log(`Crusader see's our own castle`);
+        
+      }
+    }
+    if (enemyBot !== null) {
+      if (self.status === 'goToTarget') {
+        self.finalTarget = [enemyBot.x, enemyBot.y];
       }
     }
     //enemy nearby, attack it?
-    if (leastDistToTarget <= 64 && isEnemy === true) {
+    if (leastDistToTarget <= 16 && isEnemy === true) {
       //let rels = base.relToPos(self.me.x, self.me.y, target[0], target[1], self);
       let rels = base.rel(self.me.x, self.me.y, enemyBot.x, enemyBot.y);
-      self.log(`Prophet Attacks ${rels.dx},${rels.dy}`);
+      //self.log(`Attack ${rels.dx},${rels.dy}`);
       if (self.readyAttack()){
         action = self.attack(rels.dx,rels.dy)
         return {action:action};
       }
     }
-    
-    
-    if (self.destroyedCastle === true) {
-      self.destroyedCastle = false;
-      let newLoc = [self.knownStructures[self.me.team][0].x,self.knownStructures[self.me.team][0].y];
-      self.log('Next enemy: ' + newLoc);
-      self.status = 'defend';
-    }
-    
   }
-  
-  
   if (self.status === 'attackTarget') {
     //finaltarget is enemy target pos.
     let distToEnemy = qmath.dist(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
-    if (distToEnemy >= 82) {
+    if (distToEnemy >= 60) {
       //stay put
     }
     else {
-      return '';
+      //return '';
     }
+  }
+  if (self.status === 'goToTarget') {
   }
   
   //PROCESSING FINAL TARGET
@@ -156,7 +165,12 @@ function mind(self){
     return {action:forcedAction};
   }
   action = self.navigate(self.finalTarget);
-  return {action:action}; 
-}
+  return {action:action};
+  
 
+  
+}
+function invert(x,y){
+
+}
 export default {mind}

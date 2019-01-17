@@ -115,7 +115,7 @@ function mind(self) {
     }
     else if (self.castles === 2) {
       if (offsetVal === 0) {
-        self.buildQueue.push(5,4,3,4,3);
+        self.buildQueue.push(4,4,4,4,4,4);
       }
       else if (offsetVal === 1) {
         //self.buildQueue.push(2);
@@ -128,7 +128,7 @@ function mind(self) {
       
       //building 3,4,4,4 works against enemy, archer rush, and crusader rush on all maps
       //ocassionally fails against mage rush on small map
-      self.buildQueue.push(5,5,5,5,5);
+      self.buildQueue.push(4,4,4,4,4,4);
     }
     
     

@@ -20,7 +20,7 @@ function mind(self){
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
     self.initializeCastleLocations();
     self.finalTarget = [self.me.x, self.me.y];
-    self.status = 'searchAndAttack';
+    self.status = 'defend';
     self.rallyTarget = [self.me.x, self.me.y];
     self.defendTarget = [self.me.x, self.me.y]
   }

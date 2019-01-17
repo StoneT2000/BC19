@@ -124,6 +124,7 @@ function mind(self) {
     else if (self.castles === 1) {
       self.buildQueue.push(2,5,4,4,2);
       //self.buildQueue.push(2,4,4,4);
+      //defending against 4 archers seems to need 4 archer defence
     }
     
     
