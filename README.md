@@ -71,7 +71,8 @@ The values ...
 - 4102,... 8197 are for sending the 1st new castle location for newly built units. **Also doesn't seem to be used anymore**, can be used for rush strats.
 - 8198,... 12293 **Also doesn't seem to be used anymore**
 - 12294, ...16389 are for setting unit statuses to 'attackTarget', used for defensive purposes to move units closer to enemy and farther away from own castle. Units only move such that they are outside attacking radius.
-- 16392, ... 20487 are for setting unit statuses to 'goToTarget', tells unit to always move to that target and then attack that target if possible. Sent by castle often to tell preachers to go attack enemy castle. Also sent often by castle to send preachers, crusaders to run at attacking prophets.
+- 16392, ... 20487 are for setting unit statuses to 'goToTarget', tells unit to always move to that target and then attack that target if possible. Sent by castle often to tell preachers (add crusaders later) to go attack a incoming prophet
+- 20488, ... 24833 are for setting all unit status to 'goToTarget'. All these units then attack the target, usually an enemy castle
 
 
 ## STRATEGIES

@@ -59,6 +59,13 @@ function mind(self){
       self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
       //final target is wherever is max dist from final target
     }
+    if (msg >= 20488 && msg <= 24583) {
+      self.status = 'goToTarget';
+      let padding = 20488;
+      let targetLoc = self.getLocation(msg - padding);
+      self.finalTarget = [targetLoc.x, targetLoc.y];
+      self.log(`Preparing to attack enemy at ${self.finalTarget}`);
+    }
   }
   base.updateKnownStructures(self);
   //DECISION MAKING
