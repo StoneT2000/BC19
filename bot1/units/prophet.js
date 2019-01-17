@@ -34,6 +34,9 @@ function mind(self){
   //self.status = 'defend';
   
   //SIGNAL PROCESSION
+  let seeMage = false;
+  let closestMage = null;
+  let closestMageDistance = 99999;
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
     signal.processMessageProphet(self, msg);
@@ -57,6 +60,14 @@ function mind(self){
       self.finalTarget = [targetLoc.x, targetLoc.y];
       self.log(`Preparing to attack enemy at ${self.finalTarget}`);
     }
+    if (robotsInVision[i].unit === SPECS.PREACHER && robotsInVision[i].team === otherTeamNum) {
+      seeMage = true;
+      let distToEnemy = qmath.dist(self.me.x, self.me.y, robotsInVision[i].x, robotsInVision[i].y);
+      if (distToEnemy < closestMageDistance) {
+        closestMageDistance = distToEnemy;
+        closestMage = robotsInVision[i];
+      }
+    }
   }
   //each turn, we update our local self.knownStructures list.
   //it also sets self.destroyedCastle to true if the castle that it knew about is no longer there anymore
@@ -64,6 +75,26 @@ function mind(self){
   
   
   //DECISIONS
+  if (self.status === 'attackTarget') {
+    if(seeMage === true){
+      //kite mages
+      let distToEnemy = qmath.dist(self.me.x, self.me.y, closestMage.x, closestMage.y);
+      if (distToEnemy <= 16) {
+        let rels = self.avoidEnemyLocations([[closestMage.x, closestMage.y]]);
+        if (rels !== null) {
+          return {action:self.move(rels.dx,rels.dy)} 
+        }
+        else {
+          
+        }
+      }
+      
+      
+    }
+    
+  }
+  
+  
   if (self.status === 'defend') {
     //follow lattice structure
     if ((self.me.x % 2 === 1 && self.me.y % 2 === 1 ) || (self.me.x % 2 === 0 && self.me.y % 2 === 0) || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true) {

@@ -252,6 +252,44 @@ class MyRobot extends BCAbstractRobot {
     }
     
   }
+  
+  /*
+  * Returns the best move a bot should take in order to maximize distance away from the provided enemy locations
+  * 
+  */
+  avoidEnemyLocations(enemyPositionsToAvoid) {
+    let largestSumDist = null;
+    let avoidLocs = [];
+    let robotMap = this.getVisibleRobotMap();
+    if (enemyPositionsToAvoid.length > 0){
+
+      let positionsToGoTo = search.circle(this, this.me.x, this.me.y, 4);
+      for (let i = 0; i < positionsToGoTo.length; i++) {
+        let thisSumDist = 0;
+        let pos = positionsToGoTo[i];
+        if (search.emptyPos(pos[0], pos[1], robotMap, this.map)){
+          for (let j = 0; j < enemyPositionsToAvoid.length; j++) {
+            thisSumDist += qmath.dist(pos[0], pos[1], enemyPositionsToAvoid[j][0], enemyPositionsToAvoid[j][1]);
+          }
+          avoidLocs.push({pos:pos, dist:thisSumDist});
+        }
+      }
+    }
+    if (avoidLocs.length > 0) {
+      //FORCE A MOVE AWAY
+
+      avoidLocs.sort(function(a,b) {
+        return b.dist - a.dist;
+      })
+      let rels = base.rel(this.me.x, this.me.y, avoidLocs[0].pos[0], avoidLocs[0].pos[1]);
+      return rels;
+    }
+    else {
+      return null;
+    }
+  }
+  
+  
 }
 
 var robot = new MyRobot();

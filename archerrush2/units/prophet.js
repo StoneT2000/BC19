@@ -114,18 +114,29 @@ function mind(self){
     //call out friends to chase as well?, well enemy might only send scout, so we might get led to the wrong place
     let leastDistToTarget = 99999999;
     let isEnemy = false;
-    let enemyBot;
+    let leastDistToStructure = 99999;
+    let enemyBot = null;
+    let closestStructure = null;
     for (let i = 0; i < robotsInVision.length; i++) {
       let obot = robotsInVision[i];
       
       if (obot.team !== self.me.team) {
-        
         let distToThisTarget = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
-        if (distToThisTarget < leastDistToTarget && distToThisTarget >= 16) {
-          leastDistToTarget = distToThisTarget;
+        if (obot.unit !== SPECS.CASTLE && obot.unit !== SPECS.PILGRIM){
           
-          isEnemy = true;
-          enemyBot = obot;
+          if (distToThisTarget < leastDistToTarget && distToThisTarget >= 16) {
+            leastDistToTarget = distToThisTarget;
+
+            isEnemy = true;
+            enemyBot = obot;
+          }
+        }
+        else if (obot.unit === SPECS.CASTLE) {
+          if (distToThisTarget < leastDistToStructure && distToThisTarget >= 16){
+            leastDistToStructure = distToThisTarget;
+            isEnemy = true;
+            closestStructure = obot;
+          }
         }
         
       }
@@ -133,9 +144,13 @@ function mind(self){
       }
     }
     //enemy nearby, attack it?
-    if (leastDistToTarget <= 64 && isEnemy === true) {
+    if ((leastDistToTarget <= 64 || leastDistToStructure <= 64) && isEnemy === true) {
       //let rels = base.relToPos(self.me.x, self.me.y, target[0], target[1], self);
-      let rels = base.rel(self.me.x, self.me.y, enemyBot.x, enemyBot.y);
+      let botToAttack = enemyBot;
+      if (enemyBot === null) {
+        botToAttack = closestStructure;
+      }
+      let rels = base.rel(self.me.x, self.me.y, botToAttack.x, botToAttack.y);
       self.log(`Prophet Attacks ${rels.dx},${rels.dy}`);
       if (self.readyAttack()){
         action = self.attack(rels.dx,rels.dy)
