@@ -119,3 +119,5 @@ Strategy pls.
 SIGNAL TO CASTLE THE DESTRUCTION OF A CASTLE (We sort of do, we jsut need a better way to uniquely hash a castle location in a maximum 64x64 map into a number between )
 
 Improve the way pilgrims decide on where to build churches. Sometimes they just go to enenemy fuel locations
+
+Improve the defence of our own churches. We build them and they auto build 2 more prophets. How can this be improved? How do we know when to better defend it.

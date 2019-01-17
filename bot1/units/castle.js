@@ -328,8 +328,10 @@ function mind(self) {
     }
     else if (msg === 71) {
       //dont allow pilgrims to be built
-      self.stackKarbonite = true;
-      self.canBuildPilgrims = false;
+      if (self.karbonite <= 50){
+        self.stackKarbonite = true;
+        //self.canBuildPilgrims = false;
+      }
     }
     
     
@@ -458,7 +460,7 @@ function mind(self) {
         }
         if (self.sawEnemyLastTurn === true) {
           self.signal(16391, 36); //tell everyone to defend
-          if (self.pilgrims <= self.maxPilgrims){
+          if (self.pilgrims <= self.maxPilgrims * 1.5){
             self.buildQueue = [2];
           }
           else {
@@ -486,22 +488,23 @@ function mind(self) {
         //let unitsInVincinity = search.unitsInRadius(self, 36);
 
         //we start building up prophets after their rush is done
+        self.status = 'build';
         if (self.me.turn > 5){
-          if (unitsInVincinity[SPECS.PREACHER].length >= 3){
+          if (unitsInVincinity[SPECS.PREACHER].length >= 1){
             self.buildQueue.unshift(4);
           }
           else {
-            self.buildQueue.unshift(4);
+            self.buildQueue.unshift(5);
           }
         }
       }
     }
     else {
       if (sawEnemyThisTurn === false) {
-        if (self.prophets < 6) {
+        if (unitsInVincinity[SPECS.PROPHET].length < 6) {
           self.buildQueue.push(4);
         }
-        if (self.pilgrims <= self.maxPilgrims * 1) {
+        if (self.pilgrims <= self.maxPilgrims * 1.5) {
           self.buildQueue = [2];
         }
         else {
@@ -519,10 +522,10 @@ function mind(self) {
         self.sawEnemyLastTurn = true;
         //spam mages if we dont have any, otherwise prophets!
         //let unitsInVincinity = search.unitsInRadius(self, 36);
-
+        self.status = 'build';
         //we start building up prophets after their rush is done
         if (self.me.turn > 5){
-          if (unitsInVincinity[SPECS.PREACHER].length >= 3){
+          if (unitsInVincinity[SPECS.PREACHER].length >= 1){
             self.buildQueue.unshift(4);
           }
           else {

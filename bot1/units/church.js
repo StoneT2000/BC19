@@ -96,7 +96,7 @@ function mind(self){
     if (self.sawEnemyLastTurn === true) {
       self.signal(16391, 36); //tell everyone to defend
     }
-    if (self.karbonite >= 200 && (self.fuel <= self.preachers * 60 + self.prophets * 70)) {
+    if (self.karbonite >= 200) {
       self.buildQueue.push(4, 4, 5);
     }
     if (self.karbonite >= 100) {
@@ -104,7 +104,7 @@ function mind(self){
       let unitsInVincinity = search.unitsInRadius(self, 8);
       if (unitsInVincinity[SPECS.PILGRIM].length < numberOfDeposits(self, self.me.x, self.me.y)){
         //self.buildQueue.push(2);
-        self.buildQueue.push(2);
+        //self.buildQueue.push(2);
       }
       
     }
