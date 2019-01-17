@@ -941,7 +941,7 @@ function updateKnownStructures(self) {
         //structure is still there
         newKnownStructures.push(knownStructure);
       }
-      else if (orobot.team !== self.me.team){
+      else if (teamNum !== self.me.team){
         //structure is def. gone
         //destroyed structure, send signal to castle about its death
         self.log(`Killed castle`);
@@ -1389,7 +1389,7 @@ function mind(self) {
       if (self.fuel >= fuelNeededForAttack){
         let targetLoc = self.knownStructures[otherTeamNum][0];
         let compressedLocationHash = self.compressLocation(targetLoc.x, targetLoc.y);
-        let padding = 16392;
+        let padding = 20488;
         self.signal (padding + compressedLocationHash, 36);
       }
     }
@@ -5729,6 +5729,14 @@ function mind$3(self){
         self.finalTarget = [targetLoc.x, targetLoc.y];
         self.log(`Preparing to attack enemy at ${self.finalTarget}`);
       }
+    if (msg >= 20488 && msg <= 24583) {
+        self.status = 'goToTarget';
+        let padding = 20488;
+        let targetLoc = self.getLocation(msg - padding);
+        self.finalTarget = [targetLoc.x, targetLoc.y];
+        self.log(`Preparing to attack enemy castle at ${self.finalTarget}`);
+        base.logStructure(self,self.finalTarget[0], self.finalTarget[1], otherTeamNum, 0);
+      }
   }
   base.updateKnownStructures(self);
   //DECISION MAKING
@@ -6236,7 +6244,8 @@ function mind$5(self){
         let padding = 20488;
         let targetLoc = self.getLocation(msg - padding);
         self.finalTarget = [targetLoc.x, targetLoc.y];
-        self.log(`Preparing to attack enemy at ${self.finalTarget}`);
+        self.log(`Preparing to attack enemy castle at ${self.finalTarget}`);
+        base.logStructure(self,self.finalTarget[0], self.finalTarget[1], otherTeamNum, 0);
       }
       if (msg === 5) {
         self.log(`Received ${msg} from ${robotsInVision[i].id}`);
