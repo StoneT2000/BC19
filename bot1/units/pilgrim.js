@@ -44,9 +44,10 @@ function mind(self) {
       }
     }
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
-    self.initializeCastleLocations();
-    
-    self.originalCastleLocation = [self.knownStructures[self.me.team][0].x, self.knownStructures[self.me.team][0].y]
+    let initialized = self.initializeCastleLocations();
+    if (initialized){
+      self.originalCastleLocation = [self.knownStructures[self.me.team][0].x, self.knownStructures[self.me.team][0].y]
+    }
     
     self.target = [self.me.x,self.me.y];
     self.finalTarget = [self.me.x, self.me.y];
@@ -175,7 +176,7 @@ function mind(self) {
       }
       if (newTarget !== null){
         self.status = 'goingToKarbDeposit'
-        if (self.karbonite >= 30) {
+        if (self.karbonite >= 0) {
           let nearestStructure = search.findNearestStructure(self);
           self.log(`nearest struct is ${nearestStructure.x}, ${nearestStructure.y}, karb target is ${newTarget}`);
           if (qmath.dist(newTarget[0], newTarget[1],nearestStructure.x, nearestStructure.y) > 10) {

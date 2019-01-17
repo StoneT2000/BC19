@@ -16,7 +16,29 @@ function mind(self){
   //INITIALIZATION
   if (self.me.turn === 1) {
     self.castleTalk(self.me.unit);
-    self.buildQueue = [3];
+    self.buildQueue = [4,4];
+    
+    let fuelMap = self.getFuelMap();
+    let karboniteMap = self.getKarboniteMap();
+    let closestKarbonitePos = null;
+    let closestKarboniteDist = 999999;
+    for (let i = 0; i < fuelMap.length; i++) {
+      for (let j = 0; j < fuelMap[0].length; j++) {
+        if (fuelMap[i][j] === true){
+          self.fuelSpots.push({x:j, y:i});
+        }
+        if (karboniteMap[i][j] === true){
+          self.karboniteSpots.push({x:j, y:i});
+          let distToKarb = qmath.dist(j, i, self.me.x, self.me.y);
+          if (distToKarb < closestKarboniteDist) {
+            closestKarboniteDist = distToKarb
+            closestKarbonitePos = [j, i];
+          }
+        }
+      }
+    }
+    let numFuelSpots = self.fuelSpots.length;
+    self.maxPilgrims = Math.ceil(numFuelSpots/2);
   }
   
   let robotsInVision = self.getVisibleRobots();
@@ -77,12 +99,14 @@ function mind(self){
     if (self.karbonite >= 200 && (self.fuel <= self.preachers * 60 + self.prophets * 70)) {
       self.buildQueue.push(4, 4, 5);
     }
-    if ((self.fuel <= self.preachers * 60 + self.prophets * 70) && self.karbonite >= 100) {
+    if (self.karbonite >= 100) {
       //not enough fuel, build pilgrim
       let unitsInVincinity = search.unitsInRadius(self, 8);
       if (unitsInVincinity[SPECS.PILGRIM].length < numberOfDeposits(self, self.me.x, self.me.y)){
+        //self.buildQueue.push(2);
         self.buildQueue.push(2);
       }
+      
     }
     else {
       
@@ -95,6 +119,7 @@ function mind(self){
     //self.log(`Nearest to castle is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
     self.sawEnemyLastTurn = true;
     //self.buildQueue.unshift(5);
+    self.buildQueue.unshift(4);
     
   }
   

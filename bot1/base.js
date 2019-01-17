@@ -197,7 +197,7 @@ function updateKnownStructures(self) {
         //structure is still there
         newKnownStructures.push(knownStructure);
       }
-      else {
+      else if (orobot.team !== self.me.team){
         //structure is def. gone
         //destroyed structure, send signal to castle about its death
         self.log(`Killed castle`);

@@ -273,6 +273,7 @@ function mind(self) {
   self.canBuildPilgrims = true;
   self.canBuildPreachers = true;
   self.stackFuel = false;
+  self.stackKarbonite = false;
   
   let idsWeCanHear = [];
   for (let i = 0; i < robotsInVision.length; i++) {
@@ -327,6 +328,7 @@ function mind(self) {
     }
     else if (msg === 71) {
       //dont allow pilgrims to be built
+      self.stackKarbonite = true;
       self.canBuildPilgrims = false;
     }
     
@@ -441,54 +443,99 @@ function mind(self) {
       }
     }
   }
-  if (sawEnemyThisTurn === false) {
-    //keep karbonite in stock so we can spam mages out when needed
-    if ((self.karbonite >= 100 || self.pilgrims <= 0) && self.me.turn >= 2 && self.canBuildPilgrims === true && self.pilgrims <= self.maxPilgrims) {
-      self.buildQueue.push(2);
-    }
-    else if (self.pilgrims <= self.maxPilgrims * 1.5 && unitsInVincinity[SPECS.PROPHET] + unitsInVincinity[SPECS.PREACHER] >= 8) {
-      //we are probably safe
-      self.buildQueue.push(2);
-    }
-    if (self.sawEnemyLastTurn === true) {
-      self.signal(16391, 36); //tell everyone to defend
-      if (self.canBuildPilgrims === true){
-        self.buildQueue = [2];
+  
+  //BUILDING DECISION CODE. DYNAMIC PART
+  if (self.me.turn > 4 && self.stackKarbonite === false){
+    if (self.castles > 1){
+      if (sawEnemyThisTurn === false) {
+        //keep karbonite in stock so we can spam mages out when needed
+        if ((self.karbonite >= 100 || self.pilgrims <= 0) && self.me.turn >= 2 && self.canBuildPilgrims === true && self.pilgrims <= self.maxPilgrims) {
+          self.buildQueue.push(2);
+        }
+        else if (self.pilgrims <= self.maxPilgrims * 1.5 && unitsInVincinity[SPECS.PROPHET] + unitsInVincinity[SPECS.PREACHER] >= 6) {
+          //we are probably safe
+          self.buildQueue.push(2);
+        }
+        if (self.sawEnemyLastTurn === true) {
+          self.signal(16391, 36); //tell everyone to defend
+          if (self.pilgrims <= self.maxPilgrims){
+            self.buildQueue = [2];
+          }
+          else {
+            self.buildQueue = [];
+          }
+        }
+        if (self.karbonite >= 150 && self.stackFuel === false) {
+          self.buildQueue.push(4);
+        }
+        else {
+
+        }
+        self.sawEnemyLastTurn = false;
       }
       else {
-        self.buildQueue = [];
+        let compressedLocationHash = self.compressLocation(nearestEnemyLoc.x, nearestEnemyLoc.y);
+        let padding = 12294;
+        if (sawProphet === true) {
+          padding = 16392;
+        }
+        self.signal(padding + compressedLocationHash, 36);
+        //self.log(`Nearest to castle is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
+        self.sawEnemyLastTurn = true;
+        //spam mages if we dont have any, otherwise prophets!
+        //let unitsInVincinity = search.unitsInRadius(self, 36);
+
+        //we start building up prophets after their rush is done
+        if (self.me.turn > 5){
+          if (unitsInVincinity[SPECS.PREACHER].length >= 3){
+            self.buildQueue.unshift(4);
+          }
+          else {
+            self.buildQueue.unshift(4);
+          }
+        }
       }
-    }
-    if (self.karbonite >= 150 && self.stackFuel === false) {
-      self.buildQueue.push(4, 4, 5);
     }
     else {
-      
-    }
-    self.sawEnemyLastTurn = false;
-  }
-  else {
-    let compressedLocationHash = self.compressLocation(nearestEnemyLoc.x, nearestEnemyLoc.y);
-    let padding = 12294;
-    if (sawProphet === true) {
-      padding = 16392;
-    }
-    self.signal(padding + compressedLocationHash, 36);
-    //self.log(`Nearest to castle is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
-    self.sawEnemyLastTurn = true;
-    //spam mages if we dont have any, otherwise prophets!
-    //let unitsInVincinity = search.unitsInRadius(self, 36);
-    
-    //we start building up prophets after their rush is done
-    if (self.me.turn > 5){
-      if (unitsInVincinity[SPECS.PREACHER].length >= 3){
-        self.buildQueue.unshift(4);
+      if (sawEnemyThisTurn === false) {
+        if (self.prophets < 6) {
+          self.buildQueue.push(4);
+        }
+        if (self.pilgrims <= self.maxPilgrims * 1) {
+          self.buildQueue = [2];
+        }
+        else {
+          self.buildQueue.push(4);
+        }
       }
       else {
-        self.buildQueue.unshift(5);
+        let compressedLocationHash = self.compressLocation(nearestEnemyLoc.x, nearestEnemyLoc.y);
+        let padding = 12294;
+        if (sawProphet === true) {
+          padding = 16392;
+        }
+        self.signal(padding + compressedLocationHash, 36);
+        //self.log(`Nearest to castle is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
+        self.sawEnemyLastTurn = true;
+        //spam mages if we dont have any, otherwise prophets!
+        //let unitsInVincinity = search.unitsInRadius(self, 36);
+
+        //we start building up prophets after their rush is done
+        if (self.me.turn > 5){
+          if (unitsInVincinity[SPECS.PREACHER].length >= 3){
+            self.buildQueue.unshift(4);
+          }
+          else {
+            self.buildQueue.unshift(5);
+          }
+        }
       }
     }
   }
+  //BUILDING DECISION CODE. CODE THAT MUST ALWAYS BE RUN REGARDLESS OF BEFORE
+  
+  
+  
   //building code
   //only build if we have sufficient fuel for our units to perform attack manuevers
   if ((self.fuel <= self.preachers * 50 + self.prophets * 60) && sawEnemyThisTurn === false) {

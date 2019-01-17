@@ -45,27 +45,31 @@ function mind(self){
       self.finalTarget = [newTarget.x, newTarget.y];
       self.status = 'searchAndAttack';
     }
-    if (msg >= 12294 && msg <= 16389) {
-      self.status = 'attackTarget';
-      let padding = 12294;
-      let targetLoc = self.getLocation(msg - padding);
-      self.finalTarget = [targetLoc.x, targetLoc.y];
-      self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
-      //final target is wherever is max dist from final target
-    }
-    if (msg >= 16392 && msg <= 20487) {
-      self.status = 'attackTarget';
-      let padding = 16392;
-      let targetLoc = self.getLocation(msg - padding);
-      self.finalTarget = [targetLoc.x, targetLoc.y];
-      self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
-    }
-    if (msg >= 20488 && msg <= 24583) {
-      self.status = 'goToTarget';
-      let padding = 20488;
-      let targetLoc = self.getLocation(msg - padding);
-      self.finalTarget = [targetLoc.x, targetLoc.y];
-      self.log(`Preparing to attack enemy at ${self.finalTarget}`);
+    if (msg >= 12294 && msg <= 24583){
+      if (msg >= 12294 && msg <= 16389) {
+        self.status = 'attackTarget';
+        let padding = 12294;
+        let targetLoc = self.getLocation(msg - padding);
+        self.finalTarget = [targetLoc.x, targetLoc.y];
+        self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
+        //final target is wherever is max dist from final target
+      }
+      if (msg >= 16392 && msg <= 20487) {
+        self.status = 'attackTarget';
+        let padding = 16392;
+        let targetLoc = self.getLocation(msg - padding);
+        self.finalTarget = [targetLoc.x, targetLoc.y];
+        self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
+      }
+      if (msg >= 20488 && msg <= 24583) {
+        self.status = 'goToTarget';
+        let padding = 20488;
+        let targetLoc = self.getLocation(msg - padding);
+        self.finalTarget = [targetLoc.x, targetLoc.y];
+        self.log(`Preparing to attack enemey castle at ${self.finalTarget}`);
+        base.logStructure(self,self.finalTarget[0], self.finalTarget[1], otherTeamNum, 0);
+      }
+      
     }
     if (robotsInVision[i].unit === SPECS.PREACHER && robotsInVision[i].team === otherTeamNum) {
       seeMage = true;
@@ -83,7 +87,7 @@ function mind(self){
   
   //DECISIONS
   if (self.status === 'attackTarget') {
-    if(seeMage === true){
+    if(seeMage === true && self.me.turn <= 50){
       //kite mages
       let distToEnemy = qmath.dist(self.me.x, self.me.y, closestMage.x, closestMage.y);
       if (distToEnemy <= 16) {
@@ -187,9 +191,10 @@ function mind(self){
     //finaltarget is enemy target pos.
     let distToEnemy = qmath.dist(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
     if (distToEnemy >= 82) {
-      //stay put
+      
     }
     else {
+      //stay put
       return '';
     }
     
