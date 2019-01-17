@@ -438,7 +438,7 @@ function mind(self) {
       if (self.fuel >= fuelNeededForAttack){
         let targetLoc = self.knownStructures[otherTeamNum][0];
         let compressedLocationHash = self.compressLocation(targetLoc.x, targetLoc.y);
-        let padding = 16392;
+        let padding = 20488;
         self.signal (padding + compressedLocationHash, 36);
       }
     }
