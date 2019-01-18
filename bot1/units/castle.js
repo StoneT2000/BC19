@@ -175,34 +175,6 @@ function mind(self) {
     
     
   }
-  /*
-  if (self.me.turn <= 2) {
-    for (let i = 0; i < robotsInVision.length; i++) {
-      let msg = robotsInVision[i].castle_talk;
-      let botId = robotsInVision[i].id;
-      self.log(`Heard from ${botId}: ${msg}`);
-      if (msg === 255) {
-        self.castleIds.push(botId);
-        let nx = robotsInVision[i].x;
-        let ny = robotsInVision[i].y;
-        base.logStructure(self,nx,ny,self.me.team, 0);
-
-        //LOG ENEMY
-        let ex = nx;
-        let ey = self.map.length - ny - 1;
-
-        if (!self.mapIsHorizontal) {
-          ex = self.map[0].length - nx - 1;
-          ey = ny;
-        }
-        base.logStructure(self,ex,ey,otherTeamNum, 0);
-      }
-    }
-    for (let i = 0; i < self.knownStructures[self.me.team].length; i++) {
-      self.log(`Castle at ${self.knownStructures[self.me.team][i].x}, ${self.knownStructures[self.me.team][i].y}`);
-    }
-  }
-  */
   //CODE FOR DETERMINING FRIENDLY CASTLE LOCATIONS!
   
   if (self.me.turn <= 3) {
@@ -726,6 +698,25 @@ function mind(self) {
   if (forcedAction !== null) {
     return {action:forcedAction};
   }
+  
+  let closestEnemy = null;
+  let closestDist = 99999;
+  for (let i = 0; i < robotsInVision.length; i++) {
+    let obot = robotsInVision[i];
+    if (obot.team !== self.me.team) {
+      let distToBot = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
+      if (distToBot < closestDist && distToBot <= 64) {
+        closestDist = distToBot;
+        closestEnemy = obot;
+      }
+    }
+  }
+  if (closestEnemy !== null) {
+    let rels = base.rel(self.me.x, self.me.y, closestEnemy.x, closestEnemy.y);
+    return {action: self.attack(rels.dx,rels.dy)};
+  }
+  
+  
   return {action: '', status: 'build', response:''};
 }
 
