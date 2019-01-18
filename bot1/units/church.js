@@ -16,7 +16,7 @@ function mind(self){
   //INITIALIZATION
   if (self.me.turn === 1) {
     self.castleTalk(self.me.unit);
-    self.buildQueue = [4,4];
+    self.buildQueue = [5,4];
     
     let fuelMap = self.getFuelMap();
     let karboniteMap = self.getKarboniteMap();
@@ -53,7 +53,7 @@ function mind(self){
       //pilgrim is nearby, assign it new mining stuff if needed
       if (self.status === 'pause' || (self.fuel <= 600)) {
         self.log(`Church tried to tell nearby pilgrims to mine fuel`);
-        self.signal(3,2)
+        //self.signal(3,2)
       }
     }
   }
@@ -99,12 +99,14 @@ function mind(self){
     if (self.karbonite >= 200) {
       self.buildQueue.push(4, 4, 5);
     }
-    if (self.karbonite >= 100) {
+    if (self.karbonite >= 50) {
       //not enough fuel, build pilgrim
       let unitsInVincinity = search.unitsInRadius(self, 8);
       if (unitsInVincinity[SPECS.PILGRIM].length < numberOfDeposits(self, self.me.x, self.me.y)){
+        //tell pilgrim to mine the closest thing possible
+        
         //self.buildQueue.push(2);
-        //self.buildQueue.push(2);
+        self.buildQueue = [2];
       }
       
     }

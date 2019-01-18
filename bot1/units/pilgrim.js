@@ -43,10 +43,17 @@ function mind(self) {
         }
       }
     }
+    self.churchBuilt = false;
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
     let initialized = self.initializeCastleLocations();
     if (initialized){
       self.originalCastleLocation = [self.knownStructures[self.me.team][0].x, self.knownStructures[self.me.team][0].y]
+    }
+    else {
+      //pilgrim isnt built by castle, defaults to mining the closest thing it sees
+      self.status = 'searchForAnyDeposit';
+      self.churchBuilt = true;
+      self.searchAny = true;
     }
     
     self.target = [self.me.x,self.me.y];
@@ -124,6 +131,9 @@ function mind(self) {
       else {
         self.status = 'searchForFuelDeposit';
       }
+      if (self.churchBuilt === true || self.searchAny === true) {
+        self.status = 'searchForAnyDeposit';
+      }
     }
   }
   //search for deposit, set new finalTarget and set path
@@ -131,7 +141,7 @@ function mind(self) {
     //perform search for closest deposit
     let newTarget = null;
     let cd = 9999990;
-    if (self.status === 'searchForFuelDeposit'){
+    if (self.status === 'searchForFuelDeposit' || self.status === 'searchForAnyDeposit'){
     
       for (let i = 0; i < self.fuelSpots.length; i++) {
         let nx = self.fuelSpots[i].x;
@@ -155,10 +165,12 @@ function mind(self) {
       self.status = 'goingToFuelDeposit';
       self.finalTarget = [newTarget[0],newTarget[1]];
     }
-    if (self.status === 'searchForKarbDeposit'){
+    if (self.status === 'searchForKarbDeposit' || self.status === 'searchForAnyDeposit'){
       for (let i = 0; i < self.karboniteSpots.length; i++) {
         let nx = self.karboniteSpots[i].x;
         let ny = self.karboniteSpots[i].y;
+        let proceed = true;
+
         if (robotMap[ny][nx] <= 0 || robotMap[ny][nx] === self.me.id){
           let patharr = [];
           let distToThere = 0;
@@ -211,6 +223,8 @@ function mind(self) {
         }
         self.finalTarget = [newTarget[0],newTarget[1]];
       }
+    }
+    if (self.status === 'searchForAnyDeposit') {
     }
     
     
@@ -392,6 +406,5 @@ function numberOfDeposits(self, nx, ny) {
   }
   return numDeposits;
 }
-
 
 export default {mind}
