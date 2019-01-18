@@ -16,12 +16,12 @@ function mind(self) {
   //Initialization code for the castle
   if (self.me.turn === 1){
     //CALCULATING HOW MANY INITIAL CASTLES WE HAVE
-    //we make the assumption that each castle makes a pilgrim first thing
+    //self.castleTalk(255);
     let offsetVal = 0;
-    if (self.karbonite === 90) {
+    if (self.karbonite === 70) {
       offsetVal = 1;
     }
-    else if (self.karbonite === 60) {
+    else if (self.karbonite === 40) {
       offsetVal = 2;
     }
     //we can also detemrine the offset val by looking at how many castle talk messages of 0 this castle gets.
@@ -36,7 +36,7 @@ function mind(self) {
     
     self.stackFuel = false;
     
-    self.oppositeCastleDestroyed = false;
+    self.oppositeCastleDestroyed = false; //doesn't seem to be used
     
     let fuelMap = self.getFuelMap();
     let karboniteMap = self.getKarboniteMap();
@@ -58,7 +58,7 @@ function mind(self) {
       }
     }
     let numFuelSpots = self.fuelSpots.length;
-    self.maxPilgrims = Math.ceil(numFuelSpots/2);
+    self.maxPilgrims = Math.ceil((self.fuelSpots.length + self.karboniteSpots.length)/2);
     
     
     
@@ -70,7 +70,7 @@ function mind(self) {
     //Here, we initialize self.AllUnits to contain ids of all the castles
     let locCastleNum = 0;
     //we store castle ids here to check if id of robot sending msg in castle talk is an castle or not
-    self.castleIds = []
+    self.castleIds = [];
     for (let i = 0; i < robotsInVision.length; i++) {
       let msg = robotsInVision[i].castle_talk;
       //self.log(`Received from ${robotsInVision[i].id} castle msg: ${msg}`);
@@ -104,31 +104,27 @@ function mind(self) {
     if (self.castles === 3) {
       //only first castle builds pilgrim in 3 preacher defence strategy
       if (offsetVal === 0) {
-        self.buildQueue.push(5,4,3,4,3);
+        self.buildQueue.push(5,5,5,5,5,5,5);
       }
       else if (offsetVal === 1){
-        //self.buildQueue.push();
+        //self.buildQueue.push(2);
       }
       else if (offsetVal === 2) {
-        //self.buildQueue.push();
+        //self.buildQueue.push(2);
       }
     }
     else if (self.castles === 2) {
       if (offsetVal === 0) {
-        self.buildQueue.push(4,4,4,4,4,4);
+        self.buildQueue.push(5,5,5,5,5,5,5);
       }
       else if (offsetVal === 1) {
         //self.buildQueue.push(2);
       }
     }
     else if (self.castles === 1) {
-      //on small map, building a 4,4,4,4 can't defend against this
-      //3,4,4,4 wont work for small maps, large yes
-      //self.buildQueue.push(5,4,3,4,3);
-      
-      //building 3,4,4,4 works against enemy, archer rush, and crusader rush on all maps
-      //ocassionally fails against mage rush on small map
-      self.buildQueue.push(4,4,4,4,4,4);
+      self.buildQueue.push(5,5,5,5,5,5,5);
+      //self.buildQueue.push(2,4,4,4);
+      //defending against 4 archers seems to need 4 archer defence
     }
     
     
@@ -166,7 +162,6 @@ function mind(self) {
         tempPos.push({pos:allAdjacentPos[i], dist:qmath.dist(allAdjacentPos[i][0], allAdjacentPos[i][1], desiredX, desiredY)});
       }
     }
-    
     //sort by shortest distance to karbonite
     tempPos.sort(function(a,b){
       return a.dist - b.dist;
@@ -175,9 +170,13 @@ function mind(self) {
       return a.pos;
     })
     self.log('Pilgrim build pos: ' + self.buildingPilgrimPositions);
+    
+    
+    
+    
   }
-  
   //CODE FOR DETERMINING FRIENDLY CASTLE LOCATIONS!
+  
   if (self.me.turn <= 3) {
     if (self.me.turn === 1) {
       let xposPadded = self.me.x + 192;
@@ -277,6 +276,7 @@ function mind(self) {
   self.canBuildPilgrims = true;
   self.canBuildPreachers = true;
   self.stackFuel = false;
+  self.stackKarbonite = false;
   
   let idsWeCanHear = [];
   for (let i = 0; i < robotsInVision.length; i++) {
@@ -286,13 +286,19 @@ function mind(self) {
     idsWeCanHear.push(robotsInVision[i].id);
     
     let orobot = robotsInVision[i];
-    
+    let heardId = orobot.id;
     signal.processMessageCastleTalk(self, msg, robotsInVision[i].id);
     if (signalmsg === 4) {
       //pilgrim is nearby, assign it new mining stuff if needed
-      if (self.status === 'pause' || (self.fuel <= self.preachers * 60 + self.prophets * 70) || self.stackFuel === true) {
-        self.log(`Castle tried to tell nearby pilgrims to mine fuel`);
-        self.signal(3,2)
+      if (self.me.turn <= 50) {
+        if (self.status === 'pause' || (self.fuel <= self.preachers * 60 + self.prophets * 70) || self.stackFuel === true) {
+          self.log(`Castle tried to tell nearby pilgrims to mine fuel`);
+          self.signal(3,2)
+        }
+      }
+      else {
+        self.log(`Castle tried to tell nearby pilgrims to mine anything`)
+        self.signal(24584, 2);
       }
     }
     
@@ -305,7 +311,8 @@ function mind(self) {
         if (self.mapIsHorizontal) {
           //check xpos for almost unique castle identifier;
           if (self.knownStructures[otherTeamNum][i].x === enemyCastlePosDestroyed) {
-            if (i === 0) {
+            if (enemyCastlePosDestroyed === gameMap[0].length - self.me.x - 1) {
+              self.log(`Opposite castle destroyed`);
               self.oppositeCastleDestroyed = true;
             }
             self.knownStructures[otherTeamNum].splice(i,1);
@@ -315,8 +322,9 @@ function mind(self) {
         }
         else {
           if (self.knownStructures[otherTeamNum][i].y === enemyCastlePosDestroyed) {
-            if (self.knownStructures[otherTeamNum][i].x === self.me.x && self.knownStructures[otherTeamNum][i].y === self.me.y) {
+            if (enemyCastlePosDestroyed === gameMap.length - self.me.y - 1) {
               self.oppositeCastleDestroyed = true;
+              self.log(`Opposite castle destroyed`);
             }
             self.knownStructures[otherTeamNum].splice(i,1);
             break;
@@ -329,7 +337,17 @@ function mind(self) {
     }
     else if (msg === 71) {
       //dont allow pilgrims to be built
-      self.canBuildPilgrims = false;
+      if (self.karbonite <= 50){
+        self.stackKarbonite = true;
+        //self.canBuildPilgrims = false;
+        self.log(`stacking karbo`);
+        self.buildQueue = [];
+      }
+    }
+    else if (msg === 72 && heardId !== self.me.id) {
+      //this castle doesn't have priority to build
+      self.status = 'pause';
+      self.log(`Caslte won't build`);
     }
     
     
@@ -429,68 +447,26 @@ function mind(self) {
   if (true) {
     
     
-    //self.log(`${unitsInVincinity[5]}`);
-    if (unitsInVincinity[SPECS.PREACHER].length + unitsInVincinity[SPECS.PROPHET].length >= 12){
+    if (unitsInVincinity[SPECS.PREACHER].length + unitsInVincinity[SPECS.PROPHET].length >= 3){
       self.status = 'pause';
       let distToTarget = qmath.unitDist(self.me.x, self.me.y, self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y);
       let fuelNeededForAttack = (distToTarget/2) * 8 * unitsInVincinity[SPECS.PREACHER].length + (distToTarget/2) * 10 * unitsInVincinity[SPECS.PROPHET].length;
       self.log(`Still need ${fuelNeededForAttack} fuel before attacking ${self.knownStructures[otherTeamNum][0].x}, ${self.knownStructures[otherTeamNum][0].y}`);
       self.stackFuel = true;
-      if (self.fuel >= fuelNeededForAttack){
+
         let targetLoc = self.knownStructures[otherTeamNum][0];
         let compressedLocationHash = self.compressLocation(targetLoc.x, targetLoc.y);
-        let padding = 16392;
+        let padding = 20488;
         self.signal (padding + compressedLocationHash, 36);
-      }
     }
   }
-  if (sawEnemyThisTurn === false) {
-    //keep karbonite in stock so we can spam mages out when needed
-    if ((self.karbonite >= 100 || self.pilgrims <= 0) && self.me.turn >= 2 && self.canBuildPilgrims === true && self.pilgrims <= self.maxPilgrims) {
-      self.buildQueue.push(2);
-    }
-    else if (self.pilgrims <= self.maxPilgrims * 1.5 && unitsInVincinity[SPECS.PROPHET] + unitsInVincinity[SPECS.PREACHER] >= 8) {
-      //we are probably safe
-      self.buildQueue.push(2);
-    }
-    if (self.sawEnemyLastTurn === true) {
-      self.signal(16391, 36); //tell everyone to defend
-      if (self.canBuildPilgrims === true){
-        self.buildQueue = [2];
-      }
-      else {
-        self.buildQueue = [];
-      }
-    }
-    if (self.karbonite >= 150 && self.stackFuel === false) {
-      self.buildQueue.push(4, 4, 5);
-    }
-    else {
-      
-    }
-    self.sawEnemyLastTurn = false;
-  }
-  else {
-    let compressedLocationHash = self.compressLocation(nearestEnemyLoc.x, nearestEnemyLoc.y);
-    let padding = 12294;
-    if (sawProphet === true) {
-      padding = 16392;
-    }
-    self.signal(padding + compressedLocationHash, 36);
-    //self.log(`Nearest to castle is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
-    self.sawEnemyLastTurn = true;
-    //spam mages if we dont have any, otherwise prophets!
-    //let unitsInVincinity = search.unitsInRadius(self, 36);
-    
-    //we start building up prophets after their rush is done
-    if (unitsInVincinity[SPECS.PREACHER].length >= 3){
-      self.buildQueue.unshift(4);
-    }
-    else {
-      self.buildQueue.unshift(5);
-    }
-    
-  }
+  
+  //BUILDING DECISION CODE. DYNAMIC PART
+  
+  //BUILDING DECISION CODE. CODE THAT MUST ALWAYS BE RUN REGARDLESS OF BEFORE
+  
+  
+  
   //building code
   //only build if we have sufficient fuel for our units to perform attack manuevers
   if ((self.fuel <= self.preachers * 50 + self.prophets * 60) && sawEnemyThisTurn === false) {
@@ -530,7 +506,7 @@ function mind(self) {
             }
             if (unit >= 2) {
               //if unit to be built is a preacher, send signal telling the preacher the other castle locations
-              
+              /*
               if (self.castleCount >= 2){
                 
                 self.log(`There are ${self.knownStructures[otherTeamNum].length} enemy castlesleft, opposite castle is currently dead: ${self.oppositeCastleDestroyed}`);
@@ -558,7 +534,7 @@ function mind(self) {
                   }
                 }
               }
-              
+              */
             }
             let rels = base.rel(self.me.x, self.me.y, checkPos[0], checkPos[1]);
             action = self.buildUnit(unit, rels.dx, rels.dy);
@@ -588,6 +564,25 @@ function mind(self) {
   if (forcedAction !== null) {
     return {action:forcedAction};
   }
+  
+  let closestEnemy = null;
+  let closestDist = 99999;
+  for (let i = 0; i < robotsInVision.length; i++) {
+    let obot = robotsInVision[i];
+    if (obot.team !== self.me.team) {
+      let distToBot = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
+      if (distToBot < closestDist && distToBot <= 64) {
+        closestDist = distToBot;
+        closestEnemy = obot;
+      }
+    }
+  }
+  if (closestEnemy !== null) {
+    let rels = base.rel(self.me.x, self.me.y, closestEnemy.x, closestEnemy.y);
+    return {action: self.attack(rels.dx,rels.dy)};
+  }
+  
+  
   return {action: '', status: 'build', response:''};
 }
 

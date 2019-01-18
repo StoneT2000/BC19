@@ -34,7 +34,7 @@ function mind(self){
     self.castleTalk(self.me.unit);
     self.allowedToMove = true;
     self.finalTarget = [self.me.x, self.me.y];
-    self.status = 'searchAndAttack';
+    self.status = 'defend';
     self.lastAttackedUnit = null;
     
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
@@ -156,6 +156,14 @@ function mind(self){
         let targetLoc = self.getLocation(msg - padding);
         self.finalTarget = [targetLoc.x, targetLoc.y];
         self.log(`Preparing to attack enemy at ${self.finalTarget}`);
+      }
+      if (msg >= 20488 && msg <= 24583) {
+        self.status = 'goToTarget';
+        let padding = 20488;
+        let targetLoc = self.getLocation(msg - padding);
+        self.finalTarget = [targetLoc.x, targetLoc.y];
+        self.log(`Preparing to attack enemy castle at ${self.finalTarget}`);
+        base.logStructure(self,self.finalTarget[0], self.finalTarget[1], otherTeamNum, 0);
       }
       if (msg === 5) {
         self.log(`Received ${msg} from ${robotsInVision[i].id}`);

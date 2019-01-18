@@ -104,21 +104,21 @@ function mind(self) {
     if (self.castles === 3) {
       //only first castle builds pilgrim in 3 preacher defence strategy
       if (offsetVal === 0) {
-        self.buildQueue.push(2,4,4,4,2);
+        self.buildQueue.push(2,4,4,2,2);
       }
       else if (offsetVal === 1){
-        //self.buildQueue.push();
+        self.buildQueue.push(2);
       }
       else if (offsetVal === 2) {
-        //self.buildQueue.push();
+        self.buildQueue.push(2);
       }
     }
     else if (self.castles === 2) {
       if (offsetVal === 0) {
-        self.buildQueue.push(2, 4,4,4,2);
+        self.buildQueue.push(2,4,4,4);
       }
       else if (offsetVal === 1) {
-        //self.buildQueue.push(2);
+        self.buildQueue.push(2);
       }
     }
     else if (self.castles === 1) {
@@ -286,7 +286,7 @@ function mind(self) {
     idsWeCanHear.push(robotsInVision[i].id);
     
     let orobot = robotsInVision[i];
-    
+    let heardId = orobot.id;
     signal.processMessageCastleTalk(self, msg, robotsInVision[i].id);
     if (signalmsg === 4) {
       //pilgrim is nearby, assign it new mining stuff if needed
@@ -343,6 +343,11 @@ function mind(self) {
         self.log(`stacking karbo`);
         self.buildQueue = [];
       }
+    }
+    else if (msg === 72 && heardId !== self.me.id) {
+      //this castle doesn't have priority to build
+      self.status = 'pause';
+      self.log(`Caslte won't build`);
     }
     
     
@@ -488,15 +493,23 @@ function mind(self) {
             numProphetsInQueue += 1;
           }
         });
-        if (unitsInVincinity[SPECS.PROPHET].length + numProphetsInQueue < 4) {
+        //self.log(`Td:${unitsInVincinity[SPECS.PROPHET].length + numProphetsInQueue}`)
+        if (unitsInVincinity[SPECS.PROPHET].length + numProphetsInQueue < 3) {
           self.buildQueue = [4];
+          //if paused, don't send a signal to tell other castles to pause
+          if (self.status !== 'pause') {
+            self.log(`Telling other casltes to stop building`)
+            self.castleTalk(72);
+          }
         }
-        
         if (self.pilgrims <= self.maxPilgrims && self.prophets > self.pilgrims) {
           self.buildQueue = [2];
         }
         else {
           self.buildQueue = [4];
+          if (unitsInVincinity[SPECS.PROPHET].length < self.prophets/self.castles && self.status !== 'pause') {
+            self.castleTalk(72);
+          }
         }
         self.sawEnemyLastTurn = false;
         
