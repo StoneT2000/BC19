@@ -380,7 +380,7 @@ function mind(self) {
         for (let i = 0 ; i < checkPositions.length; i++) {
           let pos = checkPositions[i];
           let robotThere = self.getRobot(robotMap[pos[1]][pos[0]]);
-          if (robotThere === null) {
+          if (robotThere === null && fuelMap[pos[1]][pos[0]] === false && karboniteMap[pos[1]][pos[0]] === false) {
             let numDepo = numberOfDeposits(self, pos[0], pos[1]);
             if (maxDeposits < numDepo) {
               maxDeposits = numDepo;

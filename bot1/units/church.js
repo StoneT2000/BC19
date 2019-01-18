@@ -110,12 +110,7 @@ function mind(self){
       }
     }
     if (self.karbonite >= 50) {
-      //not enough fuel, build pilgrim
-      
-      if (unitsInVincinity[SPECS.PILGRIM].length < numberOfDeposits(self, self.me.x, self.me.y) && self.pilgrims <= self.maxPilgrims){
-        //tell pilgrim to mine the closest thing possible
-        
-        //self.buildQueue.push(2);
+      if (unitsInVincinity[SPECS.PILGRIM].length < numberOfDeposits(self, self.me.x, self.me.y)){
         self.buildQueue = [2];
       }
       
