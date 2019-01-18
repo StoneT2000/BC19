@@ -16,7 +16,7 @@ function mind(self) {
   //Initialization code for the castle
   if (self.me.turn === 1){
     //CALCULATING HOW MANY INITIAL CASTLES WE HAVE
-    //we make the assumption that each castle makes a pilgrim first thing
+    //self.castleTalk(255);
     let offsetVal = 0;
     if (self.karbonite === 90) {
       offsetVal = 1;
@@ -58,7 +58,7 @@ function mind(self) {
       }
     }
     let numFuelSpots = self.fuelSpots.length;
-    self.maxPilgrims = Math.ceil(numFuelSpots/2);
+    self.maxPilgrims = Math.ceil((self.fuelSpots.length + self.karboniteSpots.length)/2);
     
     
     
@@ -70,7 +70,7 @@ function mind(self) {
     //Here, we initialize self.AllUnits to contain ids of all the castles
     let locCastleNum = 0;
     //we store castle ids here to check if id of robot sending msg in castle talk is an castle or not
-    self.castleIds = []
+    self.castleIds = [];
     for (let i = 0; i < robotsInVision.length; i++) {
       let msg = robotsInVision[i].castle_talk;
       //self.log(`Received from ${robotsInVision[i].id} castle msg: ${msg}`);
@@ -162,7 +162,6 @@ function mind(self) {
         tempPos.push({pos:allAdjacentPos[i], dist:qmath.dist(allAdjacentPos[i][0], allAdjacentPos[i][1], desiredX, desiredY)});
       }
     }
-    
     //sort by shortest distance to karbonite
     tempPos.sort(function(a,b){
       return a.dist - b.dist;
@@ -171,9 +170,41 @@ function mind(self) {
       return a.pos;
     })
     self.log('Pilgrim build pos: ' + self.buildingPilgrimPositions);
+    
+    
+    
+    
   }
-  
+  /*
+  if (self.me.turn <= 2) {
+    for (let i = 0; i < robotsInVision.length; i++) {
+      let msg = robotsInVision[i].castle_talk;
+      let botId = robotsInVision[i].id;
+      self.log(`Heard from ${botId}: ${msg}`);
+      if (msg === 255) {
+        self.castleIds.push(botId);
+        let nx = robotsInVision[i].x;
+        let ny = robotsInVision[i].y;
+        base.logStructure(self,nx,ny,self.me.team, 0);
+
+        //LOG ENEMY
+        let ex = nx;
+        let ey = self.map.length - ny - 1;
+
+        if (!self.mapIsHorizontal) {
+          ex = self.map[0].length - nx - 1;
+          ey = ny;
+        }
+        base.logStructure(self,ex,ey,otherTeamNum, 0);
+      }
+    }
+    for (let i = 0; i < self.knownStructures[self.me.team].length; i++) {
+      self.log(`Castle at ${self.knownStructures[self.me.team][i].x}, ${self.knownStructures[self.me.team][i].y}`);
+    }
+  }
+  */
   //CODE FOR DETERMINING FRIENDLY CASTLE LOCATIONS!
+  
   if (self.me.turn <= 3) {
     if (self.me.turn === 1) {
       let xposPadded = self.me.x + 192;
