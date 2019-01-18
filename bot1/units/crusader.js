@@ -38,7 +38,7 @@ function mind(self){
       self.finalTarget = [self.me.x, self.me.y];
     }
   }
-  if (self.me.turn === 3) {
+  if (self.me.turn === 5) {
     pathing.initializePlanner(self);
     self.setFinalTarget(self.finalTarget);
   }
