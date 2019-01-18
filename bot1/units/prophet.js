@@ -14,6 +14,7 @@ function mind(self){
   let robotMap = self.getVisibleRobotMap();
   let fuelMap = self.getFuelMap();
   let karboniteMap = self.getKarboniteMap();
+  
   //INITIALIZATION
   if (self.me.turn === 1) {
     self.castleTalk(self.me.unit);
@@ -88,7 +89,7 @@ function mind(self){
   //DECISIONS
   if (self.status === 'attackTarget') {
     if(seeMage === true && self.me.turn <= 50){
-      //kite mages
+      //kite mages if its early game
       let distToEnemy = qmath.dist(self.me.x, self.me.y, closestMage.x, closestMage.y);
       if (distToEnemy <= 16) {
         let rels = self.avoidEnemyLocations([[closestMage.x, closestMage.y]]);
@@ -199,18 +200,6 @@ function mind(self){
     }
     
   }
-  /* TODO: RESERVE A NEW SET OF SIGNALS FOR SENDING BOT TO FIGHT CASTLE. RESERVE A SET OF SIGNALS for SENDING BOT TO DEFEND AAGINST PROPHET
-  if (self.status === 'goToTarget') {
-    //finaltarget is enemy target pos.
-    let distToEnemy = qmath.dist(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
-    if (distToEnemy >= 100) {
-      //stay put
-    }
-    else {
-      return '';
-    }
-  }
-  */
   //PROCESSING FINAL TARGET
   if (forcedAction !== null) {
     return {action:forcedAction};

@@ -6,7 +6,7 @@ Mine spots that we can reach before the enemy
 
 
 
-## HOW TO DECIDE ON WHAT UNIT TO BUILD?
+##HOW TO DECIDE ON WHAT UNIT TO BUILD?
 
 ### **Information given**
 
@@ -46,3 +46,4 @@ Stack karbonite and don't build units if we have less than 50 karbonite. Used to
 
 Do we need to stack karbonite on a one castle map? Do we need the karbonite to be flexible?
 
+Early game, spam pilgrims more often

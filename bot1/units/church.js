@@ -16,7 +16,7 @@ function mind(self){
   //INITIALIZATION
   if (self.me.turn === 1) {
     self.castleTalk(self.me.unit);
-    self.buildQueue = [5,4];
+    self.buildQueue = [2];
     
     let fuelMap = self.getFuelMap();
     let karboniteMap = self.getKarboniteMap();
@@ -38,7 +38,7 @@ function mind(self){
       }
     }
     let numFuelSpots = self.fuelSpots.length;
-    self.maxPilgrims = Math.ceil(numFuelSpots/2);
+    self.maxPilgrims = Math.ceil((self.fuelSpots.length + self.karboniteSpots.length)/2);
   }
   
   let robotsInVision = self.getVisibleRobots();
@@ -95,14 +95,15 @@ function mind(self){
     //keep karbonite in stock so we can spam mages out when needed
     if (self.sawEnemyLastTurn === true) {
       self.signal(16391, 36); //tell everyone to defend
+      self.buildQueue = [];
     }
     if (self.karbonite >= 200) {
-      self.buildQueue.push(4, 4, 5);
+      self.buildQueue.push(4,4,5);
     }
     if (self.karbonite >= 50) {
       //not enough fuel, build pilgrim
       let unitsInVincinity = search.unitsInRadius(self, 8);
-      if (unitsInVincinity[SPECS.PILGRIM].length < numberOfDeposits(self, self.me.x, self.me.y)){
+      if (unitsInVincinity[SPECS.PILGRIM].length < numberOfDeposits(self, self.me.x, self.me.y) && self.pilgrims <= self.maxPilgrims){
         //tell pilgrim to mine the closest thing possible
         
         //self.buildQueue.push(2);

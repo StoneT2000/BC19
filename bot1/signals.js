@@ -133,6 +133,9 @@ function processMessagePilgrim(self, msg){
     case 3:
       self.status = 'searchForFuelDeposit'
       break;
+    case 24584:
+      self.status = 'searchForAnyDeposit';
+      self.searchAny = true;
   }
 }
 
