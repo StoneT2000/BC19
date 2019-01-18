@@ -23,7 +23,7 @@ let unitTypesStr = ['Castle', 'Church', 'Pilgrim', 'Crusader', 'Prophet', 'Preac
 class MyRobot extends BCAbstractRobot {
   constructor() {
     super();
-    
+    this.globalTurn = 0;
     this.status = 'justBuilt'; //current status of robot; just built means bot was just built has no prior status
     
     this.target = [0,0]; //current target destination for robot, used for travelling to waypoints
@@ -218,11 +218,12 @@ class MyRobot extends BCAbstractRobot {
     let possibleCastlePositions = search.circle(this, this.me.x, this.me.y, 2);
     let robotMap = this.getVisibleRobotMap();
     let nextToCastle = false;
+    let castleRobot = null;
     for (let i = 0; i < possibleCastlePositions.length; i++) {
       let px = possibleCastlePositions[i][0];
       let py = possibleCastlePositions[i][1];
 
-      let castleRobot = this.getRobot(robotMap[py][px]);
+      castleRobot = this.getRobot(robotMap[py][px]);
       if (castleRobot !== null && castleRobot.unit === SPECS.CASTLE) {
         this.knownStructures[this.me.team].push({x:castleRobot.x, y:castleRobot.y, unit: 0});
         nextToCastle = true;
@@ -245,7 +246,7 @@ class MyRobot extends BCAbstractRobot {
     }
     if (exploreTarget !== null) {
       this.knownStructures[(this.me.team + 1) % 2].push({x:exploreTarget[0], y:exploreTarget[1], unit: 0});
-      return true;
+      return castleRobot;
     }
     else {
       return false; //not at castle

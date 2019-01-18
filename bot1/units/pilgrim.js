@@ -8,7 +8,7 @@ function mind(self) {
   const choices = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
   const choice = choices[Math.floor(Math.random() * choices.length)]
   
-  self.log(`Pilgrim (${self.me.x}, ${self.me.y}); Status: ${self.status}; ${self.me.time}ms left`);
+  self.log(`Round: ${self.globalTurn}; Pilgrim (${self.me.x}, ${self.me.y}); Status: ${self.status}; ${self.me.time}ms left`);
   let fuelMap = self.getFuelMap();
   let karboniteMap = self.getKarboniteMap();
   
@@ -20,6 +20,7 @@ function mind(self) {
   
   let forcedAction = null;
   //INITIALIZATION
+  self.globalTurn += 1;
   if (self.me.turn === 1) {
     //for pilgrims, search first
     self.searchQueue = [];
@@ -49,12 +50,19 @@ function mind(self) {
     let initialized = self.initializeCastleLocations();
     if (initialized){
       self.originalCastleLocation = [self.knownStructures[self.me.team][0].x, self.knownStructures[self.me.team][0].y]
+      //let castleRobot = self.getRobot(robotMap[self.knownStructures[self.me.team][0].y][self.knownStructures[self.me.team][0].y]);
+      self.globalTurn = initialized.turn;
+      self.globalTurn += 1;
     }
     else {
       //pilgrim isnt built by castle, defaults to mining the closest thing it sees
       self.status = 'searchForAnyDeposit';
       self.churchBuilt = true;
       self.searchAny = true;
+    }
+    
+    if (self.globalTurn >= 50) {
+      self.status = 'searchForAnyDeposit';
     }
     
     self.target = [self.me.x,self.me.y];
@@ -212,8 +220,10 @@ function mind(self) {
       self.searchQueue.sort(function(a,b){
         return b.distance - a.distance
       });
-      self.status = 'goingToFuelDeposit';
-      self.finalTarget = self.searchQueue.pop().position;
+      if (self.searchQueue.length > 0){
+        self.status = 'goingToFuelDeposit';
+        self.finalTarget = self.searchQueue.pop().position;
+      }
     }
     if (self.status === 'searchForKarbDeposit'){
       self.searchQueue = [];
@@ -237,9 +247,11 @@ function mind(self) {
       self.searchQueue.sort(function(a,b){
         return b.distance - a.distance
       });
-      self.status = 'goingToKarbDeposit'
-      self.finalTarget = self.searchQueue.pop().position;
-      self.log(`Going to ${self.finalTarget}`);
+     
+      if (self.searchQueue.length > 0){
+        self.status = 'goingToKarbDeposit'
+        self.finalTarget = self.searchQueue.pop().position;
+      }
     }    
   }
 
@@ -282,10 +294,11 @@ function mind(self) {
     self.searchQueue.sort(function(a,b){
       return b.distance - a.distance
     });
-    self.finalTarget = self.searchQueue.pop().position;
     
-    self.log(`Going to ${self.finalTarget}`);
-    self.status = 'goingToAnyDeposit';
+    if (self.searchQueue.length > 0){
+      self.finalTarget = self.searchQueue.pop().position;
+      self.status = 'goingToAnyDeposit';
+    }
   }
   
   
@@ -346,6 +359,43 @@ function mind(self) {
       }
     }
   }
+  if (self.status === 'mine') {
+    //check surrouding for structure
+    let checkPositions = search.circle(self, self.me.x, self.me.y, 2);
+    let nearestStruct = search.findNearestStructure(self);
+    let distToNearestStruct = qmath.dist(self.me.x, self.me.y, nearestStruct.x, nearestStruct.y);
+    if (distToNearestStruct > 10){
+      let proceed = false;
+      for (let i = 0 ; i < checkPositions.length; i++) {
+        let pos = checkPositions[i];
+        let robotThere = self.getRobot(robotMap[pos[1]][pos[0]]);
+        if ((robotThere !== null && (robotThere.unit !== SPECS.CHURCH || robotThere.unit !== SPECS.CASTLE)) || robotThere === null) {
+          proceed = true;
+        }
+      }
+      if (proceed === true) {
+        //look for best position
+        let maxDeposits = 0;
+        let buildLoc = null;
+        for (let i = 0 ; i < checkPositions.length; i++) {
+          let pos = checkPositions[i];
+          let robotThere = self.getRobot(robotMap[pos[1]][pos[0]]);
+          if (robotThere === null) {
+            let numDepo = numberOfDeposits(self, pos[0], pos[1]);
+            if (maxDeposits < numDepo) {
+              maxDeposits = numDepo;
+              buildLoc = pos;
+            }
+          }
+        }
+        if (buildLoc !== null) {
+          self.status = 'building';
+          self.buildTarget = buildLoc;
+          self.finalTarget = [self.me.x, self.me.y];
+        }
+      }
+    }
+  }
   //forever mine
   if (karboniteMap[self.me.y][self.me.x] === true && (self.status === 'goingToKarbDeposit' || self.status === 'mine' || self.status === 'building' || self.status === 'goingToAnyDeposit')) {
     action = self.mine();
@@ -364,6 +414,10 @@ function mind(self) {
     //ADD CHURCH CODE
     return {action:action}; 
   }
+  
+  //When mining, check if building a church nearby is a good idea or not
+  
+  
   
   //PROCESSING FINAL TARGET
   if (forcedAction !== null) {

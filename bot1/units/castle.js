@@ -480,7 +480,7 @@ function mind(self) {
         let targetLoc = self.knownStructures[otherTeamNum][0];
         let compressedLocationHash = self.compressLocation(targetLoc.x, targetLoc.y);
         let padding = 20488;
-        self.signal (padding + compressedLocationHash, 36);
+        //self.signal (padding + compressedLocationHash, 36);
       }
     }
   }
@@ -520,7 +520,7 @@ function mind(self) {
           self.buildQueue = [4];
         }
         
-        if (self.pilgrims <= self.maxPilgrims && unitsInVincinity[SPECS.PROPHET].length > self.pilgrims) {
+        if (self.pilgrims <= self.maxPilgrims && self.prophets > self.pilgrims) {
           self.buildQueue = [2];
         }
         else {
