@@ -34,7 +34,7 @@ function mind(self){
     self.castleTalk(self.me.unit);
     self.allowedToMove = true;
     self.finalTarget = [self.me.x, self.me.y];
-    self.status = 'defend';
+    self.status = 'searchAndAttack';
     self.lastAttackedUnit = null;
     
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
@@ -102,6 +102,7 @@ function mind(self){
     signal.processMessagePreacher(self, msg);
     if(robotsInVision[i].id !== self.me.id){
       //process new target location
+      /*
       if (msg >= 6 && msg <= 4101) {
         //- 6 for padding
         let newTarget = self.getLocation(msg - 6);
@@ -130,14 +131,6 @@ function mind(self){
           
           //self.enemyCastleSortedIndex = 1;
         }
-        /*
-        else if (msg >= 12294 && msg <= 16389) {
-          //this caslte location is the first castle in any castle robots self.enemyCastlesSorted array.
-          padding = self.knownStructures[otherTeamNum][k]
-          //this index is what we send back to castles when we destroy this enemy castle
-          self.enemyCastleSortedIndex = 2;
-        }
-        */
         let enemyCastleLoc = self.getLocation(msg - padding);
         base.logStructure(self,enemyCastleLoc.x, enemyCastleLoc.y, otherTeamNum, 0, pushToEndOfKnownStructures);
         self.originalCastleTarget = [enemyCastleLoc.x, enemyCastleLoc.y];
@@ -168,7 +161,7 @@ function mind(self){
       if (msg === 5) {
         self.log(`Received ${msg} from ${robotsInVision[i].id}`);
       }
-      
+      */ 
     }
   }
   

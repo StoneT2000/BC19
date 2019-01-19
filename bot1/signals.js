@@ -128,14 +128,20 @@ function processMessageChurch(self, msg){
 function processMessagePilgrim(self, msg){
   switch (msg){
     case 2:
-      self.status = 'searchForKarbDeposit'
+      if (self.status !== 'mineKarb' && self.status !== 'mineFuel'){
+        self.status = 'searchForKarbDeposit'
+      }
       break;
     case 3:
-      self.status = 'searchForFuelDeposit'
+      if (self.status !== 'mineKarb' && self.status !== 'mineFuel'){
+        self.status = 'searchForFuelDeposit'
+      }
       break;
     case 24584:
-      self.status = 'searchForAnyDeposit';
-      self.searchAny = true;
+      if (self.status !== 'mineKarb' && self.status !== 'mineFuel'){
+        self.status = 'searchForAnyDeposit';
+        self.searchAny = true;
+      }
   }
 }
 

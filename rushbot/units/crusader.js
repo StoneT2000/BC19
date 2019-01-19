@@ -51,6 +51,7 @@ function mind(self){
     let msg = robotsInVision[i].signal;
     //self.log(`Received from ${robotsInVision[i].id}  msg: ${msg}`);
     signal.processMessageCrusader(self, msg);
+    /*
     if (msg >= 12294 && msg <= 16389) {
       self.status = 'attackTarget';
       let padding = 12294;
@@ -66,6 +67,7 @@ function mind(self){
       self.finalTarget = [targetLoc.x, targetLoc.y];
       self.log(`Preparing to attack enemy at ${self.finalTarget}`);
     }
+    */
   }
   base.updateKnownStructures(self);
   //DECISION MAKING

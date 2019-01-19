@@ -20,7 +20,7 @@ function mind(self){
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
     self.initializeCastleLocations();
     self.finalTarget = [self.me.x, self.me.y];
-    self.status = 'defend';
+    self.status = 'searchAndAttack';
     self.rallyTarget = [self.me.x, self.me.y];
     self.defendTarget = [self.me.x, self.me.y]
   }
@@ -42,6 +42,7 @@ function mind(self){
       self.finalTarget = [newTarget.x, newTarget.y];
       self.status = 'searchAndAttack';
     }
+    /*
     if (msg >= 12294 && msg <= 16389) {
       self.status = 'attackTarget';
       let padding = 12294;
@@ -57,6 +58,7 @@ function mind(self){
       self.finalTarget = [targetLoc.x, targetLoc.y];
       self.log(`Preparing to attack enemy at ${self.finalTarget}`);
     }
+    */
   }
   base.updateKnownStructures(self);
   //DECISIONS

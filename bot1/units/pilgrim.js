@@ -24,6 +24,7 @@ function mind(self) {
   if (self.me.turn === 1) {
     //for pilgrims, search first
     self.searchQueue = [];
+    self.statusBeforeReturn = '';
     self.status = 'searchForKarbDeposit';
     
     //self.log(`${self.knownStructures[self.me.team][0].x}`);
@@ -127,6 +128,9 @@ function mind(self) {
       else if (obot.unit === SPECS.PREACHER && distToEnemy <= 36) {
         enemyPositionsToAvoid.push([obot.x, obot.y]);
       }
+      else if (obot.unit === SPECS.CRUSADER && distToEnemy <= 36) {
+        enemyPositionsToAvoid.push([obot.x, obot.y]);
+      }
       
     }
   }
@@ -153,6 +157,7 @@ function mind(self) {
       return b.dist - a.dist;
     })
     let rels = base.rel(self.me.x, self.me.y, avoidLocs[0].pos[0], avoidLocs[0].pos[1]);
+    self.status = 'goingToAnyDeposit';
     return {action:self.move(rels.dx,rels.dy)}
   }
   
@@ -161,27 +166,30 @@ function mind(self) {
     if (robotMap[self.finalTarget[1]][self.finalTarget[0]] !== self.me.id && robotMap[self.finalTarget[1]][self.finalTarget[0]] > 0){
       if (self.status === 'goingToKarbDeposit'){
         //self.status = 'searchForKarbDeposit';
+        self.castleTalk(73);
         if (self.searchQueue.length === 0) {
-          self.status = 'searchForKarbDeposit';
+          self.status = 'searchForAnyDeposit';
         }
         else {
-          self.log(`Spot Taken: ${self.finalTarget}`)
+          //self.log(`Spot Taken: ${self.finalTarget}`)
           let nextLoc = self.searchQueue.pop().position;
-          self.log(`switching to ${nextLoc}`);
+          //self.log(`switching to ${nextLoc}`);
           self.finalTarget = nextLoc;
           
         }
       }
-      else {
+      else if (self.status === 'goingToFuelDeposit'){
+        self.castleTalk(74);
         if (self.searchQueue.length === 0) {
-          self.status = 'searchForFuelDeposit';
+          self.status = 'searchForAnyDeposit';
+          
         }
         else {
           let nextLoc = self.searchQueue.pop().position;
           self.finalTarget = nextLoc;
         }
       }
-      if (self.churchBuilt === true || self.searchAny === true || self.status === 'goingToAnyDeposit') {
+      else if (self.churchBuilt === true || self.searchAny === true || self.status === 'goingToAnyDeposit') {
         if (self.searchQueue.length === 0) {
           self.status = 'searchForAnyDeposit';
         }
@@ -298,12 +306,24 @@ function mind(self) {
     if (self.searchQueue.length > 0){
       self.finalTarget = self.searchQueue.pop().position;
       self.status = 'goingToAnyDeposit';
+      self.log(`Going to ${self.finalTarget}`);
     }
   }
   
   
   if (((self.me.fuel >= 100 || self.me.karbonite >= 20) || self.status === 'return') && self.status !== 'building') {
     //send karbo
+    if (self.status === 'mineKarb' || self.status === 'mineFuel') {
+      self.statusBeforeReturn = self.status;
+    }
+    
+    //we continue to tell castles taht this unit was mining karbonite to prevent castles from accidentally assigning pilgrims to mine a spot already taken up
+    if (self.statusBeforeReturn === 'mineKarb') {
+      self.castleTalk(73);
+    }
+    else if (self.statusBeforeReturn === 'mineFuel') {
+      self.castleTalk(74);
+    }
     let bestTarget = search.findNearestStructure(self);
     self.finalTarget = [bestTarget.x, bestTarget.y];
     self.status = 'return';
@@ -327,39 +347,29 @@ function mind(self) {
   }
   
   
-  //building status means the robot is trying to reach a build location, and build on there
-  if (self.status === 'building') {
-    
-    let robotThere = self.getRobot(robotMap[self.buildTarget[1]][self.buildTarget[0]]);
-    if (robotThere !== null && (robotThere.unit === SPECS.CHURCH)){
-      self.status = 'searchForAnyDeposit';
-      self.log(`Church built already`);
-    }
-    else {
-      if (self.me.x === self.finalTarget[0] && self.me.y === self.finalTarget[1]) {
-        let rels = base.rel(self.me.x, self.me.y, self.buildTarget[0], self.buildTarget[1]);
-        self.log(`TRIED TO BUILD: ${rels.dx}, ${rels.dy}`);
-        if (self.me.turn > 1){
-          //make sure we don't confuddle the signal for counting units
-          self.castleTalk(71);
-        }
-        if (self.fuel >= 200 && self.karbonite >= 50){
-          self.status = 'searchForAnyDeposit';
-          return {action:self.buildUnit(SPECS.CHURCH, rels.dx, rels.dy)}
-        }
-        else {
-          self.log(`NOT ENOUGH RESOURCES: fuel:${self.fuel}; karb: ${self.karbonite}`);
-        }
+  if (self.status === 'goingToKarbDeposit') {
+    //check if karb deposit has no churches around
+    let checkPositions = search.circle(self, self.finalTarget[0], self.finalTarget[1], 2);
+    let proceed = false;
+    for (let i = 0; i < checkPositions.length; i++) {
+      let pos = checkPositions[i];
+      let robotThere = self.getRobot(robotMap[pos[1]][pos[0]]);
+      if ((robotThere !== null && (robotThere.unit !== SPECS.CHURCH || robotThere.unit !== SPECS.CASTLE)) || robotThere === null) {
+        proceed = true;
+        //means that karbonite has no buildings near it
       }
-      //dont stand on the build target, leave it if the final target has a pilgrim on it already
-      let pilgrimOnFinalTarget = self.getRobot(robotMap[self.finalTarget[1]][self.finalTarget[0]]);
-      if (pilgrimOnFinalTarget !== null && pilgrimOnFinalTarget.team === self.me.team && pilgrimOnFinalTarget.unit === SPECS.PILGRIM && self.me.id !== pilgrimOnFinalTarget.id){
-        self.log(`already a unit building there`);
-          self.status = 'searchForFuelDeposit';
+    }
+    if (proceed == true) {
+      if (self.me.turn > 1){
+        //make sure we don't confuddle the signal for counting units
+        self.log(`Pilgrim might build`)
+        self.castleTalk(71);
       }
     }
   }
-  if (self.status === 'mine') {
+  
+  //building status means the robot is trying to reach a build location, and build on there
+  if (self.status === 'mineKarb' || self.status === 'mineFuel') {
     //check surrouding for structure
     let checkPositions = search.circle(self, self.me.x, self.me.y, 2);
     let nearestStruct = search.findNearestStructure(self);
@@ -380,7 +390,7 @@ function mind(self) {
         for (let i = 0 ; i < checkPositions.length; i++) {
           let pos = checkPositions[i];
           let robotThere = self.getRobot(robotMap[pos[1]][pos[0]]);
-          if (robotThere === null && fuelMap[pos[1]][pos[0]] === false && karboniteMap[pos[1]][pos[0]] === false) {
+          if (robotThere === null && fuelMap[pos[1]][pos[0]] === false && karboniteMap[pos[1]][pos[0]] === false && gameMap[pos[1]][pos[0]] === true) {
             let numDepo = numberOfDeposits(self, pos[0], pos[1]);
             if (maxDeposits < numDepo) {
               maxDeposits = numDepo;
@@ -396,22 +406,59 @@ function mind(self) {
       }
     }
   }
+  if (self.status === 'building') {
+    if (self.me.turn > 1){
+      //make sure we don't confuddle the signal for counting units
+      self.castleTalk(71);
+    }
+    let robotThere = self.getRobot(robotMap[self.buildTarget[1]][self.buildTarget[0]]);
+    if (robotThere !== null && (robotThere.unit === SPECS.CHURCH)){
+      self.status = 'searchForAnyDeposit';
+      self.log(`Church built already`);
+    }
+    else {
+      if (self.me.x === self.finalTarget[0] && self.me.y === self.finalTarget[1]) {
+        let rels = base.rel(self.me.x, self.me.y, self.buildTarget[0], self.buildTarget[1]);
+        self.log(`TRIED TO BUILD: ${rels.dx}, ${rels.dy}`);
+        
+        if (self.fuel >= 200 && self.karbonite >= 50){
+          self.status = 'searchForAnyDeposit';
+          return {action:self.buildUnit(SPECS.CHURCH, rels.dx, rels.dy)}
+        }
+        else {
+          self.log(`NOT ENOUGH RESOURCES: fuel:${self.fuel}; karb: ${self.karbonite}`);
+        }
+      }
+      //dont stand on the build target, leave it if the final target has a pilgrim on it already
+      let pilgrimOnFinalTarget = self.getRobot(robotMap[self.finalTarget[1]][self.finalTarget[0]]);
+      if (pilgrimOnFinalTarget !== null && pilgrimOnFinalTarget.team === self.me.team && pilgrimOnFinalTarget.unit === SPECS.PILGRIM && self.me.id !== pilgrimOnFinalTarget.id){
+        self.log(`already a unit building there`);
+          self.status = 'searchForFuelDeposit';
+      }
+    }
+  }
+  
   //forever mine
-  if (karboniteMap[self.me.y][self.me.x] === true && (self.status === 'goingToKarbDeposit' || self.status === 'mine' || self.status === 'building' || self.status === 'goingToAnyDeposit')) {
+  if (karboniteMap[self.me.y][self.me.x] === true && (self.status === 'goingToKarbDeposit' || self.status === 'mineKarb' || self.status === 'building' || self.status === 'goingToAnyDeposit')) {
     action = self.mine();
     if (self.status !== 'building') {
     
-      self.status = 'mine';
+      self.status = 'mineKarb';
+      //tel castles i'm mining karb, not building
+      if (self.globalTurn > 3){
+        self.castleTalk(73)
+      }
     }
     return {action:action}; 
   }
-  else if (fuelMap[self.me.y][self.me.x] === true && (self.status === 'goingToFuelDeposit' || self.status === 'mine' || self.status === 'goingToAnyDeposit')) {
+  else if (fuelMap[self.me.y][self.me.x] === true && (self.status === 'goingToFuelDeposit' || self.status === 'mineFuel' || self.status === 'goingToAnyDeposit')) {
     action = self.mine();
     if (self.status !== 'building') {
-      self.status = 'mine';
+      self.status = 'mineFuel';
+      if (self.globalTurn > 3){
+        self.castleTalk(74)
+      }
     }
-    //self.build(SPECS.CHURCH, 0, 1);
-    //ADD CHURCH CODE
     return {action:action}; 
   }
   

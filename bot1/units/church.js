@@ -49,12 +49,6 @@ function mind(self){
     signal.processMessageChurch(self, msg);
     let signalmsg = robotsInVision[i].signal;
     if (msg === 4) {
-      self.log(`Church got a unit returned`);
-      //pilgrim is nearby, assign it new mining stuff if needed
-      if (self.status === 'pause' || (self.fuel <= 600)) {
-        self.log(`Church tried to tell nearby pilgrims to mine fuel`);
-        //self.signal(3,2)
-      }
     }
   }
   self.status = 'build';
