@@ -211,7 +211,7 @@ function mind(self) {
       for (let i = 0; i < self.fuelSpots.length; i++) {
         let nx = self.fuelSpots[i].x;
         let ny = self.fuelSpots[i].y;
-        if ((robotMap[ny][nx] <= 0 || robotMap[ny][nx] === self.me.id) && ownHalf(self, nx, ny)){
+        if ((robotMap[ny][nx] <= 0 || robotMap[ny][nx] === self.me.id) && safeDeposit(self, nx, ny)){
           let patharr = [];
           let distToThere = 0;
           if (self.planner !== null) {
@@ -240,7 +240,7 @@ function mind(self) {
         let ny = self.karboniteSpots[i].y;
         let proceed = true;
 
-        if ((robotMap[ny][nx] <= 0 || robotMap[ny][nx] === self.me.id) && ownHalf(self, nx, ny)){
+        if ((robotMap[ny][nx] <= 0 || robotMap[ny][nx] === self.me.id) && safeDeposit(self, nx, ny)){
           let patharr = [];
           let distToThere = 0;
           if (self.planner !== null) {
@@ -270,7 +270,7 @@ function mind(self) {
     for (let i = 0; i < self.fuelSpots.length; i++) {
       let nx = self.fuelSpots[i].x;
       let ny = self.fuelSpots[i].y;
-      if ((robotMap[ny][nx] <= 0 || robotMap[ny][nx] === self.me.id) && ownHalf(self, nx, ny)){
+      if ((robotMap[ny][nx] <= 0 || robotMap[ny][nx] === self.me.id) && safeDeposit(self, nx, ny)){
         let patharr = [];
         let distToThere = 0;
         if (self.planner !== null) {
@@ -287,7 +287,7 @@ function mind(self) {
       let ny = self.karboniteSpots[i].y;
       let proceed = true;
 
-      if ((robotMap[ny][nx] <= 0 || robotMap[ny][nx] === self.me.id) && ownHalf(self, nx, ny)){
+      if ((robotMap[ny][nx] <= 0 || robotMap[ny][nx] === self.me.id) && safeDeposit(self, nx, ny)){
         let patharr = [];
         let distToThere = 0;
         if (self.planner !== null) {
@@ -311,6 +311,7 @@ function mind(self) {
   }
   
   
+  //if we are tyring to build, return iff structure is near
   if (((self.me.fuel >= 100 || self.me.karbonite >= 20) || self.status === 'return') && self.status !== 'building') {
     //send karbo
     if (self.status === 'mineKarb' || self.status === 'mineFuel') {
@@ -347,7 +348,7 @@ function mind(self) {
   }
   
   
-  if (self.status === 'goingToKarbDeposit') {
+  if (self.status === 'goingToKarbDeposit' || self.status === 'goingToFuelDeposit' || self.status === 'goingToAnyDeposit') {
     //check if karb deposit has no churches around
     let checkPositions = search.circle(self, self.finalTarget[0], self.finalTarget[1], 2);
     let proceed = false;
@@ -374,13 +375,13 @@ function mind(self) {
     let checkPositions = search.circle(self, self.me.x, self.me.y, 2);
     let nearestStruct = search.findNearestStructure(self);
     let distToNearestStruct = qmath.dist(self.me.x, self.me.y, nearestStruct.x, nearestStruct.y);
-    if (distToNearestStruct > 10){
-      let proceed = false;
+    if (distToNearestStruct > 4){
+      let proceed = true;
       for (let i = 0 ; i < checkPositions.length; i++) {
         let pos = checkPositions[i];
         let robotThere = self.getRobot(robotMap[pos[1]][pos[0]]);
-        if ((robotThere !== null && (robotThere.unit !== SPECS.CHURCH || robotThere.unit !== SPECS.CASTLE)) || robotThere === null) {
-          proceed = true;
+        if ((robotThere !== null && (robotThere.unit === SPECS.CHURCH || robotThere.unit === SPECS.CASTLE))) {
+          proceed = false;
         }
       }
       if (proceed === true) {
@@ -390,7 +391,7 @@ function mind(self) {
         for (let i = 0 ; i < checkPositions.length; i++) {
           let pos = checkPositions[i];
           let robotThere = self.getRobot(robotMap[pos[1]][pos[0]]);
-          let numDepo = numberOfDeposits(self, pos[0], pos[1]);
+          let numDepo = numberOfDeposits(self, pos[0], pos[1], true);
           
           if (robotThere === null && fuelMap[pos[1]][pos[0]] === false && karboniteMap[pos[1]][pos[0]] === false && gameMap[pos[1]][pos[0]] === true) {
             
@@ -482,19 +483,60 @@ function mind(self) {
   //return self.move(0,0);
 }
 
-function numberOfDeposits(self, nx, ny) {
+function numberOfDeposits(self, nx, ny, adjacentStructure = false) {
   let checkPositions = search.circle(self, nx, ny, 2);
   let numDeposits = 0;
+  let robotMap = self.getVisibleRobotMap()
   let fuelMap = self.getFuelMap();
   let karbMap = self.getKarboniteMap();
   for (let i = 0; i < checkPositions.length; i++) {
     let cx = checkPositions[i][0];
     let cy = checkPositions[i][1];
     if (fuelMap[cy][cx] === true || karbMap[cy][cx] === true) {
-      numDeposits += 1;
+      
+      if (adjacentStructure === false){
+        numDeposits +=1;
+      }
+      else {
+        let checkPositions2 = search.circle(self, cx, cy, 2);
+        let validDeposit = true;
+        for (let k = 0; k < checkPositions2.length; k++) {
+          let bx = checkPositions2[k][0];
+          let by = checkPositions2[k][1];
+          let robotThere = self.getRobot(robotMap[by][bx]);
+          if (robotThere === null) {
+
+          }
+          else if (robotThere.team === self.me.team && (robotThere.unit === SPECS.CASTLE || robotThere.unit === SPECS.CHURCH)){
+            validDeposit = false;
+          }
+        }
+        if (validDeposit === true) {
+          numDeposits +=1;
+        }
+     }
     }
   }
   return numDeposits;
+}
+
+
+//returns true if the deposit is safe enough to go to
+function safeDeposit(self, nx, ny) {
+  if (ownHalf(self, nx, ny)) {
+    return true;
+  }
+  //check if nx, ny is in vision
+  let robotMap = self.getVisibleRobotMap();
+  let unitsInVincinity = search.unitsInRadius(self, 9, self.me.team, nx, ny);
+  if (unitsInVincinity[SPECS.PROPHET].length + unitsInVincinity[SPECS.PREACHER].length >= 1) {
+    return true;
+  }
+  let nearestStruct = search.findNearestStructure(self);
+  if (qmath.dist(nx, ny, nearestStruct.x, nearestStruct.y) <= 9) {
+    return true;
+  }
+  return false;
 }
 
 function ownHalf(self, nx, ny) {

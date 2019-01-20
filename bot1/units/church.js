@@ -112,6 +112,8 @@ function mind(self){
   let sawEnemyThisTurn = false;
   let nearestEnemyLoc = null
   let closestEnemyDist = 1000;
+  let sawChurch = false;
+  let sawCrusader = false;
   for (let i = 0; i < robotsInVision.length; i++) {
     let obot = robotsInVision[i];
     if (obot.unit === SPECS.CRUSADER) {
@@ -126,18 +128,19 @@ function mind(self){
     }
     if (obot.team === otherTeamNum) {
       //sees enemy unit, send our units to defend spot
-      if (true){
-        let distToUnit = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
-        if (distToUnit < closestEnemyDist) {
-          nearestEnemyLoc = {x: obot.x, y: obot.y};
-          closestEnemyDist = distToUnit
-          self.log(`Nearest to church is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
-          sawEnemyThisTurn = true;
-        }
-        
-        
+      if (obot.unit === SPECS.CHURCH) {
+        sawChurch = true;
       }
-      
+      else if (obot.unit === SPECS.CRUSADER) {
+        sawCrusader = true;
+      }
+      let distToUnit = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
+      if (distToUnit < closestEnemyDist) {
+        nearestEnemyLoc = {x: obot.x, y: obot.y};
+        closestEnemyDist = distToUnit
+        self.log(`Nearest to church is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
+        sawEnemyThisTurn = true;
+      }
     }
   }
   if (sawEnemyThisTurn === false) {
@@ -179,12 +182,23 @@ function mind(self){
     self.sawEnemyLastTurn = false;
   }
   else {
+    let unitsInVincinity36 = search.unitsInRadius(self, 36);
     let compressedLocationHash = self.compressLocation(nearestEnemyLoc.x, nearestEnemyLoc.y);
-    //self.signal(12294 + compressedLocationHash, 36);
+    self.signal(12294 + compressedLocationHash, 36);
     //self.log(`Nearest to castle is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
     self.sawEnemyLastTurn = true;
     //self.buildQueue.unshift(5);
-    self.buildQueue.unshift(4);
+    if ((sawChurch || sawCrusader) && unitsInVincinity36[SPECS.PREACHER].length < 1){
+      if (self.fuel >= 50 && self.karbonite >= 30){
+        self.buildQueue.unshift(5);
+      }
+      else {
+        self.buildQueue.unshift(4);
+      }
+    }
+    else {
+      self.buildQueue.unshift(4);
+    }
     
   }
   

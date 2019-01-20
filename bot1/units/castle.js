@@ -329,16 +329,16 @@ function mind(self) {
     }
     else if (msg === 71) {
       //dont allow pilgrims to be built
-      self.log(`stacking karbo?`);
+
       if (self.karbonite <= 90){
         self.stackKarbonite = true;
         //self.canBuildPilgrims = false;
-        self.log(`stacking karbo`);
+
         self.buildQueue = [];
       }
-      self.log(`stacking fuel?`)
+
       if (self.fuel <= 200) {
-        self.log(`stacking fuel`);
+
         self.stackFuel = true;
         self.buildQueue = [];
       }
@@ -520,18 +520,7 @@ function mind(self) {
   
     if (self.castles > 1){
       if (sawEnemyThisTurn === false && self.me.turn > 4 && self.stackKarbonite === false && self.stackFuel === false) {
-        //self.log(`Td:${unitsInVincinity[SPECS.PROPHET].length + numProphetsInQueue}`)
-        /*
-        if (unitsInVincinity[SPECS.PROPHET].length + numProphetsInQueue < 3) {
-          self.buildQueue = [4];
-          //if paused, don't send a signal to tell other castles to pause
-          if (self.status !== 'pause') {
-            self.log(`Telling other casltes to stop building`)
-            self.castleTalk(72);
-          }
-        }
-        */
-        self.log(`Church built unit this turn: ${churchBuiltUnit}`);
+        
         if (self.pilgrims <= self.maxPilgrims && self.pilgrims < (self.prophets + 2) * 2) {
           self.buildQueue = [2];
         }
@@ -541,6 +530,9 @@ function mind(self) {
             self.castleTalk(72);
             self.buildQueue = [4];
           }
+        }
+        if (self.karbonite > 200) {
+          self.buildQueue = [4];
         }
         self.sawEnemyLastTurn = false;
         
@@ -705,7 +697,6 @@ function mind(self) {
       if (reverse === false) {
         for (let i = 0; i < adjacentPos.length; i++) {
           let checkPos = adjacentPos[i];
-          self.log(`Checking ${checkPos}`);
           if(canBuild(self, checkPos[0], checkPos[1], robotsMapInVision, passableMap)){
 
             if (self.buildQueue.length > 0 && enoughResourcesToBuild(self, self.buildQueue[0])) {

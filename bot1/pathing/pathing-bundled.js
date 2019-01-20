@@ -3509,6 +3509,8 @@ function initializePlanner(self) {
   let h = self.map.length;
   let mapArr = new Int8Array(w * h);
   self.log('Width: ' + w + ' Height: ' + h);
+  
+  //vvv doesn't include 0,0
   let surrounding = [[-1,-1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]];
   //[[0,-1], [1,-1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
   //FIRST WE REDUCE MAP TO SAVE PLANNING TIME
@@ -3517,7 +3519,7 @@ function initializePlanner(self) {
       //x:j, y:i
       let indexInMap = j + i * w;
       if (gameMap[i][j] === false){
-        /*
+        
         let numObstacles = 0;
         let remove = false;
         let surroundingTileInfo = [];
@@ -3543,6 +3545,10 @@ function initializePlanner(self) {
           //remove all wals that are singular
           mapArr[indexInMap] = 0;
         }
+        else {
+          mapArr[indexInMap] = 1;
+        }
+        /*
         else if (surroundingTileInfo[1] === false && surroundingTileInfo[6] === false) {
           mapArr[indexInMap] = 0;
         }
@@ -3553,7 +3559,7 @@ function initializePlanner(self) {
           mapArr[indexInMap] = 1;
         }
         */
-        mapArr[indexInMap] = 1;
+        
       }
     }
   }
