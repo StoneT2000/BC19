@@ -17,7 +17,8 @@ function mind(self) {
   let otherTeamNum = (self.me.team + 1) % 2;
   let action = '';
   let gameMap = self.map;
-  
+  let mapLength = self.map.length;
+
   let forcedAction = null;
   //INITIALIZATION
   self.globalTurn += 1;
@@ -35,8 +36,8 @@ function mind(self) {
     */
     self.castleTalk(self.me.unit);
     
-    for (let i = 0; i < fuelMap.length; i++) {
-      for (let j = 0; j < fuelMap[0].length; j++) {
+    for (let i = 0; i < mapLength; i++) {
+      for (let j = 0; j < mapLength; j++) {
         if (fuelMap[i][j] === true){
           self.fuelSpots.push({x:j, y:i});
         }
@@ -69,8 +70,8 @@ function mind(self) {
     self.target = [self.me.x,self.me.y];
     self.finalTarget = [self.me.x, self.me.y];
     if (!self.mapIsHorizontal) {
-      self.halfPoint = gameMap[0].length/2;
-      if (self.me.x < gameMap[0].length/2){
+      self.halfPoint = mapLength/2;
+      if (self.me.x < mapLength/2){
         self.lowerHalf = true;
         
         
@@ -81,8 +82,8 @@ function mind(self) {
       self.log(`Half x: ${self.halfPoint}, i'm on lower half:${self.lowerHalf}`);
     }
     else {
-      self.halfPoint = gameMap.length/2;
-      if (self.me.y < gameMap.length/2){
+      self.halfPoint = mapLength/2;
+      if (self.me.y < mapLength/2){
         self.lowerHalf = true;
         
         
@@ -568,13 +569,13 @@ function ownHalf(self, nx, ny) {
   }
   else {
     if (self.lowerHalf) {
-      if (ny < gameMap.length/2) {
+      if (ny < mapLength/2) {
         //self.log(`Y:${nx}, ${ny} is on our half`)
         return true;
       }
     }
     else {
-      if (ny >= gameMap.length/2) {
+      if (ny >= mapLength/2) {
         //self.log(`Y:${nx}, ${ny} is on our half`)
         return true;
       }

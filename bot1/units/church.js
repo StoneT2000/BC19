@@ -7,6 +7,7 @@ import pathing from '../pathing/pathing-bundled.js';
 
 function mind(self){
   let gameMap = self.map;
+  let mapLength = self.map.length;
   let otherTeamNum = (self.me.team + 1) % 2;
   let forcedAction = null;
   self.log(`Church (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
@@ -22,8 +23,8 @@ function mind(self){
     
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
     if (!self.mapIsHorizontal) {
-      self.halfPoint = gameMap[0].length/2;
-      if (self.me.x < gameMap[0].length/2){
+      self.halfPoint = mapLength/2;
+      if (self.me.x < mapLength/2){
         self.lowerHalf = true;
         
         
@@ -34,8 +35,8 @@ function mind(self){
       //self.log(`Half x: ${self.halfPoint}, i'm on lower half:${self.lowerHalf}`);
     }
     else {
-      self.halfPoint = gameMap.length/2;
-      if (self.me.y < gameMap.length/2){
+      self.halfPoint = mapLength/2;
+      if (self.me.y < mapLength/2){
         self.lowerHalf = true;
         
         
@@ -49,8 +50,8 @@ function mind(self){
     let karboniteMap = self.getKarboniteMap();
     let closestKarbonitePos = null;
     let closestKarboniteDist = 999999;
-    for (let i = 0; i < fuelMap.length; i++) {
-      for (let j = 0; j < fuelMap[0].length; j++) {
+    for (let i = 0; i < mapLength; i++) {
+      for (let j = 0; j < mapLength; j++) {
         if (fuelMap[i][j] === true){
           self.fuelSpots.push({x:j, y:i});
         }
@@ -286,13 +287,13 @@ function ownHalf(self, nx, ny) {
   //self.log()
   if (!self.mapIsHorizontal) {
     if (self.lowerHalf) {
-      if (nx < gameMap[0].length/2) {
+      if (nx < mapLength/2) {
         //self.log(`X:${nx}, ${ny} is on our half`)
         return true;
       }
     }
     else {
-      if (nx >= gameMap[0].length/2) {
+      if (nx >= mapLength/2) {
         //self.log(`X:${nx}, ${ny} is on our half`)
         return true;
       }

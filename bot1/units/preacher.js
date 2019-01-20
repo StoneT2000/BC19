@@ -10,6 +10,7 @@ import attack from '../attack.js';
 
 function mind(self){
   let gameMap = self.map;
+  let mapLength = self.map.length;
   let otherTeamNum = (self.me.team + 1) % 2;
   let action = '';
   
@@ -51,13 +52,14 @@ function mind(self){
       //self.log(self.path + ': ' + enemyCastleLocation.x + ', ' + enemyCastleLocation.y);
       //check path, and follow it until you are at least a distance away
       let finalNode = [];
-      for (let i = 0; i < self.path.length; i+=2) {
+      let selfPathLength = self.path.length;
+      for (let i = 0; i < selfPathLength; i+=2) {
         if (qmath.dist(myCastleLocation.x,myCastleLocation.y,self.path[i],self.path[i+1]) >= 10) {
           finalNode = [self.path[i],self.path[i+1]];
           break;
         }
       }
-      if (self.path.length === 0) {
+      if (selfPathLength === 0) {
         finalNode = [enemyCastleLocation.x, enemyCastleLocation.y];
       }
       //self.log('First here:' + finalNode);
@@ -146,8 +148,8 @@ function mind(self){
       let closestDist = 99999;
       let bestLoc = null;
       let nearestStructure = search.findNearestStructure(self);
-      for (let i = 0; i < gameMap.length; i++) {
-        for (let j = 0; j < gameMap[0].length; j++) {
+      for (let i = 0; i < mapLength; i++) {
+        for (let j = 0; j < mapLength; j++) {
           if (i % 2 === 1 && j % 2 === 1){
             //position can also not be next to structure
             if (search.emptyPos(j, i , robotMap, gameMap, false) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
@@ -401,8 +403,8 @@ function moveApart(self) {
   if (self.me.x % 2 === 0 || self.me.y %2 === 0) {
     let closestDist = 99999;
     let bestLoc = null;
-    for (let i = 0; i < gameMap.length; i++) {
-      for (let j = 0; j < gameMap[0].length; j++) {
+    for (let i = 0; i < mapLength; i++) {
+      for (let j = 0; j < mapLength; j++) {
         if (i % 2 === 1 && j % 2 === 1){
           if (search.emptyPos(j, i , robotMap, gameMap)){
             let thisDist = qmath.dist(self.me.x, self.me.y, j, i);

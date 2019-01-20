@@ -9,7 +9,6 @@ function mind(self) {
   //these 2d maps have it like map[y][x]...
   let robotsInVision = self.getVisibleRobots();
   let gameMap = self.map;
-  let mapLength = self.map.length;
   let action = '';
   let forcedAction = null;
   let otherTeamNum = (self.me.team + 1) % 2;
@@ -44,8 +43,8 @@ function mind(self) {
     let karboniteMap = self.getKarboniteMap();
     let closestKarbonitePos = null;
     let closestKarboniteDist = 999999;
-    for (let i = 0; i < mapLength; i++) {
-      for (let j = 0; j < mapLength; j++) {
+    for (let i = 0; i < fuelMap.length; i++) {
+      for (let j = 0; j < fuelMap[0].length; j++) {
         if (fuelMap[i][j] === true){
           self.fuelSpots.push({x:j, y:i});
         }
@@ -60,7 +59,7 @@ function mind(self) {
       }
     }
     let numFuelSpots = self.fuelSpots.length;
-    self.maxPilgrims = Math.ceil((numFuelSpots + self.karboniteSpots.length)/2);
+    self.maxPilgrims = Math.ceil((self.fuelSpots.length + self.karboniteSpots.length)/2);
     
     
     
@@ -237,16 +236,15 @@ function mind(self) {
 
         //LOG ENEMY
         let ex = nx;
-        let ey = mapLength - ny - 1;
+        let ey = self.map.length - ny - 1;
 
         if (!self.mapIsHorizontal) {
-          ex = mapLength - nx - 1;
+          ex = self.map[0].length - nx - 1;
           ey = ny;
         }
         base.logStructure(self,ex,ey,otherTeamNum, 0);
       }
     }
-    
     for (let i = 0; i < self.knownStructures[self.me.team].length; i++) {
       //self.log(`Castle at ${self.knownStructures[self.me.team][i].x}, ${self.knownStructures[self.me.team][i].y}`);
     }
@@ -426,7 +424,6 @@ function mind(self) {
       //pilgrim is nearby, assign it new mining status if needed. Alow it to mine anything if we have enough pilgrims
       if (self.pilgrims <= self.maxPilgrims){
         if ((self.numPilgrimsMiningFuel < self.fuelSpots.length/2 ) && ((self.karbonite > 100 || self.fuel < self.prophets * 70 + self.pilgrims * 10) || (self.fuel <= 400 + self.churches * 400))){
-          // Can self.fuelSpots.length be replaced for numFuelSpots (assuming no change?)
           self.log(`Castle tried to tell nearby pilgrims to mine fuel`);
           self.signal(3,2);
         }

@@ -7,6 +7,7 @@ import pathing from '../pathing/pathing-bundled.js';
 
 function mind(self){
   let gameMap = self.map;
+  let mapLength = self.map.length;
   let otherTeamNum = (self.me.team + 1) % 2;
   let action = '';
   let forcedAction = null;
@@ -113,8 +114,8 @@ function mind(self){
         let bestLoc = null;
         
 
-        for (let i = 0; i < gameMap.length; i++) {
-          for (let j = 0; j < gameMap[0].length; j++) {
+        for (let i = 0; i < mapLength; i++) {
+          for (let j = 0; j < mapLength; j++) {
             if (i % 2 !== j % 2 ){
               if (search.emptyPos(j, i , robotMap, gameMap, false) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
                 //assuming final target when rallying is the rally targt
