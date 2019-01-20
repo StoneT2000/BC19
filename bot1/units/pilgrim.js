@@ -125,7 +125,7 @@ function mind(self) {
       if (obot.unit === SPECS.PROPHET && distToEnemy <= 80) {
         enemyPositionsToAvoid.push([obot.x, obot.y]);
       }
-      else if (obot.unit === SPECS.PREACHER && distToEnemy <= 36) {
+      else if (obot.unit === SPECS.PREACHER && distToEnemy <= 64) {
         enemyPositionsToAvoid.push([obot.x, obot.y]);
       }
       else if (obot.unit === SPECS.CRUSADER && distToEnemy <= 36) {
@@ -390,12 +390,18 @@ function mind(self) {
         for (let i = 0 ; i < checkPositions.length; i++) {
           let pos = checkPositions[i];
           let robotThere = self.getRobot(robotMap[pos[1]][pos[0]]);
+          let numDepo = numberOfDeposits(self, pos[0], pos[1]);
+          
           if (robotThere === null && fuelMap[pos[1]][pos[0]] === false && karboniteMap[pos[1]][pos[0]] === false && gameMap[pos[1]][pos[0]] === true) {
-            let numDepo = numberOfDeposits(self, pos[0], pos[1]);
+            
             if (maxDeposits < numDepo) {
               maxDeposits = numDepo;
               buildLoc = pos;
             }
+          }
+          if (numDepo === 9) {
+            buildLoc = pos;
+            maxDeposits = numDepo;
           }
         }
         if (buildLoc !== null) {

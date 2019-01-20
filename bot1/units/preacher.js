@@ -179,9 +179,11 @@ function mind(self){
     self.log(`ENEMY Castle at ${self.knownStructures[otherTeamNum][i].x}, ${self.knownStructures[otherTeamNum][i].y}`);
   }
   */
+  let nearestStructure = search.findNearestStructure(self);
+  let distToStructureFromMe = qmath.dist(self.me.x, self.me.y, nearestStructure.x, nearestStructure.y);
   //defenders and units that are have no final target. If they did, then they must be waiting for a fuel stack to go that target
   if (self.status === 'defend') {
-    if (self.me.x % 2 === 0 || self.me.y % 2 === 0 || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true) {
+    if (self.me.x % 2 === 0 || self.me.y % 2 === 0 || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true || distToStructureFromMe <= 2) {
       let closestDist = 99999;
       let bestLoc = null;
       let nearestStructure = search.findNearestStructure(self);
@@ -194,7 +196,7 @@ function mind(self){
              
               let distToStructure = qmath.dist(j, i, nearestStructure.x, nearestStructure.y);
               if (distToStructure > 2){
-                let thisDist = qmath.dist(self.defendTarget[0], self.defendTarget[1], j, i);
+                let thisDist = qmath.dist(self.me.x, self.me.y, j, i);
                 if (thisDist < closestDist) {
                   closestDist = thisDist;
                   bestLoc = [j, i];
@@ -408,6 +410,7 @@ function mind(self){
 
   if (self.status === 'attackTarget') {
     //finaltarget is enemy target pos.
+    /*
     let distToEnemy = qmath.dist(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
     if (distToEnemy >= 50) {
       
@@ -416,6 +419,7 @@ function mind(self){
       //stay put
       return '';
     }
+    */
   }
   if (self.status === 'goToTarget') {
     
@@ -430,7 +434,7 @@ function mind(self){
     let avoidFriends = false;
     let moveFast = true;
     if (self.status === 'attackTarget'){
-      avoidFriends = true;
+      //avoidFriends = true;
     }
     if (self.me.turn <= 3 && self.status === 'defend') {
       //initially, allow bot to move freely if its not attackinga

@@ -196,14 +196,16 @@ function findNearestEnemy(self, unit) {
 }
 
 //returns an object with different unit types as keys, containing an array of units within radius, bounded by vision,
-function unitsInRadius(self, radius) {
+function unitsInRadius(self, radius, team = self.me.team) {
   let robotsInVision = self.getVisibleRobots();
   let unitsInVincinity = {0:[],1:[],2:[],3:[],4:[],5:[]};
     for (let i = 0; i < robotsInVision.length; i++) {
       let obot = robotsInVision[i];
-      let distToUnit = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
-      if (distToUnit <= radius) {
-        unitsInVincinity[obot.unit].push(obot);
+      if (obot.team === team){
+        let distToUnit = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
+        if (distToUnit <= radius) {
+          unitsInVincinity[obot.unit].push(obot);
+        }
       }
     }
   return unitsInVincinity;

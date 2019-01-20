@@ -24,6 +24,7 @@ function mind(self){
     self.status = 'defend';
     self.rallyTarget = [self.me.x, self.me.y];
     self.defendTarget = [self.me.x, self.me.y]
+    self.moveSpeed = 'fast';
   }
   if (self.me.turn === 5) {
     pathing.initializePlanner(self);
@@ -48,23 +49,24 @@ function mind(self){
     }
     if (msg >= 12294 && msg <= 24583){
       if (msg >= 12294 && msg <= 16389) {
-        self.status = 'attackTarget';
+        //self.status = 'attackTarget';
         let padding = 12294;
         let targetLoc = self.getLocation(msg - padding);
-        self.finalTarget = [targetLoc.x, targetLoc.y];
+        //self.finalTarget = [targetLoc.x, targetLoc.y];
         self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
         //final target is wherever is max dist from final target
       }
       if (msg >= 16392 && msg <= 20487) {
-        self.status = 'attackTarget';
+        //self.status = 'attackTarget';
         let padding = 16392;
         let targetLoc = self.getLocation(msg - padding);
-        self.finalTarget = [targetLoc.x, targetLoc.y];
+        //self.finalTarget = [targetLoc.x, targetLoc.y];
         self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
       }
       if (msg >= 20488 && msg <= 24583) {
         self.status = 'goToTarget';
         let padding = 20488;
+        self.moveSpeed = 'slow';
         let targetLoc = self.getLocation(msg - padding);
         self.finalTarget = [targetLoc.x, targetLoc.y];
         self.log(`Preparing to attack enemey castle at ${self.finalTarget}`);
@@ -109,10 +111,12 @@ function mind(self){
   
   if (self.status === 'defend') {
     //follow lattice structure
-    if ((self.me.x % 2 === 1 && self.me.y % 2 === 1 ) || (self.me.x % 2 === 0 && self.me.y % 2 === 0) || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true) {
+    let nearestStructure = search.findNearestStructure(self);
+    let distToStructureFromMe = qmath.dist(self.me.x, self.me.y, nearestStructure.x, nearestStructure.y);
+    if ((self.me.x % 2 === 1 && self.me.y % 2 === 1 ) || (self.me.x % 2 === 0 && self.me.y % 2 === 0) || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true || distToStructureFromMe <= 2) {
         let closestDist = 99999;
         let bestLoc = null;
-        let nearestStructure = search.findNearestStructure(self);
+        
 
         for (let i = 0; i < gameMap.length; i++) {
           for (let j = 0; j < gameMap[0].length; j++) {
@@ -121,7 +125,7 @@ function mind(self){
                 //assuming final target when rallying is the rally targt
                 let distToStructure = qmath.dist(j, i, nearestStructure.x, nearestStructure.y);
                 if (distToStructure > 2){
-                  let thisDist = qmath.dist(self.defendTarget[0], self.defendTarget[1], j, i);
+                  let thisDist = qmath.dist(self.me.x, self.me.y, j, i);
                   if (thisDist < closestDist) {
                     closestDist = thisDist;
                     bestLoc = [j, i];
@@ -200,11 +204,21 @@ function mind(self){
     }
     
   }
+  else if (self.status === 'goToTarget') {
+    let distToEnemy = qmath.dist(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
+    if (distToEnemy <= 82) {
+      self.moveSpeed = 'fast';
+      self.signal(24585, 100);
+    }
+  }
   //PROCESSING FINAL TARGET
   if (forcedAction !== null) {
     return {action:forcedAction};
   }
   let moveFast = true;
+  if (self.moveSpeed === 'slow') {
+    moveFast = false;
+  }
   action = self.navigate(self.finalTarget, false, moveFast);
   return {action:action}; 
 }

@@ -35,6 +35,8 @@ function processMessageCastleTalk(self, msg, id) {
       //this means castle oppoisng the 3rd caslte in queue is gone
       //self.knownStructures[self.me.team].shift();
       break;
+    case 75:
+      self.allUnits[id] = msg;
     default:
       break;
   }
@@ -59,11 +61,11 @@ function processMessageCrusader(self, msg){
       break;
     case 16390:
       self.status = 'rally';
-      self.finalTarget = self.rallyTarget;
+      //self.finalTarget = self.rallyTarget;
       break;
     case 16391:
       self.status = 'defend';
-      self.finalTarget = self.defendTarget;
+      //self.finalTarget = self.defendTarget;
       break;
   }
 }
@@ -86,11 +88,11 @@ function processMessagePreacher(self, msg){
       //if message is from 12294 to 16389, attack target
     case 16390:
       self.status = 'rally';
-      self.finalTarget = self.rallyTarget;
+      //self.finalTarget = self.rallyTarget;
       break;
     case 16391:
       self.status = 'defend';
-      self.finalTarget = self.defendTarget;
+      //self.finalTarget = self.defendTarget;
       break;
   }
 }
@@ -109,12 +111,14 @@ function processMessageProphet(self, msg){
       break;
     case 16390:
       self.status = 'defend';
-      self.finalTarget = self.defendTarget;
+      //self.finalTarget = self.defendTarget;
       break;
     case 16391:
       self.status = 'defend';
-      self.finalTarget = self.defendTarget;
+      //self.finalTarget = self.defendTarget;
       break;
+    case 24585:
+      self.moveSpeed = 'fast';
   }
 }
 function processMessageChurch(self, msg){

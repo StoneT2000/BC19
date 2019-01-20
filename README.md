@@ -128,5 +128,11 @@ Better defending, preachers against incoming crusaders.
 
 Scouting with pilgrims?
 
-Tune initial unit building
+Fix issue with castles deciding ot stop building prophets after some tme
+
+Force prophets to not stand right next to the castle
+
+BUG!!!!!
+
+Lattice strucutre is inefficient, our prophets for some reason just keep on trying to move into the lattice but end up expending fuel for no reason
 
