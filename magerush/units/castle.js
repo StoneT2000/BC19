@@ -99,7 +99,7 @@ function mind(self) {
       }
     }
     else if (self.castles === 1) {
-      self.buildQueue.push(5,5,5,2,5,5);
+      self.buildQueue.push(5,5,5,2,5);
     }
     
     
