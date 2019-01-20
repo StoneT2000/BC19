@@ -107,8 +107,11 @@ function mind(self) {
   //SIGNAL PROCESSION
   let robotsInVision = self.getVisibleRobots();
   for (let i = 0; i < robotsInVision.length; i++) {
-    let msg = robotsInVision[i].signal;
-    signal.processMessagePilgrim(self, msg);
+    //we don't process the signal if the signal isn't from a unit that is visible and is on our team
+    if (robotsInVision[i].team === self.me.team){
+      let msg = robotsInVision[i].signal;
+      signal.processMessagePilgrim(self, msg);
+    }
   }
 
   //DECISION MAKING

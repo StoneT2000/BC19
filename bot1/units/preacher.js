@@ -102,47 +102,6 @@ function mind(self){
     signal.processMessagePreacher(self, msg);
     if(robotsInVision[i].id !== self.me.id){
       //process new target location
-      if (msg >= 6 && msg <= 4101) {
-        //- 6 for padding
-        let newTarget = self.getLocation(msg - 6);
-        self.finalTarget = [newTarget.x, newTarget.y];
-        self.status = 'searchAndAttack';
-        self.allowedToMove = true;
-        self.log(`New target: ${self.finalTarget} from message:${msg}`);
-      }
-      if (msg >= 4102 && msg <= 12293){
-        let padding = 4102;
-        let pushToEndOfKnownStructures = true;
-        //self.enemyCastleSortedIndex = 0;
-        if (msg >= 4102 && msg <= 8197) {
-          //-4102 for padding
-          //this caslte location is the first castle in any castle robots self.enemyCastlesSorted array.
-          padding = 4102;
-          //self.enemyCastleSortedIndex = 0;
-          
-        }
-        else if (msg >= 8198 && msg <= 12293) {
-          //this caslte location is the first castle in any castle robots self.enemyCastlesSorted array.
-          padding = 8198;
-          pushToEndOfKnownStructures = false;
-          //we know opposite castle was destroyed...
-          
-          
-          //self.enemyCastleSortedIndex = 1;
-        }
-        /*
-        else if (msg >= 12294 && msg <= 16389) {
-          //this caslte location is the first castle in any castle robots self.enemyCastlesSorted array.
-          padding = self.knownStructures[otherTeamNum][k]
-          //this index is what we send back to castles when we destroy this enemy castle
-          self.enemyCastleSortedIndex = 2;
-        }
-        */
-        let enemyCastleLoc = self.getLocation(msg - padding);
-        base.logStructure(self,enemyCastleLoc.x, enemyCastleLoc.y, otherTeamNum, 0, pushToEndOfKnownStructures);
-        self.originalCastleTarget = [enemyCastleLoc.x, enemyCastleLoc.y];
-        self.log(`Received location of enemy castle: ${enemyCastleLoc.x}, ${enemyCastleLoc.y} from message:${msg}`);
-      }
       if (msg >= 12294 && msg <= 16389) {
         self.status = 'attackTarget';
         let padding = 12294;
@@ -376,21 +335,8 @@ function mind(self){
       self.log(`Destroyed castle, now going to ${newLoc}`);
       let compressedLocationHash = self.compressLocation(newLoc[0], newLoc[1]);
       //padding hash by 6
-      /*
-      self.status = 'waitingForFuelStack';
-      self.signalToSendAfterFuelIsMet = 6 + compressedLocationHash;
-      self.fuelNeeded = fuelNeededForAttack;
-      //self.signal(5 + compressedLocationHash, 36);
-      self.finalTarget = newLoc;
-      self.allowedToMove = false;
-      */
       self.status = 'defend';
-      //through base.updateKnownStructures, bot sends signal throgh castleTalk to tell castle which castle was probably destroyed.
-      //send signal to tell bots to stop moving and wait for fuel stack
-      //self.signal(5, 36);
-      //self.log(`Initial New target: ${self.finalTarget}`);
 
-      //Send through castle talk the xpos and ypos of the enemy castle destroyed if it was the original target
 
 
     }

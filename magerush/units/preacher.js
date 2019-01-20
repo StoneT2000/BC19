@@ -61,8 +61,11 @@ function mind(self){
   //SIGNAL PROCESSION
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
-    signal.processMessagePreacher(self, msg);
-    if(robotsInVision[i].id !== self.me.id){
+    self.log(`Heard this team: ${robotsInVision[i].team}`);
+    if (robotsInVision[i].team === self.me.team){
+      signal.processMessagePreacher(self, msg);
+    }
+    if(robotsInVision[i].id !== self.me.id && robotsInVision[i].team === self.me.team){
       //process new target location
       if (msg >= 6 && msg <= 5001) {
         //- 6 for padding

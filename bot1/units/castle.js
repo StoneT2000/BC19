@@ -543,7 +543,7 @@ function mind(self) {
         if (sawProphet === true) {
           padding = 16392;
         }
-        self.signal(padding + compressedLocationHash, 36);
+        self.signal(padding + compressedLocationHash, 16);
         //self.log(`Nearest to castle is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
         self.sawEnemyLastTurn = true;
         //spam mages if we dont have any, otherwise prophets!
@@ -626,7 +626,7 @@ function mind(self) {
         if (sawProphet === true) {
           padding = 16392;
         }
-        self.signal(padding + compressedLocationHash, 36);
+        self.signal(padding + compressedLocationHash, 16);
         //self.log(`Nearest to castle is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
         self.sawEnemyLastTurn = true;
         //spam mages if we dont have any, otherwise prophets!

@@ -42,11 +42,6 @@ function mind(self){
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
     signal.processMessageProphet(self, msg);
-    if (msg >= 6 && msg <= 4101) {
-      let newTarget = self.getLocation(msg - 6);
-      self.finalTarget = [newTarget.x, newTarget.y];
-      self.status = 'searchAndAttack';
-    }
     if (msg >= 12294 && msg <= 24583){
       if (msg >= 12294 && msg <= 16389) {
         //self.status = 'attackTarget';

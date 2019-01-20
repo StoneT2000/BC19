@@ -57,10 +57,10 @@ function processMessageCrusader(self, msg){
     case 0:
       break;
     case 1:
-      self.status = 'searchAndAttack';
+      //self.status = 'searchAndAttack';
       break;
     case 16390:
-      self.status = 'rally';
+      //self.status = 'rally';
       //self.finalTarget = self.rallyTarget;
       break;
     case 16391:
@@ -74,7 +74,7 @@ function processMessagePreacher(self, msg){
     case 0:
       break;
     case 1:
-      self.status = 'searchAndAttack';
+      //self.status = 'searchAndAttack';
       break;
     case 5:
       //preachers waiting for stack of fuel to engage in next venture stay as that status
@@ -87,7 +87,7 @@ function processMessagePreacher(self, msg){
       //if message is from 8198 12293
       //if message is from 12294 to 16389, attack target
     case 16390:
-      self.status = 'rally';
+      //self.status = 'rally';
       //self.finalTarget = self.rallyTarget;
       break;
     case 16391:
@@ -101,7 +101,7 @@ function processMessageProphet(self, msg){
     case 0:
       break;
     case 1:
-      self.status = 'searchAndAttack';
+      //self.status = 'searchAndAttack';
       break;
     case 5:
       //preachers waiting for stack of fuel to engage in next venture stay as that status
