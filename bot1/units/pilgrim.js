@@ -375,7 +375,14 @@ function mind(self) {
     let checkPositions = search.circle(self, self.me.x, self.me.y, 2);
     let nearestStruct = search.findNearestStructure(self);
     let distToNearestStruct = qmath.dist(self.me.x, self.me.y, nearestStruct.x, nearestStruct.y);
-    if (distToNearestStruct > 4){
+    
+    
+    //we won't build near a structure in the early game
+    let minDist = 4;
+    if (self.globalTurn <= 50){
+      minDist = 10;
+    }
+    if (distToNearestStruct > minDist){
       let proceed = true;
       for (let i = 0 ; i < checkPositions.length; i++) {
         let pos = checkPositions[i];

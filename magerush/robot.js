@@ -159,7 +159,7 @@ class MyRobot extends BCAbstractRobot {
   * @param{[x,y]} finalTarget - An array of the position of the target the bot wants to navigate to
   *
   */
-  navigate(finalTarget) {
+  navigate(finalTarget, avoidFriends = false, fast = true) {
     if (finalTarget !== null){
       this.setFinalTarget(finalTarget);
       let action = '';
@@ -171,7 +171,7 @@ class MyRobot extends BCAbstractRobot {
         }
       }
       if (this.target) {
-        let rels = base.relToPos(this.me.x, this.me.y, this.target[0], this.target[1], this);
+        let rels = base.relToPos(this.me.x, this.me.y, this.target[0], this.target[1], this, avoidFriends, fast);
         if (rels.dx === 0 && rels.dy === 0) {
           action = ''
         }
