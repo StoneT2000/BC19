@@ -61,7 +61,6 @@ function mind(self){
   //SIGNAL PROCESSION
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
-    self.log(`Heard this team: ${robotsInVision[i].team}`);
     if (robotsInVision[i].team === self.me.team){
       signal.processMessagePreacher(self, msg);
     }
