@@ -515,6 +515,7 @@ function mind(self) {
   */
   //BUILDING DECISION CODE. DYNAMIC PART
   
+  self.log(`Saw enemy: ${sawEnemyThisTurn}; Last turn: ${self.sawEnemyLastTurn}`);
   if (sawEnemyThisTurn === false) {
     if (self.sawEnemyLastTurn === true) {
       self.signal(16391, 64);
@@ -527,7 +528,7 @@ function mind(self) {
         if (self.pilgrims <= self.maxPilgrims && self.pilgrims < (self.prophets + 2) * 2) {
           self.buildQueue = [2];
         }
-        else if (self.karbonite > 100 || self.prophets < 2){
+        else if (self.karbonite > 100){
           
           if (unitsInVincinity[SPECS.PROPHET].length <= self.prophets/(self.castles) && self.status !== 'pause') {
             self.castleTalk(72);
@@ -589,6 +590,9 @@ function mind(self) {
           */
         }
       }
+      else if (sawEnemyThisTurn === false) {
+        self.sawEnemyLastTurn = false;
+      }
     }
     
     
@@ -615,7 +619,7 @@ function mind(self) {
         if (self.pilgrims <= self.maxPilgrims && self.pilgrims < (self.prophets + 2) * 2 && self.karbonite > 50) {
           self.buildQueue = [2];
         }
-        else if (self.prophets < 2 || (self.karbonite > 100 && self.fuel > self.prophets * 50)){
+        else if ((self.karbonite >= 100 && self.fuel > self.prophets * 50)){
           self.buildQueue = [4];
         }
         
@@ -663,6 +667,9 @@ function mind(self) {
           }
         }
       }
+      else if (sawEnemyThisTurn === false) {
+        self.sawEnemyLastTurn = false;
+      }
     }
   
   //if its turn 900, and we have lost one castle, go at enemey
@@ -692,7 +699,7 @@ function mind(self) {
         adjacentPos = self.buildingAttackUnitPositions;
       }
       
-      if (self.buildQueue[0] === 4) {
+      if (self.buildQueue[0] === 4 && sawEnemyThisTurn) {
         //if we build a prophet and we saw an enemy, force the prophet to build far away.
         self.log(`Reverse prophet`)
         reverse = true;

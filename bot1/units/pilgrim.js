@@ -552,6 +552,7 @@ function safeDeposit(self, nx, ny) {
 
 function ownHalf(self, nx, ny) {
   let gameMap = self.map;
+  let mapLength = gameMap.length;
   //self.log()
   if (!self.mapIsHorizontal) {
     if (self.lowerHalf) {

@@ -166,7 +166,7 @@ function mind(self){
       */
     }
     
-    if (self.karbonite > 120 && self.fuel >= unitsInVincinity100[SPECS.PROPHET].length * 60){
+    if (self.karbonite >= 125 && self.fuel >= unitsInVincinity100[SPECS.PROPHET].length * 60){
       if (self.churchNeedsProtection === true){
         self.log(`Building prophet`)
         self.buildQueue = [4];
@@ -284,6 +284,7 @@ function numberOfDeposits(self, nx, ny) {
 
 function ownHalf(self, nx, ny) {
   let gameMap = self.map;
+  let mapLength = gameMap.length;
   //self.log()
   if (!self.mapIsHorizontal) {
     if (self.lowerHalf) {

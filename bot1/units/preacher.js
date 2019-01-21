@@ -135,15 +135,12 @@ function mind(self){
   
   //always update our locations and send death of enemy castle signal if possible
   base.updateKnownStructures(self);
-  /*
-  for (let i = 0; i < self.knownStructures[otherTeamNum].length; i++) {
-    self.log(`ENEMY Castle at ${self.knownStructures[otherTeamNum][i].x}, ${self.knownStructures[otherTeamNum][i].y}`);
-  }
-  */
+
   let nearestStructure = search.findNearestStructure(self);
   let distToStructureFromMe = qmath.dist(self.me.x, self.me.y, nearestStructure.x, nearestStructure.y);
   //defenders and units that are have no final target. If they did, then they must be waiting for a fuel stack to go that target
   if (self.status === 'defend') {
+    //SPEED IMPROVEMENT USING BFS.
     if (self.me.x % 2 === 0 || self.me.y % 2 === 0 || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true || distToStructureFromMe <= 2) {
       let closestDist = 99999;
       let bestLoc = null;
@@ -155,7 +152,8 @@ function mind(self){
             if (search.emptyPos(j, i , robotMap, gameMap, false) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
               //assuming final target when rallying is the rally targt
              
-              let distToStructure = qmath.dist(j, i, nearestStructure.x, nearestStructure.y);
+              let nearestStructureHere = search.findNearestStructureHere(self, j, i);
+              let distToStructure = qmath.dist(j, i, nearestStructureHere.x, nearestStructureHere.y);
               if (distToStructure > 2){
                 let thisDist = qmath.dist(self.me.x, self.me.y, j, i);
                 if (thisDist < closestDist) {
@@ -173,81 +171,6 @@ function mind(self){
       }
     }
   }
-  //units rallying go to a rally point sort of, and will end up trying to attack the first known enemy structure
-  if (self.status === 'rally'){
-    /*
-    let unitsInVincinity = search.unitsInRadius(self, 36)
-    
-    
-    let distToTarget = qmath.dist(self.me.x, self.me.y, self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y);
-    let path2 = [];
-    let distToTarget2 = 0;
-    if (self.planner !== null){
-      distToTarget2 = self.planner.search(self.me.y,self.me.x,self.knownStructures[otherTeamNum][0].y,self.knownStructures[otherTeamNum][0].x,path2);
-    }
-    else {
-      distToTarget2 = qmath.unitDist(self.me.x, self.me.y, self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y)
-    }
-    //qmath.unitDist(self.me.x, self.me.y, self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y);
-    
-    //path distance / 2 movement * 12 for fuel cost * 8 for num units
-    let fuelNeededForAttack = (distToTarget2/2) * 12 * unitsInVincinity[5].length;
-    //self.log(`To attack, we need ${fuelNeededForAttack}`);
-    //less fuel is needed if we let preachers move slowly, and then rush in once near target
-    
-    if (unitsInVincinity[5].length >= 7) {
-      if (self.fuel >= fuelNeededForAttack){
-        self.status = 'searchAndAttack';
-        //once we send the warcry, on average each turn the preachers spend 72 fuel to move
-        //Once they start attacking enemies, they spend 15 fuel, so we need to wait until fuel is enough
-        self.signal(1,36);//note, this signal will be broadcasted to other units at where this unit is at the end of its turn
-        forcedAction = '';
-        
-        //tell castles they may continue building, karbonite etc.
-        //self.castleTalk(7);
-      }
-      else {
-        //tell castles to stop building, stack fuel for attack
-        self.castleTalk(6);
-      }
-    }
-    else if (self.me.turn !== 1){
-      //self.castleTalk(7);
-    }
-    //self.log('c:' + self.finalTarget );
-    //We force the unit to stay away from each other
-    
-    //if we are farther from enemy castle than our own castle, recalc.
-    let fartherAway = false;
-    if (qmath.dist(self.knownStructures[self.me.team][0].x,self.knownStructures[self.me.team][0].y,self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y) <= qmath.dist(self.me.x, self.me.y,self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y)){
-      //self.log(`Im far`);
-      fartherAway = true;
-    }
-    if (self.me.x % 2 === 0 || self.me.y % 2 === 0 || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true) {
-        let closestDist = 99999;
-        let bestLoc = null;
-        for (let i = 0; i < gameMap.length; i++) {
-          for (let j = 0; j < gameMap[0].length; j++) {
-            if (i % 2 === 1 && j % 2 === 1){
-              if (search.emptyPos(j, i , robotMap, gameMap) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
-                //assuming final target when rallying is the rally targt
-                let thisDist = qmath.dist(self.rallyTarget[0], self.rallyTarget[1], j, i);
-                if (thisDist < closestDist) {
-                  closestDist = thisDist;
-                  bestLoc = [j, i];
-                }
-              }
-            }
-          }
-        }
-        if (bestLoc !== null) {
-          self.finalTarget = bestLoc;
-          self.log('New location near rally point :' + self.finalTarget);
-        }
-    }
-    */
-  }
-  
   
   //DECISIONS
   
@@ -257,47 +180,7 @@ function mind(self){
   if (self.status === 'goToTarget') {
     
   }
-  if (self.status === 'searchAndAttack') {
-    if (self.knownStructures[otherTeamNum].length > 0){
-      
-      self.finalTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
-    }
-  }
-  
-  //robot is waiting for enough fuel to start another war charge
-  if (self.status === 'waitingForFuelStack') {
-    self.log(`Waiting for fuel stack:${self.fuelNeeded}`);
-    let unitsInVincinity = search.unitsInRadius(self, 36);
-    
-    moveApart(self);
-    /*
-    let path2 = [];
-    let distToTarget2 = 0;
-    if (self.planner !== null){
-      distToTarget2 = self.planner.search(self.me.y,self.me.x,self.finalTarget[1], self.finalTarget[0],path2);
-    }
-    else {
-      distToTarget2 = qmath.unitDist(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
-    }
-    
-    self.fuelNeeded = (distToTarget2/2) * 12 * 6 + 250;//unitsInVincinity[5].length;
-    */
-    if (self.fuelNeeded <= self.fuel) {
-      self.signal(self.signalToSendAfterFuelIsMet, 36);
-      self.status = 'searchAndAttack';
-      self.allowedToMove = true;
-      forcedAction = '';
-      //self.castleTalk(7);
-    }
-    else {
-      //tell castle to pause
-      self.allowedToMove = false;
-      self.castleTalk(6);
-    }
-  }
-  
-  
-  if (self.status === 'searchAndAttack' || self.status === 'rally' || self.status === 'defend' || self.status === 'exploreAndAttack' || self.status === 'waitingForFuelStack' || self.status === 'attackTarget' || self.status === 'goToTarget') {
+  if (self.status === 'defend' || self.status === 'attackTarget' || self.status === 'goToTarget') {
     //watch for enemies, then chase them
     //call out friends to chase as well?, well enemy might only send scout, so we might get led to the wrong place
     
@@ -314,26 +197,7 @@ function mind(self){
 
       let longestDistance = 0;
       let newLoc = [self.knownStructures[self.me.team][0].x,self.knownStructures[self.me.team][0].y];
-      //self.lastAttackedUnit = null;
-      //self.status = 'searchAndAttack';
 
-      if (self.knownStructures[otherTeamNum].length > 1) {
-        let ln = self.knownStructures[otherTeamNum].length;
-        newLoc = [self.knownStructures[otherTeamNum][1].x, self.knownStructures[otherTeamNum][1].y];
-      }
-      else {
-        //IMPLEMENT TODO: if there is no next enemy left, go back home and defend
-      }
-      self.log('Next enemy: ' + newLoc);
-      let path2 = [];
-      let distToTarget2 = 0;
-      if (self.planner !== null){
-        distToTarget2 = self.planner.search(self.me.y,self.me.x,newLoc[1], newLoc[0],path2);
-      }
-      else {
-        distToTarget2 = qmath.unitDist(self.me.x, self.me.y, newLoc[0], newLoc[1]);
-      }
-      let fuelNeededForAttack = (distToTarget2/2) * 16 * 7 + 250;
       self.log(`Destroyed castle, now going to ${newLoc}`);
       let compressedLocationHash = self.compressLocation(newLoc[0], newLoc[1]);
       //padding hash by 6
@@ -396,31 +260,5 @@ function mind(self){
   }
   return {action:action};
 }
-
-function moveApart(self) {
-  let gameMap = self.map;
-  let robotMap = self.getVisibleRobotMap();
-  if (self.me.x % 2 === 0 || self.me.y %2 === 0) {
-    let closestDist = 99999;
-    let bestLoc = null;
-    for (let i = 0; i < mapLength; i++) {
-      for (let j = 0; j < mapLength; j++) {
-        if (i % 2 === 1 && j % 2 === 1){
-          if (search.emptyPos(j, i , robotMap, gameMap)){
-            let thisDist = qmath.dist(self.me.x, self.me.y, j, i);
-            if (thisDist < closestDist) {
-              closestDist = thisDist;
-              bestLoc = [j, i];
-            }
-          }
-        }
-      }
-    }
-    if (bestLoc !== null) {
-      self.finalTarget = bestLoc;
-    }
-  }
-}
-
 
 export default {mind}

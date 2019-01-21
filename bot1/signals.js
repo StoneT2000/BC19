@@ -114,8 +114,9 @@ function processMessageProphet(self, msg){
       //self.finalTarget = self.defendTarget;
       break;
     case 16391:
-      self.status = 'defend';
+      self.status = 'defendOldPos';
       //self.finalTarget = self.defendTarget;
+      self.defendTarget = [self.knownStructures[self.me.team][0].x, self.knownStructures[self.me.team][0].y]
       break;
     case 24585:
       self.moveSpeed = 'fast';

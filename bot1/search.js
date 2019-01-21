@@ -168,7 +168,49 @@ function findNearestStructure(self) {
   //self.log(`${bestTarget.x},${bestTarget.y}`)
   return bestTarget;
 }
-
+function findNearestStructureHere(self, x, y, unitsInVisionFiltered) {
+  let visibleRobots;
+  if (unitsInVisionFiltered) {
+    visibleRobots = unitsInVisionFiltered;
+  }
+  else {
+    visibleRobots = self.getVisibleRobots();
+  }
+  let shortestDist = 10000000;
+  let bestTarget = null;
+  
+  //First we search through known locations in case these structures aren't visible
+  for (let i = 0; i < self.knownStructures[self.me.team].length; i++) {
+    let friendlyStructure = self.knownStructures[self.me.team][i];
+    let distToStruct = qmath.dist(x, y, friendlyStructure.x, friendlyStructure.y);
+    if (distToStruct < shortestDist) {
+      shortestDist = distToStruct;
+      bestTarget = friendlyStructure;
+      //self.log(`Pilgrim-${self.me.id} found past struct: ${bestTarget}`);
+    }
+  }
+  
+  
+  
+  //Now we search through the robots that are visible by this robot.
+  for (let i = 0; i < visibleRobots.length; i++) {
+    let thatRobot = visibleRobots[i];
+    if (thatRobot.unit === SPECS.CHURCH || thatRobot.unit === SPECS.CASTLE) {
+      if (thatRobot.team === self.me.team){
+        let distToStruct = qmath.dist(x,y, thatRobot.x, thatRobot.y);
+        if (distToStruct < shortestDist) {
+          shortestDist = distToStruct;
+          bestTarget = {x:thatRobot.x, y:thatRobot.y, unit: thatRobot.unit};
+        }
+      }
+    }
+  }
+  if (bestTarget === null) {
+    return false;
+  }
+  //self.log(`${bestTarget.x},${bestTarget.y}`)
+  return bestTarget;
+}
 
 //Finds the nearest enemy unit, optionally searches for nearest unit type unit
 //returns null if no nearby enemies
@@ -225,4 +267,4 @@ function horizontalSymmetry(gameMap){
   }
   return true;
 }
-export default {circle, bfsDeltas, emptyPos, bfs, canPass, fuelDeposit, karboniteDeposit, findNearestStructure, horizontalSymmetry, inArr, unitsInRadius};
+export default {circle, bfsDeltas, emptyPos, bfs, canPass, fuelDeposit, karboniteDeposit, findNearestStructure, horizontalSymmetry, inArr, unitsInRadius, findNearestStructureHere};

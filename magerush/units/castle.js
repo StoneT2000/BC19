@@ -18,10 +18,10 @@ function mind(self) {
     //CALCULATING HOW MANY INITIAL CASTLES WE HAVE
     //we make the assumption that each castle makes a pilgrim first thing
     let offsetVal = 0;
-    if (self.karbonite === 90) {
+    if (self.karbonite === 70) {
       offsetVal = 1;
     }
-    else if (self.karbonite === 60) {
+    else if (self.karbonite === 40) {
       offsetVal = 2;
     }
     //we can also detemrine the offset val by looking at how many castle talk messages of 0 this castle gets.
@@ -288,13 +288,13 @@ function mind(self) {
             let unit = self.buildQueue.shift(); //remove that unit
 
             if (self.buildQueue[self.buildQueue.length-1] === 2){
-              self.buildQueue.push(5,5);
+              self.buildQueue.push(4,5);
             }
             else if (self.pilgrims <= self.maxPilgrims){
               self.buildQueue.push(2);
             }
             else {
-              self.buildQueue.push(5,5);
+              self.buildQueue.push(4,5);
             }
             if (unit === 3) {
               //send an initial signal?
