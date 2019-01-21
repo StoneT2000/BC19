@@ -330,7 +330,6 @@ function mind(self) {
       }
     }
     else if (msg === 71) {
-      //dont allow pilgrims to be built
 
       if (self.karbonite <= 90){
         self.stackKarbonite = true;
@@ -493,32 +492,31 @@ function mind(self) {
   }
   
   //code for determing when castle sends its local army out.
-  let unitsInVincinity = search.unitsInRadius(self, 100);
-  /*
-  if (true) {
-    
-    
-    if (unitsInVincinity[SPECS.PREACHER].length + unitsInVincinity[SPECS.PROPHET].length >= 12){
-      self.status = 'pause';
-      let distToTarget = qmath.unitDist(self.me.x, self.me.y, self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y);
-      let fuelNeededForAttack = (distToTarget/2) * 8 * unitsInVincinity[SPECS.PREACHER].length + (distToTarget/2) * 10 * unitsInVincinity[SPECS.PROPHET].length;
-      self.log(`Still need ${fuelNeededForAttack} fuel before attacking ${self.knownStructures[otherTeamNum][0].x}, ${self.knownStructures[otherTeamNum][0].y}`);
-      self.stackFuel = true;
-      if (self.fuel >= fuelNeededForAttack){
-        let targetLoc = self.knownStructures[otherTeamNum][0];
-        let compressedLocationHash = self.compressLocation(targetLoc.x, targetLoc.y);
-        let padding = 20488;
-        self.signal (padding + compressedLocationHash, 36);
+  //let unitsInVincinity = search.unitsInRadius(self, 100);
+
+  let unitsInVincinity = {0:[],1:[],2:[],3:[],4:[],5:[]};
+  let farthestUnitDist = {0:0,1:0,2:0,3:0,4:0,5:0};
+  for (let i = 0; i < robotsInVision.length; i++) {
+    let obot = robotsInVision[i];
+    if (obot.team === self.me.team){
+      let distToUnit = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
+      if (distToUnit <= 100) {
+        unitsInVincinity[obot.unit].push(obot);
+        if (distToUnit > farthestUnitDist[obot.unit]) {
+          farthestUnitDist[obot.unit] = distToUnit;
+        }
       }
     }
   }
-  */
   //BUILDING DECISION CODE. DYNAMIC PART
   
   self.log(`Saw enemy: ${sawEnemyThisTurn}; Last turn: ${self.sawEnemyLastTurn}`);
   if (sawEnemyThisTurn === false) {
     if (self.sawEnemyLastTurn === true) {
-      self.signal(16391, 64);
+      let range = 64;
+      range = Math.min(Math.pow(Math.ceil(Math.sqrt(Math.max(farthestUnitDist[SPECS.PROPHET], farthestUnitDist[SPECS.PREACHER]))), 2),64);
+      self.signal(16391, range);
+      
     }
   }
   
@@ -547,13 +545,13 @@ function mind(self) {
         if (sawProphet === true) {
           padding = 16392;
         }
-        self.signal(padding + compressedLocationHash, 16);
-        //self.log(`Nearest to castle is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
+        let range = 64;
+        //farthestUnitDist[SPECS.PROPHET];
+        range = Math.min(Math.pow(Math.ceil(Math.sqrt(Math.max(farthestUnitDist[SPECS.PROPHET], farthestUnitDist[SPECS.PREACHER]))), 2),64);
+        self.log('Farthest prphet: ' + farthestUnitDist[SPECS.PROPHET]);
+        self.signal(padding + compressedLocationHash, range);
         self.sawEnemyLastTurn = true;
-        //spam mages if we dont have any, otherwise prophets!
-        //let unitsInVincinity = search.unitsInRadius(self, 36);
 
-        //we start building up prophets after their rush is done
         self.status = 'build';
         
         if (self.me.turn > 0){
@@ -633,8 +631,9 @@ function mind(self) {
         if (sawProphet === true) {
           padding = 16392;
         }
-        self.signal(padding + compressedLocationHash, 16);
-        //self.log(`Nearest to castle is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
+        let range = 64;
+        range = Math.min(Math.pow(Math.ceil(Math.sqrt(Math.max(farthestUnitDist[SPECS.PROPHET], farthestUnitDist[SPECS.PREACHER]))), 2),64);
+        self.signal(padding + compressedLocationHash, range);
         self.sawEnemyLastTurn = true;
         //spam mages if we dont have any, otherwise prophets!
         //let unitsInVincinity = search.unitsInRadius(self, 36);

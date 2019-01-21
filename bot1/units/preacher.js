@@ -30,7 +30,6 @@ function mind(self){
     self.setFinalTarget(self.finalTarget);
   }
   if (self.me.turn === 1) {
-    self.originalCastleTarget = [-1, -1];
     
     self.castleTalk(self.me.unit);
     self.allowedToMove = true;
@@ -91,6 +90,20 @@ function mind(self){
       self.defendTarget = [self.me.x, self.me.y];
       self.finalTarget = [self.me.x, self.me.y];
     }
+    
+    self.origStructureLoc = null;
+    let possibleStructureLocs = search.circle(self, self.me.x, self.me.y, 2);
+    for (let i = 0; i < possibleStructureLocs.length; i++) {
+      let pos = possibleStructureLocs[i];
+      let rid = robotMap[pos[1]][pos[0]];
+      let obot = self.getRobot(rid);
+      if (obot !== null && obot.team === self.me.team && (obot.unit === SPECS.CASTLE || obot.unit === SPECS.CHURCH)) {
+        self.origStructureLoc = pos;
+        self.log('Im from' + pos);
+        break;
+      }
+    }
+    
     //self.finalTarget = [exploreTarget[0], exploreTarget[1]];
     
   }
@@ -99,6 +112,7 @@ function mind(self){
   let robotsInVision = self.getVisibleRobots();
   
   //SIGNAL PROCESSION
+  let unitsInVision = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
     signal.processMessagePreacher(self, msg);
@@ -131,6 +145,9 @@ function mind(self){
       }
       
     }
+    if (robotsInVision[i].unit === SPECS.CHURCH) {
+      unitsInVision[6].push(robotsInVision[i]);
+    }
   }
   
   //always update our locations and send death of enemy castle signal if possible
@@ -139,9 +156,9 @@ function mind(self){
   let nearestStructure = search.findNearestStructure(self);
   let distToStructureFromMe = qmath.dist(self.me.x, self.me.y, nearestStructure.x, nearestStructure.y);
   //defenders and units that are have no final target. If they did, then they must be waiting for a fuel stack to go that target
-  if (self.status === 'defend') {
+  if (self.status === 'defend' || self.status === 'defendOldPos') {
     //SPEED IMPROVEMENT USING BFS.
-    if (self.me.x % 2 === 0 || self.me.y % 2 === 0 || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true || distToStructureFromMe <= 2) {
+    if (self.me.x % 2 === 0 || self.me.y % 2 === 0 || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true || distToStructureFromMe <= 2 || self.status === 'defendOldPos') {
       let closestDist = 99999;
       let bestLoc = null;
       let nearestStructure = search.findNearestStructure(self);
@@ -149,13 +166,17 @@ function mind(self){
         for (let j = 0; j < mapLength; j++) {
           if (i % 2 === 1 && j % 2 === 1){
             //position can also not be next to structure
-            if (search.emptyPos(j, i , robotMap, gameMap, false) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
+            if ((search.emptyPos(j, i , robotMap, gameMap, false) || self.me.id === robotMap[i][j]) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
               //assuming final target when rallying is the rally targt
              
-              let nearestStructureHere = search.findNearestStructureHere(self, j, i);
-              let distToStructure = qmath.dist(j, i, nearestStructureHere.x, nearestStructureHere.y);
+              let nearestStructureHere = search.findNearestStructureHere(self, j, i, unitsInVision[6]);
+                let distToStructure = qmath.dist(j, i, nearestStructureHere.x, nearestStructureHere.y);
               if (distToStructure > 2){
-                let thisDist = qmath.dist(self.me.x, self.me.y, j, i);
+                let tgt = [self.me.x, self.me.y]
+                  if (self.status === 'defendOldPos') {
+                    tgt = self.defendTarget;
+                  }
+                  let thisDist = qmath.dist(tgt[0], tgt[1], j, i);
                 if (thisDist < closestDist) {
                   closestDist = thisDist;
                   bestLoc = [j, i];
@@ -169,7 +190,11 @@ function mind(self){
         self.finalTarget = bestLoc;
         self.log('New location near defend point :' + self.finalTarget);
       }
+      if (self.status === 'defendOldPos') {
+        self.status = 'defend';
+      }
     }
+    
   }
   
   //DECISIONS

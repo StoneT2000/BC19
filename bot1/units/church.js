@@ -149,7 +149,7 @@ function mind(self){
     let unitsInVincinity100 = search.unitsInRadius(self, 100);
     //keep karbonite in stock so we can spam mages out when needed
     if (self.sawEnemyLastTurn === true) {
-      //self.signal(16391, 64); //tell everyone to defend
+      self.signal(16391, 64); //tell everyone to defend
       self.buildQueue = [];
     }
     if (self.karbonite >= 200) {
@@ -185,7 +185,7 @@ function mind(self){
   else {
     let unitsInVincinity36 = search.unitsInRadius(self, 36);
     let compressedLocationHash = self.compressLocation(nearestEnemyLoc.x, nearestEnemyLoc.y);
-    self.signal(12294 + compressedLocationHash, 36);
+    self.signal(12294 + compressedLocationHash, 64);
     //self.log(`Nearest to castle is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
     self.sawEnemyLastTurn = true;
     //self.buildQueue.unshift(5);

@@ -91,8 +91,8 @@ function processMessagePreacher(self, msg){
       //self.finalTarget = self.rallyTarget;
       break;
     case 16391:
-      self.status = 'defend';
-      //self.finalTarget = self.defendTarget;
+      self.status = 'defendOldPos';
+      self.defendTarget = self.origStructureLoc;
       break;
   }
 }
@@ -116,7 +116,7 @@ function processMessageProphet(self, msg){
     case 16391:
       self.status = 'defendOldPos';
       //self.finalTarget = self.defendTarget;
-      self.defendTarget = [self.knownStructures[self.me.team][0].x, self.knownStructures[self.me.team][0].y]
+      self.defendTarget = self.origStructureLoc;
       break;
     case 24585:
       self.moveSpeed = 'fast';

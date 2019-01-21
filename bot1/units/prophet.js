@@ -26,6 +26,18 @@ function mind(self){
     self.rallyTarget = [self.me.x, self.me.y];
     self.defendTarget = [self.me.x, self.me.y]
     self.moveSpeed = 'fast';
+    self.origStructureLoc = [self.me.x, self.me.y];
+    let possibleStructureLocs = search.circle(self, self.me.x, self.me.y, 2);
+    for (let i = 0; i < possibleStructureLocs.length; i++) {
+      let pos = possibleStructureLocs[i];
+      let rid = robotMap[pos[1]][pos[0]];
+      let obot = self.getRobot(rid);
+      if (obot !== null && obot.team === self.me.team && (obot.unit === SPECS.CASTLE || obot.unit === SPECS.CHURCH)) {
+        self.origStructureLoc = pos;
+        self.log('Im from' + pos);
+        break;
+      }
+    }
   }
   if (self.me.turn === 5) {
     pathing.initializePlanner(self);
@@ -51,7 +63,7 @@ function mind(self){
           //self.status = 'attackTarget';
           let padding = 12294;
           let targetLoc = self.getLocation(msg - padding);
-          //self.finalTarget = [targetLoc.x, targetLoc.y];
+          self.finalTarget = [targetLoc.x, targetLoc.y];
           self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
           //final target is wherever is max dist from final target
         }
@@ -127,7 +139,6 @@ function mind(self){
           for (let j = 0; j < mapLength; j++) {
             if (i % 2 !== j % 2 ){
               if ((search.emptyPos(j, i , robotMap, gameMap, false) || self.me.id === robotMap[i][j]) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
-                //assuming final target when rallying is the rally targt
                 let nearestStructureHere = search.findNearestStructureHere(self, j, i, unitsInVision[6]);
                 let distToStructure = qmath.dist(j, i, nearestStructureHere.x, nearestStructureHere.y);
                 if (distToStructure > 2){
@@ -229,7 +240,7 @@ function mind(self){
     return {action:forcedAction};
   }
   let moveFast = true;
-  if (self.moveSpeed === 'slow') {
+  if (self.moveSpeed === 'slow' || self.status === 'defend' || self.status === 'defendOldPos' || self.status === 'attackTarget') {
     moveFast = false;
   }
   action = self.navigate(self.finalTarget, false, moveFast);
