@@ -11,7 +11,7 @@ function mind(self){
   let otherTeamNum = (self.me.team + 1) % 2;
   let action = '';
   let forcedAction = null;
-  self.log(`Prophet (${self.me.x}, ${self.me.y}); Status: ${self.status}; ${self.me.time} ms left`);
+  self.log(`Prophet (${self.me.x}, ${self.me.y}); Status: ${self.status}; FinalTarget: ${self.finalTarget}; ${self.me.time} ms left`);
   let robotMap = self.getVisibleRobotMap();
   let fuelMap = self.getFuelMap();
   let karboniteMap = self.getKarboniteMap();
@@ -41,7 +41,7 @@ function mind(self){
   }
   if (self.me.turn === 5) {
     pathing.initializePlanner(self);
-    self.setFinalTarget(self.finalTarget);
+    //self.setFinalTarget(self.finalTarget);
   }
   
   let robotsInVision = self.getVisibleRobots();

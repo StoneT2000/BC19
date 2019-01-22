@@ -18,6 +18,7 @@ function mind(self) {
   if (self.me.turn === 1){
     //CALCULATING HOW MANY INITIAL CASTLES WE HAVE
     //self.castleTalk(255);
+    
     self.finalSignal = false;
     let offsetVal = 0;
     self.castleNum = 0;

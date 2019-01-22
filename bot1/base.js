@@ -97,7 +97,7 @@ function relToPos(p1x, p1y, p2x, p2y, self, avoidFriends = false, fast = true) {
   let vals = rel(p1x, p1y, p2x, p2y);
   let deltas = unitMoveDeltas[self.me.unit];
   if (fast === false) {
-    deltas = unitMoveDeltas[self.me.unit].slice(0, 8);
+    deltas = unitMoveDeltas[self.me.unit].slice(0, 9);
   }
   let robotMap = self.getVisibleRobotMap();
   let closestDist = qmath.dist(p2x,p2y,p1x, p1y);
@@ -105,8 +105,10 @@ function relToPos(p1x, p1y, p2x, p2y, self, avoidFriends = false, fast = true) {
   for (let i = 0; i < deltas.length; i++) {
 
     let nx = p1x+deltas[i][0];
-    let ny = p1y+deltas[i][1]
+    let ny = p1y+deltas[i][1];
+    
     let pass = self.canMove(deltas[i][0],deltas[i][1])
+    //self.log(`check: ${nx}, ${ny}; can move there? : ${pass}`);
     if (pass === true){
       let validPlace = true;
       if (avoidFriends) {
