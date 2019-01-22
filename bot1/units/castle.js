@@ -19,6 +19,8 @@ function mind(self) {
     //CALCULATING HOW MANY INITIAL CASTLES WE HAVE
     //self.castleTalk(255);
     
+    self.sentContestableBot = false;
+    
     self.finalSignal = false;
     let offsetVal = 0;
     self.castleNum = 0;
@@ -93,7 +95,8 @@ function mind(self) {
     //From fuelspot and karbonite spot locations, locate the closest contestable resource deposit.
     //Contestable CRITERIA
     //Resource spot is contestable if it is within r^2 of 64 of the same resource deposit on the other half
-    let contestableSpots = [];
+    self.contestableSpots = [];
+    /*
     for (let i = 0; i < self.fuelSpots.length; i++) {
       let spot = self.fuelSpots[i];
       let oppositeSpot;
@@ -105,9 +108,10 @@ function mind(self) {
       }
       if (ownHalf(self, spot.x, spot.y) && qmath.dist(spot.x, spot.y, oppositeSpot[0], oppositeSpot[1]) <= 64) {
         self.log(`Spot at ${spot.x}, ${spot.y} is contestable`);
-        contestableSpots.push(spot);
+        self.contestableSpots.push(spot);
       }
     }
+    */
     for (let i = 0; i < self.karboniteSpots.length; i++) {
       let spot = self.karboniteSpots[i];
       let oppositeSpot;
@@ -119,19 +123,11 @@ function mind(self) {
       }
       if (ownHalf(self, spot.x, spot.y) && qmath.dist(spot.x, spot.y, oppositeSpot[0], oppositeSpot[1]) <= 64) {
         self.log(`Spot at ${spot.x}, ${spot.y} is contestable`);
-        contestableSpots.push(spot);
+        self.contestableSpots.push(spot);
       }
     }
     self.closestContestableSpot = null;
-    let closestContestableSpotDist = 99999;
-    for (let i = 0; i < contestableSpots.length; i++) {
-      let spot = contestableSpots[i];
-      let distTospot = qmath.dist(spot.x, spot.y, self.me.x, self.me.y);
-      if (closestContestableSpotDist >= distTospot) {
-        closestContestableSpotDist = distTospot;
-        self.closestContestableSpot = spot;
-      }
-    }
+    
     
     
     self.status = 'build';
@@ -172,31 +168,53 @@ function mind(self) {
     }
     
     //INITIAL BUILDING STRATEGIES
-    //only first castle builds pilgrim in 3 preacher defence strategy
-    if (self.castles === 3) {
-      //only first castle builds pilgrim in 3 preacher defence strategy
-      if (offsetVal === 0) {
-        self.buildQueue.push(4,2);
+    if (self.closestContestableSpot !== null){
+      if (self.castles === 3) {
+        if (offsetVal === 0) {
+          self.buildQueue.push(2, 2);
+        }
+        else if (offsetVal === 1){
+          self.buildQueue.push(2);
+        }
+        else if (offsetVal === 2) {
+          self.buildQueue.push(2);
+        }
       }
-      else if (offsetVal === 1){
-        self.buildQueue.push(2);
+      else if (self.castles === 2) {
+        if (offsetVal === 0) {
+          self.buildQueue.push(2,2);
+        }
+        else if (offsetVal === 1) {
+          self.buildQueue.push(2);
+        }
       }
-      else if (offsetVal === 2) {
-        self.buildQueue.push(2);
+      else if (self.castles === 1) {
+        self.buildQueue.push(2,2,2);
       }
     }
-    else if (self.castles === 2) {
-      if (offsetVal === 0) {
-        self.buildQueue.push(4,2);
+    else {
+      if (self.castles === 3) {
+        if (offsetVal === 0) {
+          self.buildQueue.push(2,2);
+        }
+        else if (offsetVal === 1){
+          self.buildQueue.push(2);
+        }
+        else if (offsetVal === 2) {
+          self.buildQueue.push(2);
+        }
       }
-      else if (offsetVal === 1) {
-        self.buildQueue.push(2,2);
+      else if (self.castles === 2) {
+        if (offsetVal === 0) {
+          self.buildQueue.push(2,2);
+        }
+        else if (offsetVal === 1) {
+          self.buildQueue.push(2,2);
+        }
       }
-    }
-    else if (self.castles === 1) {
-      self.buildQueue.push(4,2,2,2);
-      //self.buildQueue.push(2,4,4,4);
-      //defending against 4 archers seems to need 4 archer defence
+      else if (self.castles === 1) {
+        self.buildQueue.push(2,2,2,2);
+      }
     }
     
     
@@ -224,7 +242,7 @@ function mind(self) {
     self.buildingAttackUnitPositions = tempPos.map(function(a){
       return a.pos;
     })
-    self.log('Attack build pos: '+ self.buildingAttackUnitPositions);
+    //self.log('Attack build pos: '+ self.buildingAttackUnitPositions);
     
     tempPos = [];
     desiredX = closestKarbonitePos[0];
@@ -241,7 +259,7 @@ function mind(self) {
     self.buildingPilgrimPositions = tempPos.map(function(a){
       return a.pos;
     })
-    self.log('Pilgrim build pos: ' + self.buildingPilgrimPositions);
+    //self.log('Pilgrim build pos: ' + self.buildingPilgrimPositions);
     
     
     
@@ -252,13 +270,13 @@ function mind(self) {
   if (self.me.turn <= 3) {
     if (self.me.turn === 1) {
       let xposPadded = self.me.x + 192;
-       self.log(`Said X: ${xposPadded}`);
+      //self.log(`Said X: ${xposPadded}`);
       self.castleTalk(xposPadded);
     }
     else if (self.me.turn === 2){
       let yposPadded = self.me.y + 192;
       self.castleTalk(yposPadded);
-      self.log(`Said y: ${yposPadded}`);
+      //self.log(`Said y: ${yposPadded}`);
     }
     for (let i = 0; i < robotsInVision.length; i++) {
       let msg = robotsInVision[i].castle_talk;
@@ -276,11 +294,11 @@ function mind(self) {
         if (msg >= 192) {
           
           if (self.initialCastleLocationMessages[botId].x === -1){
-            self.log(`Received x pos from castle-${botId}  msg: ${msg}=${msg-192}`);
+            //self.log(`Received x pos from castle-${botId}  msg: ${msg}=${msg-192}`);
             self.initialCastleLocationMessages[botId].x = (msg - 192);
           }
           else {
-            self.log(`Received y pos from castle-${botId}  msg: ${msg}=${msg-192}`);
+            //self.log(`Received y pos from castle-${botId}  msg: ${msg}=${msg-192}`);
             self.initialCastleLocationMessages[botId].y = (msg - 192);
           }
         }
@@ -288,9 +306,10 @@ function mind(self) {
       }
     }
   }
-
+  let buildEarlyProphet = false;
+  
   if (self.me.turn === 3) {
-    
+    let sendEarlyProphetStrat = true;
     //STORE A SORTED ENEEMY LOCATION ARRAY
     self.enemyCastlesSorted = [];
     for (let i = 0; i < self.castleIds.length; i++){
@@ -298,7 +317,7 @@ function mind(self) {
       let nx = self.initialCastleLocationMessages[castleId].x;
       let ny = self.initialCastleLocationMessages[castleId].y;
       if (nx !== -1 && ny !== -1){
-        self.log(`Castle Location Data Received for castle-${castleId}: ${self.initialCastleLocationMessages[castleId].x}, ${self.initialCastleLocationMessages[castleId].y}`);
+        //self.log(`Castle Location Data Received for castle-${castleId}: ${self.initialCastleLocationMessages[castleId].x}, ${self.initialCastleLocationMessages[castleId].y}`);
 
         //NOW STORE ALL ENEMY CASTLE LOCATION DATA AND ALL FRIENDLY CASTLE LOC DATA
 
@@ -316,7 +335,49 @@ function mind(self) {
         base.logStructure(self,ex,ey,otherTeamNum, 0);
       }
     }
-    
+    //figure out which castle is best sutied for sending an early prophet
+    for (let i = 0; i < robotsInVision.length; i++) {
+      let msg = robotsInVision[i].castle_talk;
+      if (msg === 76) {
+        sendEarlyProphetStrat = false;
+      }
+    }
+    if (sendEarlyProphetStrat === true){
+      self.log(`checking if we are good castle to send prophet`)
+      let myClosestContestableSpotDist = 99999;
+      let otherClosestContestableSpotDist = 99999;
+      let bestSpot = null;
+      let castleLocs = [];
+      for (let i = 1; i < self.knownStructures[self.me.team].length; i++) {
+        let ck = self.knownStructures[self.me.team][i];
+        castleLocs.push([ck.x, ck.y])
+      }
+      for (let i = 0; i < self.contestableSpots.length; i++) {
+        let spot = self.contestableSpots[i];
+        let distTospot = qmath.dist(spot.x, spot.y, self.me.x, self.me.y);
+        if (myClosestContestableSpotDist >= distTospot) {
+          myClosestContestableSpotDist = distTospot;
+          bestSpot = spot;
+          self.closestContestableSpot = bestSpot;
+        }
+        for (let i = 0; i < castleLocs.length; i++) {
+          let cx = castleLocs[i][0];
+          let cy = castleLocs[i][1];
+          let distTospot2 = qmath.dist(spot.x, spot.y, cx, cy);
+          if (otherClosestContestableSpotDist >= distTospot2) {
+            otherClosestContestableSpotDist = distTospot2;
+          }
+
+        }
+      }
+      if (myClosestContestableSpotDist <= otherClosestContestableSpotDist) {
+        self.castleTalk(76);
+        self.log(`we are good castle to send prophet`)
+        self.closestContestableSpot = bestSpot;
+        buildEarlyProphet = true;
+      }
+    }
+    /*
     for (let i = 0; i < self.knownStructures[self.me.team].length; i++) {
       //self.log(`Castle at ${self.knownStructures[self.me.team][i].x}, ${self.knownStructures[self.me.team][i].y}`);
     }
@@ -328,7 +389,7 @@ function mind(self) {
       return a.x - b.x;
     })
     for (let i = 0; i < self.enemyCastlesSorted.length; i++){
-      self.log(`Enemy Castle: ${i}, at ${self.enemyCastlesSorted[i].x}, ${self.enemyCastlesSorted[i].y}`);
+      //self.log(`Enemy Castle: ${i}, at ${self.enemyCastlesSorted[i].x}, ${self.enemyCastlesSorted[i].y}`);
       for (let k = 0; k < self.knownStructures[otherTeamNum].length; k++) {
         let kx = self.knownStructures[otherTeamNum][k].x
         let ky = self.knownStructures[otherTeamNum][k].y;
@@ -338,8 +399,8 @@ function mind(self) {
       }
     }
     self.knownStructures[otherTeamNum].forEach(function(a){
-      self.log(`Index for ${a.x}, ${a.y}: ${a.index}`)
-    })
+      //self.log(`Index for ${a.x}, ${a.y}: ${a.index}`)
+    })*/
     
   }
   
@@ -757,7 +818,9 @@ function mind(self) {
     self.status = 'pause';
   }
   if (self.status === 'build') {
-    
+    if (buildEarlyProphet === true) {
+      self.buildQueue.unshift(4);
+    }
     self.log(`BuildQueue: ${self.buildQueue}`)
     if (self.buildQueue[0] !== -1){
       let reverse = false;
@@ -783,14 +846,21 @@ function mind(self) {
               //build the first unit put into the build queue
               let unit = self.buildQueue.shift(); //remove that unit
               
-              if (self.me.turn <= 2 && self.castleNum === 0) {
+              if (self.me.turn === 3 && self.castleNum === 0 && self.closestContestableSpot !== null) {
                 //tell first 2 units, probably a prophet and pilgrim, to go this spot
                 let padding = 24586;
-                
+                 
                 let compressedLocNum = self.compressLocation(self.closestContestableSpot.x,self.closestContestableSpot.y);
                 self.signal(padding + compressedLocNum,  2);
               }
               
+              //if we are naturally building a prophet not because of incoming enemies, and it is after we decide on that early strategy, send prophet to closest contestable spot. We should instead actually just have the prophet that is going to the contestable spot that is on defendSpot mode to send thru castle talk if they made it there or not.
+              if (self.me.turn > 3 && sawEnemyThisTurn === false && self.closestContestableSpot !== null && self.sentContestableBot === false) {
+                let padding = 24586;
+                let compressedLocNum = self.compressLocation(self.closestContestableSpot.x,self.closestContestableSpot.y);
+                self.sentContestableBot = true;
+                self.signal(padding + compressedLocNum,  2);
+              }
               let rels = base.rel(self.me.x, self.me.y, checkPos[0], checkPos[1]);
               action = self.buildUnit(unit, rels.dx, rels.dy);
               return {action:action};

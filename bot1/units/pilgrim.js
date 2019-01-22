@@ -349,38 +349,47 @@ function mind(self) {
   
   
   //if we are tyring to build, return iff structure is near
-  if (((self.me.fuel >= 100 || self.me.karbonite >= 20) || self.status === 'return') && self.status !== 'building') {
+  if (((self.me.fuel >= 100 || self.me.karbonite >= 20) || self.status === 'return')) {
     //send karbo
-    if (self.status === 'mineKarb' || self.status === 'mineFuel') {
-      self.statusBeforeReturn = self.status;
-    }
-    
-    //we continue to tell castles taht this unit was mining karbonite to prevent castles from accidentally assigning pilgrims to mine a spot already taken up
-    if (self.statusBeforeReturn === 'mineKarb') {
-      self.castleTalk(73);
-    }
-    else if (self.statusBeforeReturn === 'mineFuel') {
-      self.castleTalk(74);
-    }
     let bestTarget = search.findNearestStructure(self);
-    self.finalTarget = [bestTarget.x, bestTarget.y];
-    self.status = 'return';
+    let proceedToReturn = true;
+    if (self.status === 'building') {
+      if (qmath.dist(bestTarget.x, bestTarget.y, self.me.x, self.me.y) > 100) {
+        proceedToReturn = false;
+      }
+    }
+    if (proceedToReturn) {
+      if (self.status === 'mineKarb' || self.status === 'mineFuel') {
+        self.statusBeforeReturn = self.status;
+      }
 
-    let currRels = base.rel(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
-    if (Math.abs(currRels.dx) <= 1 && Math.abs(currRels.dy) <= 1){
-      
-      self.status = 'searchForAnyDeposit';
-      /*
-      if (self.fuel <= 100) {
-        self.status = 'searchForFuelDeposit';
+      //we continue to tell castles taht this unit was mining karbonite to prevent castles from accidentally assigning pilgrims to mine a spot already taken up
+      if (self.statusBeforeReturn === 'mineKarb') {
+        self.castleTalk(73);
       }
-      else {
-        self.status = 'searchForKarbDeposit';
+      else if (self.statusBeforeReturn === 'mineFuel') {
+        self.castleTalk(74);
       }
-      */
-      self.signal(4,2);
-      action = self.give(currRels.dx, currRels.dy, self.me.karbonite, self.me.fuel);
-      return {action:action}; 
+
+      self.finalTarget = [bestTarget.x, bestTarget.y];
+      self.status = 'return';
+
+      let currRels = base.rel(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
+      if (Math.abs(currRels.dx) <= 1 && Math.abs(currRels.dy) <= 1){
+
+        self.status = 'searchForAnyDeposit';
+        /*
+        if (self.fuel <= 100) {
+          self.status = 'searchForFuelDeposit';
+        }
+        else {
+          self.status = 'searchForKarbDeposit';
+        }
+        */
+        self.signal(4,2);
+        action = self.give(currRels.dx, currRels.dy, self.me.karbonite, self.me.fuel);
+        return {action:action}; 
+      }
     }
   }
   

@@ -166,7 +166,7 @@ class MyRobot extends BCAbstractRobot {
       let action = '';
       if (this.path.length > 0) {
         let distLeftToSubTarget = qmath.dist(this.me.x, this.me.y, this.target[0], this.target[1]);
-        if (distLeftToSubTarget <= 1){
+        if (distLeftToSubTarget <= 2){
           this.target[1] = this.path.shift();
           this.target[0] = this.path.shift();
         }
