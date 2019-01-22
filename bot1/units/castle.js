@@ -514,7 +514,7 @@ function mind(self) {
   if (sawEnemyThisTurn === false) {
     if (self.sawEnemyLastTurn === true) {
       let range = 64;
-      range = Math.min(Math.pow(Math.ceil(Math.sqrt(Math.max(farthestUnitDist[SPECS.PROPHET], farthestUnitDist[SPECS.PREACHER]))), 2),64);
+      range = Math.min(Math.max(Math.pow(Math.ceil(Math.sqrt(Math.max(farthestUnitDist[SPECS.PROPHET], farthestUnitDist[SPECS.PREACHER]))), 2), 4),64);
       self.signal(16391, range);
       
     }
@@ -547,14 +547,14 @@ function mind(self) {
         }
         let range = 64;
         //farthestUnitDist[SPECS.PROPHET];
-        range = Math.min(Math.pow(Math.ceil(Math.sqrt(Math.max(farthestUnitDist[SPECS.PROPHET], farthestUnitDist[SPECS.PREACHER]))), 2),64);
+        range = Math.min(Math.max(Math.pow(Math.ceil(Math.sqrt(Math.max(farthestUnitDist[SPECS.PROPHET], farthestUnitDist[SPECS.PREACHER]))), 2), 4),64);
         self.log('Farthest prphet: ' + farthestUnitDist[SPECS.PROPHET]);
         self.signal(padding + compressedLocationHash, range);
         self.sawEnemyLastTurn = true;
 
         self.status = 'build';
         
-        if (self.me.turn > 0){
+        if (self.me.turn > 0) {
           if (sawCrusader === true) {
             if (unitsInVincinity[SPECS.PREACHER].length < 1){
               self.buildQueue.unshift(5);
@@ -632,7 +632,8 @@ function mind(self) {
           padding = 16392;
         }
         let range = 64;
-        range = Math.min(Math.pow(Math.ceil(Math.sqrt(Math.max(farthestUnitDist[SPECS.PROPHET], farthestUnitDist[SPECS.PREACHER]))), 2),64);
+        range = Math.min(Math.max(Math.pow(Math.ceil(Math.sqrt(Math.max(farthestUnitDist[SPECS.PROPHET], farthestUnitDist[SPECS.PREACHER]))), 2), 4),64);
+        self.log(`Sent range : ${range}`);
         self.signal(padding + compressedLocationHash, range);
         self.sawEnemyLastTurn = true;
         //spam mages if we dont have any, otherwise prophets!

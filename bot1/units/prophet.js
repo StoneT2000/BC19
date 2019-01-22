@@ -55,23 +55,26 @@ function mind(self){
   let unitsInVision = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
-    
     if (robotsInVision[i].team === self.me.team){
       signal.processMessageProphet(self, msg);
       if (msg >= 12294 && msg <= 24583){
         if (msg >= 12294 && msg <= 16389) {
           //self.status = 'attackTarget';
+          //current status should be defend
+          //this signal means we see an enemy that is other than a prophet
+          //thus, we stay still
           let padding = 12294;
           let targetLoc = self.getLocation(msg - padding);
-          self.finalTarget = [targetLoc.x, targetLoc.y];
+          //self.finalTarget = [targetLoc.x, targetLoc.y];
           self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
           //final target is wherever is max dist from final target
         }
         if (msg >= 16392 && msg <= 20487) {
-          //self.status = 'attackTarget';
+          self.status = 'attackTarget';
+          //seeing an enemey prophet means we try to engage it
           let padding = 16392;
           let targetLoc = self.getLocation(msg - padding);
-          //self.finalTarget = [targetLoc.x, targetLoc.y];
+          self.finalTarget = [targetLoc.x, targetLoc.y];
           self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
         }
         if (msg >= 20488 && msg <= 24583) {
@@ -168,7 +171,65 @@ function mind(self){
   if (self.status === 'attackTarget') {
     
   }
-  
+  if (self.status === 'defend' || self.status === 'attackTarget') {
+    //if defending, and not evenough friends nearby, perform kite manuevers
+    let enemyPositionsToAvoid = [];
+    let friendsNearby = 0;
+    for (let i = 0; i < robotsInVision.length; i++) {
+      let obot = robotsInVision[i];
+
+      //find position that is the farthest away from all enemies
+      if (obot.team === otherTeamNum) {
+        let distToEnemy = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
+        /*
+        if (obot.unit === SPECS.PROPHET && distToEnemy <= 80) {
+          enemyPositionsToAvoid.push([obot.x, obot.y]);
+        }
+        */
+        if (obot.unit === SPECS.PREACHER && distToEnemy <= 16) {
+          enemyPositionsToAvoid.push([obot.x, obot.y]);
+        }
+        else if (obot.unit === SPECS.CRUSADER && distToEnemy <= 16) {
+          enemyPositionsToAvoid.push([obot.x, obot.y]);
+        }
+
+      }
+      else if (obot.team === self.me.team) {
+        if (obot.unit === SPECS.PROPHET || obot.unit === SPECS.CRUSADER || obot.unit === SPECS.PREACHER) {
+          friendsNearby += 1;
+        }
+      }
+    }
+    if (friendsNearby < 4){
+      
+      let largestSumDist = null;
+      let avoidLocs = [];
+      if (enemyPositionsToAvoid.length > 0){
+        self.log(`Im trying to kite`);
+        self.log(`Prophet sees enemies nearby`)
+        let positionsToGoTo = search.circle(self, self.me.x, self.me.y, 4);
+        for (let i = 0; i < positionsToGoTo.length; i++) {
+          let thisSumDist = 0;
+          let pos = positionsToGoTo[i];
+          if (search.emptyPos(pos[0], pos[1], robotMap, self.map)){
+            for (let j = 0; j < enemyPositionsToAvoid.length; j++) {
+              thisSumDist += qmath.dist(pos[0], pos[1], enemyPositionsToAvoid[j][0], enemyPositionsToAvoid[j][1]);
+            }
+            avoidLocs.push({pos:pos, dist:thisSumDist});
+          }
+        }
+      }
+      if (avoidLocs.length > 0) {
+        //FORCE A MOVE AWAY
+        self.log(`Prophet running away from enemy`)
+        avoidLocs.sort(function(a,b) {
+          return b.dist - a.dist;
+        })
+        let rels = base.rel(self.me.x, self.me.y, avoidLocs[0].pos[0], avoidLocs[0].pos[1]);
+        return {action:self.move(rels.dx,rels.dy)}
+      }
+    }
+  }
   if (self.status === 'searchAndAttack' || self.status === 'rally' || self.status === 'defend' || self.status === 'attackTarget' || self.status === 'goToTarget') {
     //watch for enemies, then chase them
     //call out friends to chase as well?, well enemy might only send scout, so we might get led to the wrong place
@@ -235,6 +296,8 @@ function mind(self){
       self.signal(24585, 100);
     }
   }
+  
+  
   //PROCESSING FINAL TARGET
   if (forcedAction !== null) {
     return {action:forcedAction};
@@ -242,6 +305,9 @@ function mind(self){
   let moveFast = true;
   if (self.moveSpeed === 'slow' || self.status === 'defend' || self.status === 'defendOldPos' || self.status === 'attackTarget') {
     moveFast = false;
+  }
+  if (self.me.turn <= 3) {
+    moveFast = true;
   }
   action = self.navigate(self.finalTarget, false, moveFast);
   return {action:action}; 

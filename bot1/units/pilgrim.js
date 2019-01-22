@@ -138,7 +138,6 @@ function mind(self) {
       
     }
   }
-  let largestSumDist = null;
   let avoidLocs = [];
   if (enemyPositionsToAvoid.length > 0){
     self.log(`Pilgrim sees enemies nearby`)
@@ -439,7 +438,7 @@ function mind(self) {
         let rels = base.rel(self.me.x, self.me.y, self.buildTarget[0], self.buildTarget[1]);
         self.log(`TRIED TO BUILD: ${rels.dx}, ${rels.dy}`);
         
-        if (self.fuel >= 200 && self.karbonite >= 50){
+        if (self.fuel >= 250 && self.karbonite >= 50){
           self.status = 'searchForAnyDeposit';
           return {action:self.buildUnit(SPECS.CHURCH, rels.dx, rels.dy)}
         }
@@ -469,7 +468,7 @@ function mind(self) {
     }
     return {action:action}; 
   }
-  else if (fuelMap[self.me.y][self.me.x] === true && (self.status === 'goingToFuelDeposit' || self.status === 'mineFuel' || self.status === 'goingToAnyDeposit')) {
+  else if (fuelMap[self.me.y][self.me.x] === true && (self.status === 'goingToFuelDeposit' || self.status === 'mineFuel' || self.status === 'goingToAnyDeposit' || self.status === 'building')) {
     action = self.mine();
     if (self.status !== 'building') {
       self.status = 'mineFuel';
