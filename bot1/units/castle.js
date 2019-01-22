@@ -20,11 +20,14 @@ function mind(self) {
     //self.castleTalk(255);
     self.finalSignal = false;
     let offsetVal = 0;
-    if (self.karbonite === 90) {
+    self.castleNum = 0;
+    if (self.karbonite === 75) {
       offsetVal = 1;
+      self.castleNum = 1;
     }
-    else if (self.karbonite === 80) {
+    else if (self.karbonite === 65) {
       offsetVal = 2;
+      self.castleNum = 2;
     }
     //we can also detemrine the offset val by looking at how many castle talk messages of 0 this castle gets.
     //if we all build turn 1, castle 1 gets 3 messages, castle 2 gets 4 messages, castle 3 gets 5 messages.
@@ -62,6 +65,72 @@ function mind(self) {
     let numFuelSpots = self.fuelSpots.length;
     self.maxPilgrims = Math.ceil((numFuelSpots + self.karboniteSpots.length)/2);
     
+    if (!self.mapIsHorizontal) {
+      self.halfPoint = mapLength/2;
+      if (self.me.x < mapLength/2){
+        self.lowerHalf = true;
+        
+        
+      }
+      else {
+        self.lowerHalf = false;
+      }
+    }
+    else {
+      self.halfPoint = mapLength/2;
+      if (self.me.y < mapLength/2){
+        self.lowerHalf = true;
+        
+        
+      }
+      else {
+        self.lowerHalf = false;
+      }
+    }
+    
+    
+    //From fuelspot and karbonite spot locations, locate the closest contestable resource deposit.
+    //Contestable CRITERIA
+    //Resource spot is contestable if it is within r^2 of 64 of the same resource deposit on the other half
+    let contestableSpots = [];
+    for (let i = 0; i < self.fuelSpots.length; i++) {
+      let spot = self.fuelSpots[i];
+      let oppositeSpot;
+      if (!self.mapIsHorizontal) {
+        oppositeSpot = [mapLength - spot.x - 1, spot.y];
+      }
+      else {
+        oppositeSpot = [spot.x, mapLength - spot.y - 1];
+      }
+      if (ownHalf(self, spot.x, spot.y) && qmath.dist(spot.x, spot.y, oppositeSpot[0], oppositeSpot[1]) <= 64) {
+        self.log(`Spot at ${spot.x}, ${spot.y} is contestable`);
+        contestableSpots.push(spot);
+      }
+    }
+    for (let i = 0; i < self.karboniteSpots.length; i++) {
+      let spot = self.karboniteSpots[i];
+      let oppositeSpot;
+      if (!self.mapIsHorizontal) {
+        oppositeSpot = [mapLength - spot.x - 1, spot.y];
+      }
+      else {
+        oppositeSpot = [spot.x, mapLength - spot.y - 1];
+      }
+      if (ownHalf(self, spot.x, spot.y) && qmath.dist(spot.x, spot.y, oppositeSpot[0], oppositeSpot[1]) <= 64) {
+        self.log(`Spot at ${spot.x}, ${spot.y} is contestable`);
+        contestableSpots.push(spot);
+      }
+    }
+    self.closestContestableSpot = null;
+    let closestContestableSpotDist = 99999;
+    for (let i = 0; i < contestableSpots.length; i++) {
+      let spot = contestableSpots[i];
+      let distTospot = qmath.dist(spot.x, spot.y, self.me.x, self.me.y);
+      if (closestContestableSpotDist >= distTospot) {
+        closestContestableSpotDist = distTospot;
+        self.closestContestableSpot = spot;
+      }
+    }
     
     
     self.status = 'build';
@@ -106,7 +175,7 @@ function mind(self) {
     if (self.castles === 3) {
       //only first castle builds pilgrim in 3 preacher defence strategy
       if (offsetVal === 0) {
-        self.buildQueue.push(2,2);
+        self.buildQueue.push(4,2);
       }
       else if (offsetVal === 1){
         self.buildQueue.push(2);
@@ -117,14 +186,14 @@ function mind(self) {
     }
     else if (self.castles === 2) {
       if (offsetVal === 0) {
-        self.buildQueue.push(2,2);
+        self.buildQueue.push(4,2);
       }
       else if (offsetVal === 1) {
         self.buildQueue.push(2,2);
       }
     }
     else if (self.castles === 1) {
-      self.buildQueue.push(2,2,2,2);
+      self.buildQueue.push(4,2,2,2);
       //self.buildQueue.push(2,4,4,4);
       //defending against 4 archers seems to need 4 archer defence
     }
@@ -712,39 +781,15 @@ function mind(self) {
             if (self.buildQueue.length > 0 && enoughResourcesToBuild(self, self.buildQueue[0])) {
               //build the first unit put into the build queue
               let unit = self.buildQueue.shift(); //remove that unit
-
-              if (unit >= 2) {
-                //if unit to be built is a preacher, send signal telling the preacher the other castle locations
-                /*
-                if (self.castleCount >= 2){
-
-                  self.log(`There are ${self.knownStructures[otherTeamNum].length} enemy castlesleft, opposite castle is currently dead: ${self.oppositeCastleDestroyed}`);
-
-                  //IF There are at least 2 known structures alive, and the opposite castle isn't dead yet, send the new location the preacher with padding = 4102. Preacher will process the location and will continue to prioritize the opposite castle
-                  if (self.knownStructures[otherTeamNum].length > 1 && self.oppositeCastleDestroyed === false){
-                    //if 
-                    let compressedLocNum = self.compressLocation(self.knownStructures[otherTeamNum][1].x, self.knownStructures[otherTeamNum][1].y);
-                    //padding of 4102;
-                    //DETERMINE THE PADDING
-                    let padding = 4102;
-                    padding = 4102 //+ self.knownStructures[otherTeamNum][1].index * 4096;
-
-                    //TELL NEW UNIT IF THE KNOWN TARGET UNIT AUTOMATICALLY KNOWS IS DETROYED OR NOT
-
-                    self.signal(padding + compressedLocNum,  2);
-                  }
-
-                  //if there is at least one known structure alive, and the opposite castle is gone, this castle produces units to attack the other locations.
-                  else if (self.knownStructures[otherTeamNum].length >= 1)  {
-                    if (self.oppositeCastleDestroyed === true) {
-                      let padding = 8198
-                      let compressedLocNum = self.compressLocation(self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y);
-                      self.signal(padding + compressedLocNum,  2);
-                    }
-                  }
-                }
-                */
+              
+              if (self.me.turn <= 2 && self.castleNum === 0) {
+                //tell first 2 units, probably a prophet and pilgrim, to go this spot
+                let padding = 24586;
+                
+                let compressedLocNum = self.compressLocation(self.closestContestableSpot.x,self.closestContestableSpot.y);
+                self.signal(padding + compressedLocNum,  2);
               }
+              
               let rels = base.rel(self.me.x, self.me.y, checkPos[0], checkPos[1]);
               action = self.buildUnit(unit, rels.dx, rels.dy);
               return {action:action};
@@ -826,5 +871,38 @@ function enoughResourcesToBuild(self, unitType) {
   }
   return false;
 }
-
+function ownHalf(self, nx, ny) {
+  let gameMap = self.map;
+  let mapLength = gameMap.length;
+  //self.log()
+  if (!self.mapIsHorizontal) {
+    if (self.lowerHalf) {
+      if (nx < gameMap[0].length/2) {
+        //self.log(`X:${nx}, ${ny} is on our half`)
+        return true;
+      }
+    }
+    else {
+      if (nx >= gameMap[0].length/2) {
+        //self.log(`X:${nx}, ${ny} is on our half`)
+        return true;
+      }
+    }
+  }
+  else {
+    if (self.lowerHalf) {
+      if (ny < mapLength/2) {
+        //self.log(`Y:${nx}, ${ny} is on our half`)
+        return true;
+      }
+    }
+    else {
+      if (ny >= mapLength/2) {
+        //self.log(`Y:${nx}, ${ny} is on our half`)
+        return true;
+      }
+    }
+  }
+  return false;
+}
 export default {mind}

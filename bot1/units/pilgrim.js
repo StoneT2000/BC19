@@ -112,6 +112,40 @@ function mind(self) {
     if (robotsInVision[i].team === self.me.team){
       let msg = robotsInVision[i].signal;
       signal.processMessagePilgrim(self, msg);
+      if (msg >= 24586 && msg <= 28681){
+        self.status = 'goingToAnyDeposit';
+        let padding = 24586;
+        let targetLoc = self.getLocation(msg - padding);
+        //self.defendTarget = [targetLoc.x, targetLoc.y];
+        self.finalTarget = [targetLoc.x, targetLoc.y];
+        
+        let checkPositions = search.circle(self, self.finalTarget[0], self.finalTarget[1], 2);
+        let maxDeposits = 0;
+        let buildLoc = null;
+        for (let i = 0 ; i < checkPositions.length; i++) {
+          let pos = checkPositions[i];
+          let robotThere = self.getRobot(robotMap[pos[1]][pos[0]]);
+          let numDepo = numberOfDeposits(self, pos[0], pos[1], true);
+          
+          if (robotThere === null && fuelMap[pos[1]][pos[0]] === false && karboniteMap[pos[1]][pos[0]] === false && gameMap[pos[1]][pos[0]] === true) {
+            
+            if (maxDeposits < numDepo) {
+              maxDeposits = numDepo;
+              buildLoc = pos;
+            }
+          }
+          if (numDepo === 9) {
+            buildLoc = pos;
+            maxDeposits = numDepo;
+          }
+        }
+        if (buildLoc !== null) {
+          self.status = 'building';
+          self.buildTarget = buildLoc;
+        }
+        
+        self.log(`Preparing to mine spot at ${self.finalTarget}, build at ${self.buildTarget}`);
+      }
     }
   }
 
@@ -126,7 +160,7 @@ function mind(self) {
     //find position that is the farthest away from all enemies
     if (obot.team === otherTeamNum) {
       let distToEnemy = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
-      if (obot.unit === SPECS.PROPHET && distToEnemy <= 80) {
+      if (obot.unit === SPECS.PROPHET && distToEnemy <= 100) {
         enemyPositionsToAvoid.push([obot.x, obot.y]);
       }
       else if (obot.unit === SPECS.PREACHER && distToEnemy <= 64) {
@@ -445,6 +479,11 @@ function mind(self) {
         else {
           self.log(`NOT ENOUGH RESOURCES: fuel:${self.fuel}; karb: ${self.karbonite}`);
         }
+      }
+      else {
+        //we aren't there yet, keep moving
+        action = self.navigate(self.finalTarget);
+        return {action:action};
       }
       //dont stand on the build target, leave it if the final target has a pilgrim on it already
       let pilgrimOnFinalTarget = self.getRobot(robotMap[self.finalTarget[1]][self.finalTarget[0]]);

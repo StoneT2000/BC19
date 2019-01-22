@@ -88,6 +88,14 @@ function mind(self){
         }
 
       }
+      if (msg >= 24586 && msg <= 28681){
+        self.status = 'defendSpot';
+        let padding = 24586;
+        let targetLoc = self.getLocation(msg - padding);
+        self.defendTarget = [targetLoc.x, targetLoc.y];
+        self.finalTarget = [targetLoc.x, targetLoc.y];
+        self.log(`Preparing to surround spot at ${self.finalTarget}`);
+      }
     }
     if (robotsInVision[i].unit === SPECS.PREACHER && robotsInVision[i].team === otherTeamNum) {
       seeMage = true;
@@ -107,6 +115,7 @@ function mind(self){
   
   
   //DECISIONS
+  /*
   if (self.status === 'attackTarget') {
     if(seeMage === true && self.me.turn <= 50){
       //kite mages if its early game
@@ -126,12 +135,14 @@ function mind(self){
     
   }
   
-  
-  if (self.status === 'defend' || self.status === 'defendOldPos') {
+  */
+  if (self.status === 'defend' || self.status === 'defendOldPos' || self.status === 'defendSpot') {
     //follow lattice structure
     
     let nearestStructure = search.findNearestStructure(self);
     let distToStructureFromMe = qmath.dist(self.me.x, self.me.y, nearestStructure.x, nearestStructure.y);
+    
+    //if status === defendOldPos, we force unit to reposition itself.
     if ((self.me.x % 2 === 1 && self.me.y % 2 === 1 ) || (self.me.x % 2 === 0 && self.me.y % 2 === 0) || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true || distToStructureFromMe <= 2 || self.status === 'defendOldPos') {
         
         let closestDist = 99999;
@@ -146,7 +157,7 @@ function mind(self){
                 let distToStructure = qmath.dist(j, i, nearestStructureHere.x, nearestStructureHere.y);
                 if (distToStructure > 2){
                   let tgt = [self.me.x, self.me.y]
-                  if (self.status === 'defendOldPos') {
+                  if (self.status === 'defendOldPos' || self.status === 'defendSpot') {
                     tgt = self.defendTarget;
                   }
                   let thisDist = qmath.dist(tgt[0], tgt[1], j, i);
@@ -168,10 +179,13 @@ function mind(self){
         }
     }
   }
-  if (self.status === 'attackTarget') {
-    
+  
+  if (self.status === 'defendPilgrim') {
+    //follow nearest pilgrim?
   }
-  if (self.status === 'defend' || self.status === 'attackTarget') {
+  
+  //kiting code
+  if (self.status === 'defend' || self.status === 'attackTarget' || self.status === 'defendSpot') {
     //if defending, and not evenough friends nearby, perform kite manuevers
     let enemyPositionsToAvoid = [];
     let friendsNearby = 0;
@@ -186,7 +200,11 @@ function mind(self){
           enemyPositionsToAvoid.push([obot.x, obot.y]);
         }
         */
-        if (obot.unit === SPECS.PREACHER && distToEnemy <= 16) {
+        let mpr = 16;
+        if (self.status === 'defendSpot') {
+          mpr = 25;
+        }
+        if (obot.unit === SPECS.PREACHER && distToEnemy <= mpr) {
           enemyPositionsToAvoid.push([obot.x, obot.y]);
         }
         else if (obot.unit === SPECS.CRUSADER && distToEnemy <= 16) {
@@ -230,7 +248,7 @@ function mind(self){
       }
     }
   }
-  if (self.status === 'searchAndAttack' || self.status === 'rally' || self.status === 'defend' || self.status === 'attackTarget' || self.status === 'goToTarget') {
+  if (self.status === 'defend' || self.status === 'attackTarget' || self.status === 'goToTarget' || self.status === 'defendSpot') {
     //watch for enemies, then chase them
     //call out friends to chase as well?, well enemy might only send scout, so we might get led to the wrong place
     let leastDistToTarget = 99999999;

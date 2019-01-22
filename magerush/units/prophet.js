@@ -15,7 +15,8 @@ function mind(self){
   //INITIALIZATION
   if (self.me.turn === 1) {
     self.castleTalk(self.me.unit);
-    self.status = 'defend';
+    self.status = 'searchAndAttack';
+    self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
     self.initializeCastleLocations();
     self.finalTarget = [self.me.x, self.me.y];
   }
@@ -35,6 +36,7 @@ function mind(self){
   //DECISIONS
   if (self.status === 'searchAndAttack') {
     self.finalTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
+    self.log(`Goign to ${self.finalTarget}`);
   }
   if (self.status === 'searchAndAttack' || self.status === 'rally' || self.status === 'defend') {
     //watch for enemies, then chase them
