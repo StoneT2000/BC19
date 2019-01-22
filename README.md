@@ -101,13 +101,25 @@ Pilgrims by default search and mine for karbonite. When they return to a castle 
 Let pilgrims sit at a mining spot and just mine. Let crusaders deliver resources to castles from pilgrims if the pilgrim is not close.
 
 #### Pilgrim Scouting (TODO)
+Idea:
+ During the mid game, send cheap pilgrims to scout the map. Pilgrim will search for enemy units. The pilgrim will communicate the positions of the enemy units back (see communication section)
 
-TODO: Implement code to make pilgrims that scout the map for enemy castles. Once it finds them, it finds our army of preachers, probably waiting at some rally point, (hopefully they are alive), and signals them the location of the enemy castle.
+Why is this useful?
+ We can determine whether to defend a contestable place
+ We can determine whether to defend one of our churches
+ We decide how much many resources to spend on defense on specific areas
 
+Timing
+ Do this during the mid game, so we can gain advantage in the mid-late game. In early game, this could be expensive.
+
+Communication:
+ Pilgrim can castleTalk back to castles if units are being built and sent. Once scouting is complete, the pilgrim finds our preacher army in its visible range, and will inform the information to the preachers with the normal communication method.
+
+#### Pilgrim Telescope (TODO)
 TODO: Implement code for a pilgrim to follow an army of preachers. The pilgrim acts as a telescope for the preachers, looks out for enemy castles along the way and also helps defend against enemy prophets (long range units). If it sees prophets that can attack our units, it should send a signal for the army to attack the prophets.
+I approve - Tom
 
 #### Prophet defense (TODO)
-
 
 
 # TODO
