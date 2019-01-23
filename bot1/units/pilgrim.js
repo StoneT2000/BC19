@@ -25,9 +25,12 @@ function mind(self) {
   if (self.me.turn === 1) {
     //for pilgrims, search first
     self.searchQueue = [];
+    
+    //Mining Index: The idnex of the bots mining spot in self.allSpots. ONLY CHANGED WHEN TOLD BY CASTLE
+    self.miningIndex = -1;
     self.statusBeforeReturn = '';
     self.status = 'searchForKarbDeposit';
-    
+    self.status = 'waitingForCommand';
     //self.log(`${self.knownStructures[self.me.team][0].x}`);
     /*
     let castleId = robotMap[origCastleLoc[1]][origCastleLoc[0]];
@@ -40,9 +43,11 @@ function mind(self) {
       for (let j = 0; j < mapLength; j++) {
         if (fuelMap[i][j] === true){
           self.fuelSpots.push({x:j, y:i});
+          self.allSpots.push({x:j, y:i, type:'fuel'});
         }
         if (karboniteMap[i][j] === true){
           self.karboniteSpots.push({x:j, y:i});
+          self.allSpots.push({x:j, y:i, type:'karbonite'});
         }
       }
     }
@@ -62,10 +67,11 @@ function mind(self) {
       self.churchBuilt = true;
       self.searchAny = true;
     }
-    
+    /*
     if (self.globalTurn >= 50) {
       self.status = 'searchForAnyDeposit';
     }
+    */
     
     self.target = [self.me.x,self.me.y];
     self.finalTarget = [self.me.x, self.me.y];
@@ -79,7 +85,7 @@ function mind(self) {
       else {
         self.lowerHalf = false;
       }
-      self.log(`Half x: ${self.halfPoint}, i'm on lower half:${self.lowerHalf}`);
+
     }
     else {
       self.halfPoint = mapLength/2;
@@ -91,7 +97,6 @@ function mind(self) {
       else {
         self.lowerHalf = false;
       }
-      self.log(`Half y: ${self.halfPoint}, i'm on lower half:${self.lowerHalf}`);
     }
     
     //self.log(`I'm on my own half? ${which}`);
@@ -113,11 +118,13 @@ function mind(self) {
       let msg = robotsInVision[i].signal;
       signal.processMessagePilgrim(self, msg);
       if (msg >= 24586 && msg <= 28681){
-        self.status = 'goingToAnyDeposit';
+        self.status = 'goingToDeposit';
         let padding = 24586;
+        
         let targetLoc = self.getLocation(msg - padding);
         //self.defendTarget = [targetLoc.x, targetLoc.y];
         self.finalTarget = [targetLoc.x, targetLoc.y];
+        self.miningIndex = getIndexAllSpots(self, self.finalTarget)
         
         let checkPositions = search.circle(self, self.finalTarget[0], self.finalTarget[1], 2);
         let maxDeposits = 0;
@@ -146,9 +153,34 @@ function mind(self) {
         
         self.log(`Preparing to mine spot at ${self.finalTarget}, build at ${self.buildTarget}`);
       }
+      //this is used for newly built bots, no prior indice
+      //29682 value is subject to change. should be changed in pilgrim and castle.js. 28842 is based on fact max 160 resource tiles per map
+      else if (msg < 28842 && msg >= 28682 && self.status === 'waitingForCommand' && self.miningIndex === -1) {
+        let padding = 28682;
+        let indice = msg - padding;
+        self.status = 'goingToDeposit';
+        self.miningIndex = indice;
+        self.log(`New Pilgrim was told to go mine ${self.allSpots[indice].x}, ${self.allSpots[indice].y} = ${indice}`);
+        self.finalTarget = [self.allSpots[indice].x, self.allSpots[indice].y];
+      }
+      //use this value for prev. built bots that just returned
+      else if (msg < 29002 && msg >= 28842 && self.status === 'waitingForCommand') {
+        let padding = 28842;
+        let indice = msg - padding;
+        self.status = 'goingToDeposit';
+        self.miningIndex = indice;
+        self.log(`Old Pilgrim was told to go mine ${self.allSpots[indice].x}, ${self.allSpots[indice].y} = ${indice}`);
+        self.finalTarget = [self.allSpots[indice].x, self.allSpots[indice].y];
+      }
+      //if waiting for command, no signal is given, go to old spot, don't wait for castle to reassign
+
     }
   }
-
+  if (self.status === 'waitingForCommand') {
+    self.status = 'goingToDeposit';
+    self.log(`Pilgrim didn't receive command, going to ${self.allSpots[self.miningIndex].x}, ${self.allSpots[self.miningIndex].y} = ${self.miningIndex}`);
+    self.finalTarget = [self.allSpots[self.miningIndex].x, self.allSpots[self.miningIndex].y];
+  }
   //DECISION MAKING
   
   //regardless, pilgrim tries to stay out of shooting range
@@ -194,16 +226,17 @@ function mind(self) {
       return b.dist - a.dist;
     })
     let rels = base.rel(self.me.x, self.me.y, avoidLocs[0].pos[0], avoidLocs[0].pos[1]);
-    self.status = 'goingToAnyDeposit';
+    //search for previous deposit?
+    self.status = 'searchForAnyDeposit';
     return {action:self.move(rels.dx,rels.dy)}
   }
-  
-  //if robot is going to deposit but it is taken up, go to next deposit location in queue, otherwise re-search that queue
+  //CODE FOR TELLING PILGRIMS TO GO TO NEXT DEPOSIT IF THEY SEE A UNIT OVER THE DEPOSIT THEY WANT TO GO TO
   if (self.status === 'goingToKarbDeposit' || self.status === 'goingToFuelDeposit' || self.status === 'goingToAnyDeposit') {
     if (robotMap[self.finalTarget[1]][self.finalTarget[0]] !== self.me.id && robotMap[self.finalTarget[1]][self.finalTarget[0]] > 0){
       if (self.status === 'goingToKarbDeposit'){
         //self.status = 'searchForKarbDeposit';
-        self.castleTalk(73);
+        self.miningIndex = getIndexAllSpots(self, self.finalTarget);
+        self.castleTalk(self.miningIndex + 77);
         if (self.searchQueue.length === 0) {
           self.status = 'searchForAnyDeposit';
         }
@@ -212,11 +245,13 @@ function mind(self) {
           let nextLoc = self.searchQueue.pop().position;
           //self.log(`switching to ${nextLoc}`);
           self.finalTarget = nextLoc;
-          
+          self.miningIndex = getIndexAllSpots(self, self.finalTarget);
+          self.castleTalk(self.miningIndex + 77);
         }
       }
       else if (self.status === 'goingToFuelDeposit'){
-        self.castleTalk(74);
+        self.miningIndex = getIndexAllSpots(self, self.finalTarget);
+        self.castleTalk(self.miningIndex + 77);
         if (self.searchQueue.length === 0) {
           self.status = 'searchForAnyDeposit';
           
@@ -224,6 +259,8 @@ function mind(self) {
         else {
           let nextLoc = self.searchQueue.pop().position;
           self.finalTarget = nextLoc;
+          self.miningIndex = getIndexAllSpots(self, self.finalTarget);
+          self.castleTalk(self.miningIndex + 77);
         }
       }
       else if (self.churchBuilt === true || self.searchAny === true || self.status === 'goingToAnyDeposit') {
@@ -232,17 +269,28 @@ function mind(self) {
         }
         else {
           let nextLoc = self.searchQueue.pop().position;
-          self.log(`Spot Taken: ${self.finalTarget}, switching to ${nextLoc}`);
+          //self.log(`Spot Taken: ${self.finalTarget}, switching to ${nextLoc}`);
           self.finalTarget = nextLoc;
+          self.miningIndex = getIndexAllSpots(self, self.finalTarget);
+          self.castleTalk(self.miningIndex + 77);
         }
       }
     }
+    else {
+      self.miningIndex = getIndexAllSpots(self, self.finalTarget);
+      self.castleTalk(self.miningIndex + 77);
+    }
   }
+  
+  //IF ROBOT IS GOING TO DEPOSIT AS COMMANDED AND SEES ANOTHER UNIT THERE WHEN IT IS CLOSE TO ITS TARGET, GO SEARCH FOR NEW PLACE
+  if (self.status === 'goingToDeposit') {
+    if (robotMap[self.finalTarget[1]][self.finalTarget[0]] !== self.me.id && robotMap[self.finalTarget[1]][self.finalTarget[0]] > 0 && qmath.dist(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]) <= 2){
+      self.status = 'searchForAnyDeposit';
+    }
+  }
+  
   //search for deposit, set new finalTarget and store it to self.searchQueue
   if (self.status === 'searchForKarbDeposit' || self.status === 'searchForFuelDeposit') {
-    //perform search for closest deposit
-    let newTarget = null;
-    let cd = 9999990;
     if (self.status === 'searchForFuelDeposit'){
     
       for (let i = 0; i < self.fuelSpots.length; i++) {
@@ -275,7 +323,6 @@ function mind(self) {
       for (let i = 0; i < self.karboniteSpots.length; i++) {
         let nx = self.karboniteSpots[i].x;
         let ny = self.karboniteSpots[i].y;
-        let proceed = true;
 
         if ((robotMap[ny][nx] <= 0 || robotMap[ny][nx] === self.me.id) && safeDeposit(self, nx, ny)){
           let patharr = [];
@@ -294,7 +341,7 @@ function mind(self) {
       });
      
       if (self.searchQueue.length > 0){
-        self.status = 'goingToKarbDeposit'
+        self.status = 'goingToKarbDeposit';
         self.finalTarget = self.searchQueue.pop().position;
       }
     }    
@@ -302,8 +349,6 @@ function mind(self) {
 
   if (self.status === 'searchForAnyDeposit') {
     self.searchQueue = [];
-    let cd = 9999999;
-    let newTarget = null;
     for (let i = 0; i < self.fuelSpots.length; i++) {
       let nx = self.fuelSpots[i].x;
       let ny = self.fuelSpots[i].y;
@@ -322,7 +367,6 @@ function mind(self) {
     for (let i = 0; i < self.karboniteSpots.length; i++) {
       let nx = self.karboniteSpots[i].x;
       let ny = self.karboniteSpots[i].y;
-      let proceed = true;
 
       if ((robotMap[ny][nx] <= 0 || robotMap[ny][nx] === self.me.id) && safeDeposit(self, nx, ny)){
         let patharr = [];
@@ -343,10 +387,10 @@ function mind(self) {
     if (self.searchQueue.length > 0){
       self.finalTarget = self.searchQueue.pop().position;
       self.status = 'goingToAnyDeposit';
-      self.log(`Going to ${self.finalTarget}`);
+      self.miningIndex = getIndexAllSpots(self, self.finalTarget);
+      //self.log(`Going to ${self.finalTarget}`);
     }
   }
-  
   
   //if we are tyring to build, return iff structure is near
   if (((self.me.fuel >= 100 || self.me.karbonite >= 20) || self.status === 'return')) {
@@ -365,28 +409,30 @@ function mind(self) {
 
       //we continue to tell castles taht this unit was mining karbonite to prevent castles from accidentally assigning pilgrims to mine a spot already taken up
       if (self.statusBeforeReturn === 'mineKarb') {
-        self.castleTalk(73);
+        //self.castleTalk(73);
       }
       else if (self.statusBeforeReturn === 'mineFuel') {
-        self.castleTalk(74);
+        //self.castleTalk(74);
       }
-
+      
       self.finalTarget = [bestTarget.x, bestTarget.y];
       self.status = 'return';
 
       let currRels = base.rel(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
       if (Math.abs(currRels.dx) <= 1 && Math.abs(currRels.dy) <= 1){
-
-        self.status = 'searchForAnyDeposit';
-        /*
-        if (self.fuel <= 100) {
-          self.status = 'searchForFuelDeposit';
+        if (bestTarget.unit === SPECS.CASTLE){
+          self.status = 'waitingForCommand';
+          self.signal(4,2);
+          self.castleTalk(0);
         }
-        else {
-          self.status = 'searchForKarbDeposit';
+        else if (bestTarget.unit === SPECS.CHURCH) {
+          //units returning to church will just stay next to it, and follow the 
+          //if we return something to a church, we continue to mine at our deposit
+          self.status = 'goingToDeposit';
+          //self.castleTalk(0);
+          self.finalTarget = [self.allSpots[self.miningIndex].x, self.allSpots[self.miningIndex].y];
         }
-        */
-        self.signal(4,2);
+        
         action = self.give(currRels.dx, currRels.dy, self.me.karbonite, self.me.fuel);
         return {action:action}; 
       }
@@ -394,10 +440,15 @@ function mind(self) {
   }
   
   
-  if (self.status === 'goingToKarbDeposit' || self.status === 'goingToFuelDeposit' || self.status === 'goingToAnyDeposit') {
+  if (self.status === 'goingToDeposit') {
     //check if karb deposit has no churches around
     let checkPositions = search.circle(self, self.finalTarget[0], self.finalTarget[1], 2);
     let proceed = false;
+    
+    if (self.me.turn > 1) {
+      self.castleTalk(self.miningIndex + 77);
+    }
+    
     for (let i = 0; i < checkPositions.length; i++) {
       let pos = checkPositions[i];
       let robotThere = self.getRobot(robotMap[pos[1]][pos[0]]);
@@ -410,9 +461,10 @@ function mind(self) {
       if (self.me.turn > 1){
         //make sure we don't confuddle the signal for counting units
         self.log(`Pilgrim might build`)
-        self.castleTalk(71);
+        //self.castleTalk(71);
       }
     }
+    
   }
   
   //building status means the robot is trying to reach a build location, and build on there
@@ -469,11 +521,12 @@ function mind(self) {
   if (self.status === 'building') {
     if (self.me.turn > 1){
       //make sure we don't confuddle the signal for counting units
-      self.castleTalk(71);
+      //self.castleTalk(71);
+      self.castleTalk(self.miningIndex + 77);
     }
     let robotThere = self.getRobot(robotMap[self.buildTarget[1]][self.buildTarget[0]]);
     if (robotThere !== null && (robotThere.unit === SPECS.CHURCH)){
-      self.status = 'searchForAnyDeposit';
+      self.status = 'goingToDeposit';
       self.log(`Church built already`);
     }
     else {
@@ -481,8 +534,8 @@ function mind(self) {
         let rels = base.rel(self.me.x, self.me.y, self.buildTarget[0], self.buildTarget[1]);
         self.log(`TRIED TO BUILD: ${rels.dx}, ${rels.dy}`);
         
-        if (self.fuel >= 250 && self.karbonite >= 50){
-          self.status = 'searchForAnyDeposit';
+        if (self.fuel + self.me.fuel >= 250 && self.karbonite + self.me.karbonite >= 70){
+          self.status = 'goingToDeposit';
           return {action:self.buildUnit(SPECS.CHURCH, rels.dx, rels.dy)}
         }
         else {
@@ -498,30 +551,41 @@ function mind(self) {
       let pilgrimOnFinalTarget = self.getRobot(robotMap[self.finalTarget[1]][self.finalTarget[0]]);
       if (pilgrimOnFinalTarget !== null && pilgrimOnFinalTarget.team === self.me.team && pilgrimOnFinalTarget.unit === SPECS.PILGRIM && self.me.id !== pilgrimOnFinalTarget.id){
         self.log(`already a unit building there`);
-          self.status = 'searchForFuelDeposit';
+          self.status = 'goingToDeposit';
       }
+    }
+  }
+  if (self.status === 'goingToDeposit'){
+    //start mining if reached target
+    //assumptions, final target is definately a deposit location;
+    if (qmath.dist(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]) === 0) {
+      self.status = 'mineHere';
     }
   }
   
   //forever mine
-  if (karboniteMap[self.me.y][self.me.x] === true && (self.status === 'goingToKarbDeposit' || self.status === 'mineKarb' || self.status === 'building' || self.status === 'goingToAnyDeposit')) {
+  if (karboniteMap[self.me.y][self.me.x] === true && (self.status === 'mineHere' || self.status === 'goingToKarbDeposit' || self.status === 'mineKarb' || self.status === 'building' || self.status === 'goingToAnyDeposit')) {
     action = self.mine();
+    self.miningIndex = getIndexAllSpots(self, [self.me.x, self.me.y]);
     if (self.status !== 'building') {
-    
+      
       self.status = 'mineKarb';
       //tel castles i'm mining karb, not building
-      if (self.globalTurn > 3){
-        self.castleTalk(73)
+      if (self.me.turn > 1){
+        //self.castleTalk(73)
+        self.castleTalk(self.miningIndex + 77);
       }
     }
     return {action:action}; 
   }
-  else if (fuelMap[self.me.y][self.me.x] === true && (self.status === 'goingToFuelDeposit' || self.status === 'mineFuel' || self.status === 'goingToAnyDeposit' || self.status === 'building')) {
+  else if (fuelMap[self.me.y][self.me.x] === true && (self.status === 'mineHere' || self.status === 'goingToFuelDeposit' || self.status === 'mineFuel' || self.status === 'goingToAnyDeposit' || self.status === 'building')) {
     action = self.mine();
+    self.miningIndex = getIndexAllSpots(self, [self.me.x, self.me.y]);
     if (self.status !== 'building') {
       self.status = 'mineFuel';
-      if (self.globalTurn > 3){
-        self.castleTalk(74)
+      if (self.me.turn > 1){
+        //self.castleTalk(74)
+        self.castleTalk(self.miningIndex + 77);
       }
     }
     return {action:action}; 
@@ -632,5 +696,13 @@ function ownHalf(self, nx, ny) {
   return false;
 }
 
-
+function getIndexAllSpots(self, pos){
+  for (let i = 0; i < self.allSpots.length; i++) {
+    let p = self.allSpots[i];
+    if (p.x === pos[0] && p.y === pos[1]) {
+      return i;
+    }
+  }
+  return false;
+}
 export default {mind}

@@ -13,22 +13,27 @@ function mind(self) {
   let action = '';
   let forcedAction = null;
   let otherTeamNum = (self.me.team + 1) % 2;
-  
+  let robotMap = self.getVisibleRobotMap();
+  let karboniteMap = self.getKarboniteMap();
+  let fuelMap = self.getFuelMap();
   //Initialization code for the castle
   if (self.me.turn === 1){
     //CALCULATING HOW MANY INITIAL CASTLES WE HAVE
     //self.castleTalk(255);
+    self.occupiedMiningLocationsIndices = {}; 
+    //all the indicesof mining locations in self.allSpots that currently have a unit moving towards it, mining on it, or trying to build on it.
+    //It is updated through self.allUnits[id].mineLoc. Pilgrim only changes mineLoc if they die (the object is gone), or if received new signal when it is on return mode
     
     self.sentContestableBot = false;
-    
+    self.newIndices = [];
     self.finalSignal = false;
     let offsetVal = 0;
     self.castleNum = 0;
-    if (self.karbonite === 75) {
+    if (self.karbonite === 90) {
       offsetVal = 1;
       self.castleNum = 1;
     }
-    else if (self.karbonite === 65) {
+    else if (self.karbonite === 80) {
       offsetVal = 2;
       self.castleNum = 2;
     }
@@ -46,17 +51,19 @@ function mind(self) {
     
     self.oppositeCastleDestroyed = false; //doesn't seem to be used
     
-    let fuelMap = self.getFuelMap();
-    let karboniteMap = self.getKarboniteMap();
+    
+    
     let closestKarbonitePos = null;
     let closestKarboniteDist = 999999;
     for (let i = 0; i < mapLength; i++) {
       for (let j = 0; j < mapLength; j++) {
         if (fuelMap[i][j] === true){
           self.fuelSpots.push({x:j, y:i});
+          self.allSpots.push({x:j, y:i, type:'fuel'});
         }
         if (karboniteMap[i][j] === true){
           self.karboniteSpots.push({x:j, y:i});
+          self.allSpots.push({x:j, y:i, type:'karbonite'});
           let distToKarb = qmath.dist(j, i, self.me.x, self.me.y);
           if (distToKarb < closestKarboniteDist) {
             closestKarboniteDist = distToKarb
@@ -145,7 +152,8 @@ function mind(self) {
       
       //because we receive castle information first, locCastleNum < self.castles makes sure the messages received are just castles sending 0's or alive signals
       if (msg >= 0) {
-        self.allUnits[robotsInVision[i].id] = 0;
+        self.allUnits[robotsInVision[i].id] = {};
+        self.allUnits[robotsInVision[i].id].unit = 0;
         locCastleNum +=1;
         self.castleIds.push(robotsInVision[i].id);
         
@@ -307,9 +315,9 @@ function mind(self) {
     }
   }
   let buildEarlyProphet = false;
-  
+  let sendEarlyProphetStrat = false;
   if (self.me.turn === 3) {
-    let sendEarlyProphetStrat = true;
+    sendEarlyProphetStrat = true;
     //STORE A SORTED ENEEMY LOCATION ARRAY
     self.enemyCastlesSorted = [];
     for (let i = 0; i < self.castleIds.length; i++){
@@ -345,7 +353,7 @@ function mind(self) {
     if (sendEarlyProphetStrat === true){
       self.log(`checking if we are good castle to send prophet`)
       let myClosestContestableSpotDist = 99999;
-      let otherClosestContestableSpotDist = 99999;
+      let otherClosestContestableSpotDist = 99998;
       let bestSpot = null;
       let castleLocs = [];
       for (let i = 1; i < self.knownStructures[self.me.team].length; i++) {
@@ -358,7 +366,7 @@ function mind(self) {
         if (myClosestContestableSpotDist >= distTospot) {
           myClosestContestableSpotDist = distTospot;
           bestSpot = spot;
-          self.closestContestableSpot = bestSpot;
+          //self.closestContestableSpot = bestSpot;
         }
         for (let i = 0; i < castleLocs.length; i++) {
           let cx = castleLocs[i][0];
@@ -415,7 +423,143 @@ function mind(self) {
   self.numPilgrimsMiningFuel = 0;
   let idsWeCanHear = [];
   
-  let churchBuiltUnit = false;
+  
+  
+
+  
+  //initialize priority queue of mining locations
+  self.searchQueue = [];
+  //THIS IS FOR FINDING ALL POSSIBLE MINING LOCATIONS AND STORING THEM
+  let cd = 9999999;
+  let newTarget = null;
+  for (let i = 0; i < self.fuelSpots.length; i++) {
+    let nx = self.fuelSpots[i].x;
+    let ny = self.fuelSpots[i].y;
+    if (safeDeposit(self, nx, ny)){
+      let patharr = [];
+      let distToThere = 0;
+      if (self.planner !== null) {
+        distToThere = self.planner.search(self.me.y,self.me.x,ny,nx,patharr);
+      }
+      else {
+        distToThere = qmath.dist(self.me.x,self.me.y,nx,ny);
+      }
+      self.searchQueue.push({position: [nx,ny], distance: distToThere, type:'fuel'});
+    }
+  }
+  for (let i = 0; i < self.karboniteSpots.length; i++) {
+    let nx = self.karboniteSpots[i].x;
+    let ny = self.karboniteSpots[i].y;
+    let proceed = true;
+
+    if (safeDeposit(self, nx, ny)){
+      let patharr = [];
+      let distToThere = 0;
+      if (self.planner !== null) {
+        distToThere = self.planner.search(self.me.y,self.me.x,ny,nx,patharr);
+      }
+      else {
+        distToThere = qmath.dist(self.me.x,self.me.y,nx,ny);
+      }
+      self.searchQueue.push({position: [nx,ny], distance: distToThere, type:'karbonite'});
+    }
+  }
+  self.searchQueue.sort(function(a,b){
+    return a.distance - b.distance
+  });
+  self.log(`Safe spots:${self.searchQueue.length}`);
+  //COUNTING NUMBER OF UNITS PLANNING TO OR ALREADY MINING FUEL OR KARB.
+  for (let index in self.occupiedMiningLocationsIndices) {
+    let ind = self.occupiedMiningLocationsIndices[index];
+    self.log(`Occupied positions of ${index}: (${self.allSpots[ind].x}, ${self.allSpots[ind].y})`);
+    if (self.allSpots[ind].type === 'fuel') {
+      self.numPilgrimsMiningFuel += 1;
+    }
+    else if (self.allSpots[ind].type === 'karbonite'){
+      self.numPilgrimsMiningKarbonite += 1; 
+    }
+  }
+  
+  //then filter out the searchQueue for unoccupied mining locations
+  let newSearchQueue = [];
+  //we do this insane micro thing before turn 3...
+  if (self.me.turn > 3){
+    for (let i = 0; i < robotsInVision.length; i++) {
+      let msg = robotsInVision[i].castle_talk;
+      let id = robotsInVision[i].id;
+     
+      if (msg >= 77) {
+        //figuring out locations of new pilgrims that will go to that castles tell us, these messages stay there for 2 rounds
+        if (self.allUnits[id].unit === SPECS.CASTLE){
+          //self.log(`castle-id: ${id}; msg: ${msg}; turn:${self.me.turn}`);
+          self.newIndices.push({msg:msg - 77, turn: self.me.turn});
+        }
+
+      }
+    }
+    let newIndicesNew = [];
+    for (let i = 0; i < self.newIndices.length; i++) {
+      let ab = self.newIndices[i];
+      if (self.me.turn - ab.turn <= 1) {
+        newIndicesNew.push(ab);
+      }
+    }
+    self.newIndices = newIndicesNew;
+
+  
+  
+  for (let i = 0; i < self.searchQueue.length; i++) {
+    let spos = self.searchQueue[i].position;
+    let unoccupied = true;
+    for (let index in self.occupiedMiningLocationsIndices) {
+      let ind = self.occupiedMiningLocationsIndices[index];
+      //searched position is occupied
+      if (spos[0] === self.allSpots[ind].x && spos[1] === self.allSpots[ind].y) {
+        unoccupied = false;
+        break;
+      }
+    }
+    if (unoccupied === true) {
+      for (let k = 0; k < self.newIndices.length; k++) {
+        let ind = self.newIndices[k].msg;
+        if (spos[0] === self.allSpots[ind].x && spos[1] === self.allSpots[ind].y) {
+          unoccupied = false;
+          break;
+        }
+      }
+    }
+    if (unoccupied === true) {
+      newSearchQueue.push(self.searchQueue[i]);
+    }
+      
+  }
+  
+  self.searchQueue = newSearchQueue;
+  }
+  self.searchQueueFuel = self.searchQueue.filter(function (a){
+    if (a.type === 'fuel'){
+      return true
+    }
+    else return false
+  });
+  self.searchQueueKarbonite = self.searchQueue.filter(function (a){
+    if (a.type === 'karbonite'){
+      return true;
+    }
+    else return false;
+  });
+  for (let i = 0; i < self.searchQueueFuel.length; i++) {
+    let spos = self.searchQueueFuel[i].position;
+    //self.log(`Unoccupied fuel: ${spos}`);
+  }
+  for (let i = 0; i < self.searchQueueKarbonite.length; i++) {
+    let spos = self.searchQueueKarbonite[i].position;
+    //self.log(`Unoccupied karb: ${spos}`);
+  }
+  self.log(`Safe fuel spots:${self.searchQueueFuel.length}`);
+  self.log(`Safe karb spots:${self.searchQueueKarbonite.length}`);
+  
+  //THIS IS FOR PROCESSING ALL MESSAGES
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].castle_talk; //msg through castle talk
     let signalmsg = robotsInVision[i].signal; //msg through normal signalling
@@ -424,8 +568,26 @@ function mind(self) {
     
     let orobot = robotsInVision[i];
     let heardId = orobot.id;
-    signal.processMessageCastleTalk(self, msg, robotsInVision[i].id);
+    signal.processMessageCastleTalk(self, msg, robotsInVision[i].id); //process 6>=msg>=1
     
+    //if msg is >= 7, it must be from a unit with a known unit type already
+    if (msg >= 7 || msg === 0) {
+      
+      if (self.allUnits[heardId] === undefined) {
+        self.allUnits[heardId] = {};
+      }
+      //self.log(`Heard from unit ${heardId}-type:${self.allUnits[heardId].unit}`);
+
+    }
+    if (msg >= 77) {
+      if (self.allUnits[heardId].unit === SPECS.PILGRIM) {
+        //update the known mining locations. Stored into self object for access of previous turn data. Important as pilgrims willl send some other signals as well
+        self.allUnits[heardId].mineLoc = msg - 77;
+        //self.log(`Pilgrim - ${heardId} mines at ${self.allSpots[msg - 77].x},${self.allSpots[msg - 77].y}: msg: ${msg}`);
+        self.occupiedMiningLocationsIndices[heardId] = self.allUnits[heardId].mineLoc;
+
+      }
+    }
     
     if (msg >= 7 && msg <= 70) {
       let enemyCastlePosDestroyed = msg - 7;
@@ -481,14 +643,16 @@ function mind(self) {
       self.log(`Caslte won't build`);
     }
     else if (msg === 73) {
-      self.numPilgrimsMiningKarbonite += 1;
+      //self.numPilgrimsMiningKarbonite += 1;
+      //self.log(`pilgrim is mining at ${self.allUnits[heardId].mineLoc}: ${heardId} `);
     }
     else if (msg === 74) {
-      self.numPilgrimsMiningFuel += 1;
+      //self.numPilgrimsMiningFuel += 1;
+      //self.log(`pilgrim is mining at ${self.allUnits[heardId].mineLoc}: ${heardId} `);
     }
     else if (msg === 75) {
       //build prophet!
-      //churchBuiltUnit = true;
+
       //
     }
     
@@ -514,7 +678,7 @@ function mind(self) {
       }
     }
     if (alive === true){      
-      switch(self.allUnits[id]) {
+      switch(self.allUnits[id].unit) {
         case 0:
           self.castles += 1;
           break;
@@ -539,11 +703,17 @@ function mind(self) {
           break;
       }
     }
+    else {
+      //if dead, clear out some things
+      self.log(`Unit ${id}, type: ${self.allUnits[id].unit} died`);
+      delete self.occupiedMiningLocationsIndices[id];
+      delete self.allUnits[id];
+    }
   }
   
   
   //ACCURATE numbers as of the end of the last round
-  self.log(`Round ${self.me.turn}: Castle (${self.me.x}, ${self.me.y}); Status: ${self.status}; Castles:${self.castles}, Churches: ${self.churches + self.churchesThatBuild}, Pilgrims: ${self.pilgrims}, Crusaders: ${self.crusaders}, Prophets: ${self.prophets}, Preachers: ${self.preachers}, Fuel:${self.fuel}, Karbonite: ${self.karbonite}; ${self.me.time} ms left`);
+  self.log(`Round ${self.me.turn}: Castle (${self.me.x}, ${self.me.y}); Status: ${self.status}; Castles:${self.castles}, Churches: ${self.churches + self.churchesThatBuild}, Pilgrims: ${self.pilgrims}, Crusaders: ${self.crusaders}, Prophets: ${self.prophets}, Preachers: ${self.preachers}, Fuel:${self.fuel}, Karbonite: ${self.karbonite}; MiningFuel:${self.numPilgrimsMiningFuel}; MiningKarb:${self.numPilgrimsMiningKarbonite} ${self.me.time} ms left`);
   
   //Commands code:
   //Here, castles give commands to surrounding units?
@@ -551,26 +721,69 @@ function mind(self) {
   //Give commands to pilgrims who then relay the message to other units?
   
   for (let i = 0; i < robotsInVision.length; i++) {
+    
     let signalmsg = robotsInVision[i].signal;
     if (signalmsg === 4) {
       //pilgrim is nearby, assign it new mining status if needed. Alow it to mine anything if we have enough pilgrims
+      let queueToCheck = self.searchQueue;
+      let pilgrimAdjacentOnFuel = false;
+      let pilgrimAdjacentOnKarbonite = false;
+      let pilg = robotsInVision[i];
+      if (fuelMap[pilg.y][pilg.x] === true) {
+        pilgrimAdjacentOnFuel = true;
+      }
+      else if (karboniteMap[pilg.y][pilg.x] === true) {
+        pilgrimAdjacentOnKarbonite = true;
+      }
+      //if pilgrim is on a resource tile when giving the resources, we allow the pilgrim to continue mining on that spot even though it si recorded as occupied (in previous round), continue minig there if designation is any or the same resource type.
+      
+      let proceed = true;
       if (self.pilgrims <= self.maxPilgrims){
         if ((self.numPilgrimsMiningFuel < self.fuelSpots.length/2 ) && ((self.karbonite > 100 || self.fuel < self.prophets * 70 + self.pilgrims * 10) || (self.fuel <= 400 + self.churches * 400))){
           // Can self.fuelSpots.length be replaced for numFuelSpots (assuming no change?)
           self.log(`Castle tried to tell nearby pilgrims to mine fuel`);
           self.signal(3,2);
+          if (self.searchQueueFuel.length) {
+            queueToCheck = self.searchQueueFuel;
+          }
+          if (pilgrimAdjacentOnFuel) {
+            proceed = false;
+          }
         }
         else if (self.numPilgrimsMiningKarbonite < self.karboniteSpots.length/2 && self.karbonite <= 100){
           self.log(`Castle tried to tell nearby pilgrims to mine karb`);
           self.signal(2,2);
+          if (self.searchQueueKarbonite.length) {
+            queueToCheck = self.searchQueueKarbonite;
+          }
+          if (pilgrimAdjacentOnKarbonite) {
+            proceed = false;
+          }
         }
         else {
           self.log(`Castle tried to tell nearby pilgrims to mine anything`)
           self.signal(24584, 2);
+          if (pilgrimAdjacentOnFuel || pilgrimAdjacentOnKarbonite) {
+            proceed = false;
+          }
         }
       }
       else {
         self.log(`told ${robotsInVision[i].id} to mine anything as we have enough pilgrims`);
+        self.signal(24584, 2);
+      }
+      if (queueToCheck.length && proceed === true){
+        let padding = 28842; //send signal to a bot that was already built
+        let val = getIndexAllSpots(self, queueToCheck[0].position);
+        self.log(`Castle told new pilgrim to go mine ${queueToCheck[0].position} = ${val}`);
+        //signal to unit new mining location
+        self.signal(padding + val, 2);
+        //signal to all other castles that location
+        self.castleTalk(77 + val);
+      }
+      else {
+        //no places to mine? mine anything
+        self.log(`told ${robotsInVision[i].id} to mine anything there are no safe spots left`);
         self.signal(24584, 2);
       }
     }
@@ -660,7 +873,7 @@ function mind(self) {
         else if (self.karbonite > 100){
           
           if (unitsInVincinity[SPECS.PROPHET].length <= self.prophets/(self.castles) && self.status !== 'pause') {
-            self.castleTalk(72);
+            //self.castleTalk(72);
             self.buildQueue = [4];
           }
         }
@@ -744,7 +957,7 @@ function mind(self) {
           self.buildQueue = [4];
         }
         */
-        self.log(`Church built unit this turn: ${churchBuiltUnit}`);
+
         if (self.pilgrims <= self.maxPilgrims && self.pilgrims < (self.prophets + 2) * 2 && self.karbonite > 50) {
           self.buildQueue = [2];
         }
@@ -820,6 +1033,7 @@ function mind(self) {
   if (self.status === 'build') {
     if (buildEarlyProphet === true) {
       self.buildQueue.unshift(4);
+      self.log(`using early strat`)
     }
     self.log(`BuildQueue: ${self.buildQueue}`)
     if (self.buildQueue[0] !== -1){
@@ -846,21 +1060,49 @@ function mind(self) {
               //build the first unit put into the build queue
               let unit = self.buildQueue.shift(); //remove that unit
               
-              if (self.me.turn === 3 && self.castleNum === 0 && self.closestContestableSpot !== null) {
+              if (self.me.turn === 3 && sendEarlyProphetStrat === true && self.closestContestableSpot !== null) {
                 //tell first 2 units, probably a prophet and pilgrim, to go this spot
                 let padding = 24586;
-                 
+                
                 let compressedLocNum = self.compressLocation(self.closestContestableSpot.x,self.closestContestableSpot.y);
+                let val = getIndexAllSpots(self, [self.closestContestableSpot.x,self.closestContestableSpot.y]);
+                self.log(`Castle told new pilgrim to go early mine ${self.closestContestableSpot.x}, ${self.closestContestableSpot.y} = ${val}`);
                 self.signal(padding + compressedLocNum,  2);
+                //let padding = 28682;
+                //self.signal(padding + val, 2);
+                self.castleTalk(77 + val);
               }
-              
+              if (unit === 2 && self.searchQueue.length && self.me.turn !== 3) {
+                
+                if (self.me.turn > 3){
+                  let queueToCheck = self.searchQueue;
+                  if (self.searchQueueKarbonite.length) {
+                    queueToCheck = self.searchQueueKarbonite;
+                  }
+                  let padding = 28682;
+                  let val = getIndexAllSpots(self, queueToCheck[0].position);
+                  if (self.me.turn !== 2){
+                    self.log(`Castle told new pilgrim to go mine ${queueToCheck[0].position} = ${val}`);
+                    //signal to unit new mining location
+                    self.signal(padding + val, 2);
+                    //signal to all other castles that location
+
+                    self.castleTalk(77 + val);
+                  }
+                }
+                else {
+                  self.signal(2, 2);
+                }
+              }
               //if we are naturally building a prophet not because of incoming enemies, and it is after we decide on that early strategy, send prophet to closest contestable spot. We should instead actually just have the prophet that is going to the contestable spot that is on defendSpot mode to send thru castle talk if they made it there or not.
+              /*
               if (self.me.turn > 3 && sawEnemyThisTurn === false && self.closestContestableSpot !== null && self.sentContestableBot === false) {
                 let padding = 24586;
                 let compressedLocNum = self.compressLocation(self.closestContestableSpot.x,self.closestContestableSpot.y);
                 self.sentContestableBot = true;
                 self.signal(padding + compressedLocNum,  2);
               }
+              */
               let rels = base.rel(self.me.x, self.me.y, checkPos[0], checkPos[1]);
               action = self.buildUnit(unit, rels.dx, rels.dy);
               return {action:action};
@@ -872,7 +1114,6 @@ function mind(self) {
       else if (reverse === true) {
         for (let i = adjacentPos.length - 1; i >= 0; i--) {
           let checkPos = adjacentPos[i];
-          self.log(`Checking ${checkPos}`);
           if(canBuild(self, checkPos[0], checkPos[1], robotsMapInVision, passableMap)){
 
             if (self.buildQueue.length > 0 && enoughResourcesToBuild(self, self.buildQueue[0])) {
@@ -931,7 +1172,22 @@ function canBuild(self, xpos, ypos, robotMap, passableMap) {
   }
   return false;
 }
-
+function safeDeposit(self, nx, ny) {
+  if (ownHalf(self, nx, ny)) {
+    return true;
+  }
+  //check if nx, ny is in vision
+  let robotMap = self.getVisibleRobotMap();
+  let unitsInVincinity = search.unitsInRadius(self, 9, self.me.team, nx, ny);
+  if (unitsInVincinity[SPECS.PROPHET].length + unitsInVincinity[SPECS.PREACHER].length >= 1) {
+    return true;
+  }
+  let nearestStruct = search.findNearestStructure(self);
+  if (qmath.dist(nx, ny, nearestStruct.x, nearestStruct.y) <= 9) {
+    return true;
+  }
+  return false;
+}
 function enoughResourcesToBuild(self, unitType) {
   let fuelCost = SPECS.UNITS[unitType].CONSTRUCTION_FUEL;
   let karbCost = SPECS.UNITS[unitType].CONSTRUCTION_KARBONITE;
@@ -975,5 +1231,14 @@ function ownHalf(self, nx, ny) {
     }
   }
   return false;
+}
+function getIndexAllSpots(self, pos){
+  for (let i = 0; i < self.allSpots.length; i++) {
+    let p = self.allSpots[i];
+    if (p.x === pos[0] && p.y === pos[1]) {
+      return i;
+    }
+  }
+  return null;
 }
 export default {mind}

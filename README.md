@@ -59,7 +59,7 @@ Send signals to other bots depending on self.status, received signals etc.
 The values ...
 - 0, ... 5 are reserved for units to tell all castles which unit got spawned.
 - 6 is reserved for units to tell all castles to pause building that turn.
-- 7,8,9 are used by preachers to tell castles if the (7-6)st, (8-6)nd, castle was destroyed.
+- 77, ..., 236 is reserved for pilgrims to tell all castles which resource tile they are mining
 
 ## Signal Encoding
 The values ...
@@ -78,6 +78,8 @@ The values ...
 - 24834 is for telling a pilgrim to search and mine any deposit
 - 24585 is for telling units to move at fastest speed possible
 - 24586, ... 28681 is for telling prophets to move and defend a new location.
+- 28682 to 28841  is for telling newly built pilgrims to mine that location. (Specify type?)
+- 28842 to 29001 is for telling old pilgrims to mine that location.
 
 
 ## STRATEGIES

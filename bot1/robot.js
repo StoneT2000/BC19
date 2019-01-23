@@ -50,7 +50,7 @@ class MyRobot extends BCAbstractRobot {
     
     
     
-    
+    this.allSpots = []; //array of all deposits;
     this.fuelSpots = []; //array of all fuelspots
     this.karboniteSpots = []; //array of all karbonite spots
     this.sentCommand = false;

@@ -6,22 +6,29 @@
 function processMessageCastleTalk(self, msg, id) {
   switch(msg) {
     case 1:
-      self.allUnits[id] = msg;
+      self.allUnits[id] = {};
+      self.allUnits[id].unit = msg;
       break;
     case 2:
-      self.allUnits[id] = msg;
+      self.allUnits[id] = {};
+      self.allUnits[id].unit = msg;
+      self.allUnits[id].mineLoc = -1;
       break;
     case 3:
-      self.allUnits[id] = msg;
+      self.allUnits[id] = {};
+      self.allUnits[id].unit = msg;
       break;
     case 4:
-      self.allUnits[id] = msg;
+      self.allUnits[id] = {};
+      self.allUnits[id].unit = msg;
       break;
     case 5:
-      self.allUnits[id] = msg;
+      self.allUnits[id] = {};
+      self.allUnits[id].unit = msg;
       break;
     case 6:
-      self.status = 'pause';
+      self.allUnits[id] = {};
+      self.allUnits[id].unit = 0;
       break;
     case 7:
       //this means castle opposing the very first castle in turnqueue is gone

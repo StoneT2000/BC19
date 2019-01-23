@@ -12,7 +12,10 @@ function mind(self){
   let forcedAction = null;
   self.log(`Church (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
   let action = '';
+  let fuelMap = self.getFuelMap();
+  let karbMap = self.getKarboniteMap();
   let robotsMapInVision = self.getVisibleRobotMap();
+  let robotMap = self.getVisibleRobotMap();
   let passableMap = self.map;
   //INITIALIZATION
   if (self.me.turn === 1) {
@@ -173,14 +176,37 @@ function mind(self){
         //self.castleTalk(75)
       }
     }
+    
+    self.sawEnemyLastTurn = false;
+    
+    
+    //THIS CODE MUST BE AT THE END OF THIS IF STATEMENT BECAUSE WE PREEMPTIVELY RETURNA  BUILD
     if (self.karbonite >= 50) {
-      if (unitsInVincinity[SPECS.PILGRIM].length < numberOfDeposits(self, self.me.x, self.me.y)){
-        self.buildQueue = [2];
+      let buildPilgrim = false;
+      let buildLoc = null;
+      let checkPositions = search.circle(self, self.me.x, self.me.y, 2);
+      for (let i = 0; i < checkPositions.length; i++) {
+        let cx = checkPositions[i][0];
+        let cy = checkPositions[i][1];
+        let robotThere = self.getRobot(robotMap[cy][cx]);
+        if ((fuelMap[cy][cx] === true || karbMap[cy][cx] === true) && (robotThere === null)) {
+          buildPilgrim = true;
+          buildLoc = [cx, cy];
+          break;
+        }
+      }
+      
+      
+      if (buildPilgrim === true){
+        self.buildQueue = [];
+        let rels = base.rel(self.me.x, self.me.y, buildLoc[0], buildLoc[1]);
+        action = self.buildUnit(2, rels.dx, rels.dy);
+        return {action:action};
       }
 
       
     }
-    self.sawEnemyLastTurn = false;
+    
   }
   else {
     let unitsInVincinity36 = search.unitsInRadius(self, 36);
@@ -224,7 +250,7 @@ function mind(self){
       for (let i = 0; i < adjacentPos.length; i++) {
         let checkPos = adjacentPos[i];
         
-        if(canBuild(self, checkPos[0], checkPos[1], robotsMapInVision, passableMap)){
+        if(canBuild(self, checkPos[0], checkPos[1], robotMap, passableMap)){
 
           if (self.buildQueue.length > 0 && enoughResourcesToBuild(self, self.buildQueue[0])) {
             let unit = self.buildQueue.shift();
