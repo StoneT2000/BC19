@@ -385,31 +385,6 @@ function mind(self) {
         buildEarlyProphet = true;
       }
     }
-    /*
-    for (let i = 0; i < self.knownStructures[self.me.team].length; i++) {
-      //self.log(`Castle at ${self.knownStructures[self.me.team][i].x}, ${self.knownStructures[self.me.team][i].y}`);
-    }
-    for (let i = 0; i < self.knownStructures[otherTeamNum].length; i++) {
-      //self.log(`ENEMY Castle at ${self.knownStructures[otherTeamNum][i].x}, ${self.knownStructures[otherTeamNum][i].y}`);
-      self.enemyCastlesSorted.push(self.knownStructures[otherTeamNum][i]);
-    }
-    self.enemyCastlesSorted.sort(function(a,b){
-      return a.x - b.x;
-    })
-    for (let i = 0; i < self.enemyCastlesSorted.length; i++){
-      //self.log(`Enemy Castle: ${i}, at ${self.enemyCastlesSorted[i].x}, ${self.enemyCastlesSorted[i].y}`);
-      for (let k = 0; k < self.knownStructures[otherTeamNum].length; k++) {
-        let kx = self.knownStructures[otherTeamNum][k].x
-        let ky = self.knownStructures[otherTeamNum][k].y;
-        if (kx === self.enemyCastlesSorted[i].x && ky === self.enemyCastlesSorted[i].y) {
-          self.knownStructures[otherTeamNum][k].index = i;
-        }
-      }
-    }
-    self.knownStructures[otherTeamNum].forEach(function(a){
-      //self.log(`Index for ${a.x}, ${a.y}: ${a.index}`)
-    })*/
-    
   }
   
   
@@ -548,14 +523,7 @@ function mind(self) {
     }
     else return false;
   });
-  for (let i = 0; i < self.searchQueueFuel.length; i++) {
-    let spos = self.searchQueueFuel[i].position;
-    //self.log(`Unoccupied fuel: ${spos}`);
-  }
-  for (let i = 0; i < self.searchQueueKarbonite.length; i++) {
-    let spos = self.searchQueueKarbonite[i].position;
-    //self.log(`Unoccupied karb: ${spos}`);
-  }
+
   self.log(`Safe fuel spots:${self.searchQueueFuel.length}`);
   self.log(`Safe karb spots:${self.searchQueueKarbonite.length}`);
   
@@ -576,10 +544,10 @@ function mind(self) {
       if (self.allUnits[heardId] === undefined) {
         self.allUnits[heardId] = {};
       }
-      //self.log(`Heard from unit ${heardId}-type:${self.allUnits[heardId].unit}`);
 
     }
-    if (msg >= 77) {
+    // 77 <= msg <= 236 is for pilgrims to tell castle which spot its mining
+    if (msg >= 77 && msg <= 236) {
       if (self.allUnits[heardId].unit === SPECS.PILGRIM) {
         //update the known mining locations. Stored into self object for access of previous turn data. Important as pilgrims willl send some other signals as well
         self.allUnits[heardId].mineLoc = msg - 77;
@@ -623,7 +591,7 @@ function mind(self) {
       }
     }
     else if (msg === 71) {
-
+      //unused?
       if (self.karbonite <= 90){
         self.stackKarbonite = true;
         //self.canBuildPilgrims = false;
@@ -642,6 +610,8 @@ function mind(self) {
       self.status = 'pause';
       self.log(`Caslte won't build`);
     }
+    
+    //vvv UNUSED!
     else if (msg === 73) {
       //self.numPilgrimsMiningKarbonite += 1;
       //self.log(`pilgrim is mining at ${self.allUnits[heardId].mineLoc}: ${heardId} `);
@@ -827,7 +797,6 @@ function mind(self) {
           }
           nearestEnemyLoc = {x: obot.x, y: obot.y};
           closestEnemyDist = distToUnit
-          self.log(`Nearest to castle is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
           sawEnemyThisTurn = true;
         }
       }
@@ -854,7 +823,6 @@ function mind(self) {
   }
   //BUILDING DECISION CODE. DYNAMIC PART
   
-  self.log(`Saw enemy: ${sawEnemyThisTurn}; Last turn: ${self.sawEnemyLastTurn}`);
   if (sawEnemyThisTurn === false) {
     if (self.sawEnemyLastTurn === true) {
       let range = 64;
@@ -864,159 +832,146 @@ function mind(self) {
     }
   }
   
-    if (self.castles > 1){
-      if (sawEnemyThisTurn === false && self.me.turn > 4 && self.stackKarbonite === false && self.stackFuel === false) {
-        
-        if (self.pilgrims <= self.maxPilgrims && self.pilgrims < (self.prophets + 2) * 2) {
-          self.buildQueue = [2];
-        }
-        else if (self.karbonite > 100){
-          
-          if (unitsInVincinity[SPECS.PROPHET].length <= self.prophets/(self.castles) && self.status !== 'pause') {
-            //self.castleTalk(72);
-            self.buildQueue = [4];
-          }
-        }
-        if (self.karbonite > 200) {
+  if (self.castles > 1){
+    if (sawEnemyThisTurn === false && self.me.turn > 4 && self.stackKarbonite === false && self.stackFuel === false) {
+
+      if (self.pilgrims <= self.maxPilgrims && self.pilgrims < (self.prophets + 2) * 2) {
+        self.buildQueue = [2];
+      }
+      else if (self.karbonite >= 100){
+
+        if (unitsInVincinity[SPECS.PROPHET].length <= self.prophets/(self.castles) && self.status !== 'pause') {
+          //self.castleTalk(72);
           self.buildQueue = [4];
         }
-        self.sawEnemyLastTurn = false;
-        
       }
-      else if (sawEnemyThisTurn === true){
-        let compressedLocationHash = self.compressLocation(nearestEnemyLoc.x, nearestEnemyLoc.y);
-        let padding = 12294;
-        if (sawProphet === true) {
-          padding = 16392;
-        }
-        let range = 64;
-        //farthestUnitDist[SPECS.PROPHET];
-        range = Math.min(Math.max(Math.pow(Math.ceil(Math.sqrt(Math.max(farthestUnitDist[SPECS.PROPHET], farthestUnitDist[SPECS.PREACHER]))), 2), 4),64);
-        self.log('Farthest prphet: ' + farthestUnitDist[SPECS.PROPHET]);
-        self.signal(padding + compressedLocationHash, range);
-        self.sawEnemyLastTurn = true;
+      if (self.karbonite > 200) {
+        self.buildQueue = [4];
+      }
+      self.sawEnemyLastTurn = false;
 
-        self.status = 'build';
-        
-        if (self.me.turn > 0) {
-          if (sawCrusader === true) {
-            if (unitsInVincinity[SPECS.PREACHER].length < 1){
-              self.buildQueue.unshift(5);
-            }
-            else {
-              self.buildQueue.unshift(4);
-            }
-          }
-          else if (sawPreacher === true) {
-            if (unitsInVincinity[SPECS.PROPHET].length < 1){
-              self.buildQueue.unshift(4);
-            }
-            else if (unitsInVincinity[SPECS.PREACHER].length < 1){
-              self.buildQueue.unshift(5);
-            }
-            else if (self.fuel >= unitsInVincinity[SPECS.PROPHET].length * 75 + 125){
-              self.log(`enough ammo, build another prophet`)
-              self.buildQueue.unshift(4);
-            }
-          }
-          else if (self.fuel >= 200){
-            self.buildQueue.unshift(4);
-          }
-          /*
-          if (unitsInVincinity[SPECS.PREACHER].length >= 1){
-            self.buildQueue.unshift(4);
-          }
-          else {
+    }
+    else if (sawEnemyThisTurn === true){
+      let compressedLocationHash = self.compressLocation(nearestEnemyLoc.x, nearestEnemyLoc.y);
+      let padding = 12294;
+      if (sawProphet === true) {
+        padding = 16392;
+      }
+      let range = 64;
+      //send only as far as we need. Max of 64 because we only process signals from units we know are our own team
+      range = Math.min(Math.max(Math.pow(Math.ceil(Math.sqrt(Math.max(farthestUnitDist[SPECS.PROPHET], farthestUnitDist[SPECS.PREACHER]))), 2), 4),64);
+      self.log('Farthest prophet: ' + farthestUnitDist[SPECS.PROPHET]);
+      self.signal(padding + compressedLocationHash, range);
+      self.sawEnemyLastTurn = true;
+
+      self.status = 'build';
+
+      if (self.me.turn > 0) {
+        if (sawCrusader === true) {
+          if (unitsInVincinity[SPECS.PREACHER].length < 1){
             self.buildQueue.unshift(5);
           }
-          */
-        }
-      }
-      else if (sawEnemyThisTurn === false) {
-        self.sawEnemyLastTurn = false;
-      }
-    }
-    
-    
-    //1 castle code
-    else {
-      if (sawEnemyThisTurn === false && self.me.turn > 4 && self.stackKarbonite === false && self.stackFuel === false) {
-        if (self.sawEnemyLastTurn === true) {
-          //saw enenemy last turn, now we don't see
-          self.signal(16391, 64);
-          self.buildQueue = [];
-        }
-        let numProphetsInQueue = 0;
-        self.buildQueue.forEach(function(a){
-          if (a === 4)  {
-            numProphetsInQueue += 1;
-          }
-        });
-        /*
-        if (unitsInVincinity[SPECS.PROPHET].length + numProphetsInQueue < 4) {
-          self.buildQueue = [4];
-        }
-        */
-
-        if (self.pilgrims <= self.maxPilgrims && self.pilgrims < (self.prophets + 2) * 2 && self.karbonite > 50) {
-          self.buildQueue = [2];
-        }
-        else if ((self.karbonite >= 100 && self.fuel > self.prophets * 50)){
-          self.buildQueue = [4];
-        }
-        
-        
-        
-        self.sawEnemyLastTurn = false;
-      }
-      else if (sawEnemyThisTurn === true){
-        let compressedLocationHash = self.compressLocation(nearestEnemyLoc.x, nearestEnemyLoc.y);
-        let padding = 12294;
-        if (sawProphet === true) {
-          padding = 16392;
-        }
-        let range = 64;
-        range = Math.min(Math.max(Math.pow(Math.ceil(Math.sqrt(Math.max(farthestUnitDist[SPECS.PROPHET], farthestUnitDist[SPECS.PREACHER]))), 2), 4),64);
-        self.log(`Sent range : ${range}`);
-        self.signal(padding + compressedLocationHash, range);
-        self.sawEnemyLastTurn = true;
-        //spam mages if we dont have any, otherwise prophets!
-        //let unitsInVincinity = search.unitsInRadius(self, 36);
-        self.status = 'build';
-        //we start building up prophets after their rush is done
-        //dont build if we have so little fuel as there is no point
-        if (self.me.turn > 0){
-          if (sawCrusader === true) {
-            if (unitsInVincinity[SPECS.PREACHER].length < 1){
-              self.buildQueue.unshift(5);
-            }
-            else {
-              self.buildQueue.unshift(4);
-            }
-          }
-          else if (sawPreacher === true) {
-            if (unitsInVincinity[SPECS.PROPHET].length < 1){
-              self.buildQueue.unshift(4);
-            }
-            else if (unitsInVincinity[SPECS.PREACHER].length < 1){
-              self.buildQueue.unshift(5);
-            }
-            else if (self.fuel >= unitsInVincinity[SPECS.PROPHET].length * 75 + 125){
-              self.log(`enough ammo, build another prophet`)
-              self.buildQueue.unshift(4);
-            }
-          }
-          else if (self.fuel >= 200){
+          else {
             self.buildQueue.unshift(4);
           }
         }
-      }
-      else if (sawEnemyThisTurn === false) {
-        self.sawEnemyLastTurn = false;
+        else if (sawPreacher === true) {
+          if (unitsInVincinity[SPECS.PROPHET].length < 1){
+            self.buildQueue.unshift(4);
+          }
+          else if (unitsInVincinity[SPECS.PREACHER].length < 1){
+            self.buildQueue.unshift(5);
+          }
+          else if (self.fuel >= unitsInVincinity[SPECS.PROPHET].length * 75 + 125){
+            self.log(`enough ammo, build another prophet`)
+            self.buildQueue.unshift(4);
+          }
+        }
+        else if (self.fuel >= 200){
+          self.buildQueue.unshift(4);
+        }
       }
     }
+    else if (sawEnemyThisTurn === false) {
+      self.sawEnemyLastTurn = false;
+    }
+  }
+
+
+  //1 castle code
+  else {
+    if (sawEnemyThisTurn === false && self.me.turn > 4 && self.stackKarbonite === false && self.stackFuel === false) {
+      if (self.sawEnemyLastTurn === true) {
+        //saw enenemy last turn, now we don't see
+        self.signal(16391, 64);
+        self.buildQueue = [];
+      }
+      let numProphetsInQueue = 0;
+      self.buildQueue.forEach(function(a){
+        if (a === 4)  {
+          numProphetsInQueue += 1;
+        }
+      });
+
+      if (self.pilgrims <= self.maxPilgrims && self.pilgrims < (self.prophets + 2) * 2 && self.karbonite > 50) {
+        self.buildQueue = [2];
+      }
+      else if ((self.karbonite >= 100 && self.fuel > self.prophets * 50)){
+        self.buildQueue = [4];
+      }
+
+
+
+      self.sawEnemyLastTurn = false;
+    }
+    else if (sawEnemyThisTurn === true){
+      let compressedLocationHash = self.compressLocation(nearestEnemyLoc.x, nearestEnemyLoc.y);
+      let padding = 12294;
+      if (sawProphet === true) {
+        padding = 16392;
+      }
+      let range = 64;
+      range = Math.min(Math.max(Math.pow(Math.ceil(Math.sqrt(Math.max(farthestUnitDist[SPECS.PROPHET], farthestUnitDist[SPECS.PREACHER]))), 2), 4),64);
+      self.log(`Sent range : ${range}`);
+      self.signal(padding + compressedLocationHash, range);
+      self.sawEnemyLastTurn = true;
+      //spam mages if we dont have any, otherwise prophets!
+      //let unitsInVincinity = search.unitsInRadius(self, 36);
+      self.status = 'build';
+      //we start building up prophets after their rush is done
+      //dont build if we have so little fuel as there is no point
+      if (self.me.turn > 0){
+        if (sawCrusader === true) {
+          if (unitsInVincinity[SPECS.PREACHER].length < 1){
+            self.buildQueue.unshift(5);
+          }
+          else {
+            self.buildQueue.unshift(4);
+          }
+        }
+        else if (sawPreacher === true) {
+          if (unitsInVincinity[SPECS.PROPHET].length < 1){
+            self.buildQueue.unshift(4);
+          }
+          else if (unitsInVincinity[SPECS.PREACHER].length < 1){
+            self.buildQueue.unshift(5);
+          }
+          else if (self.fuel >= unitsInVincinity[SPECS.PROPHET].length * 75 + 125){
+            self.log(`enough ammo, build another prophet`)
+            self.buildQueue.unshift(4);
+          }
+        }
+        else if (self.fuel >= 200){
+          self.buildQueue.unshift(4);
+        }
+      }
+    }
+    else if (sawEnemyThisTurn === false) {
+      self.sawEnemyLastTurn = false;
+    }
+  }
   
-  //if its turn 900, and we have lost one castle, go at enemey
+  //if its turn 900, and we have lost at least one castle, go at enemey
   if (self.me.turn >= 920 && self.castles < self.castleCount && self.finalSignal === false) {
     let targetLoc = self.knownStructures[otherTeamNum][0];
     let compressedLocationHash = self.compressLocation(targetLoc.x, targetLoc.y);
@@ -1025,7 +980,7 @@ function mind(self) {
     self.signal (padding + compressedLocationHash, 100);
   }
   
-  //building code
+  //BUILDING CODE
   //only build if we have sufficient fuel for our units to perform attack manuevers
   if (((self.fuel <= self.preachers * 50 + self.prophets * 60) || self.fuel <= 100) && sawEnemyThisTurn === false) {
     self.status = 'pause';
@@ -1041,6 +996,22 @@ function mind(self) {
       let adjacentPos = [];//search.circle(self, self.me.x, self.me.y, 2);
       if (self.buildQueue[0] === 2){
         adjacentPos = self.buildingPilgrimPositions
+        
+        //sort adjacent positions by distance to checkQueue
+        let checkQueue = self.searchQueue;
+        if (self.searchQueueKarbonite.length) {
+          checkQueue = self.searchQueueKarbonite;
+        }
+        if (checkQueue.length){
+          let tpos = checkQueue[0].position;
+          let adjacentPosDist = adjacentPos.map(function(a){
+            return {pos:a, dist: qmath.dist(a[0], a[1], tpos[0], tpos[1])}
+          });
+          adjacentPosDist.sort(function(a,b){
+            return a.dist - b.dist;
+          })
+          adjacentPos = adjacentPosDist.map(function(a){return a.pos});
+        }
       }
       else {
         adjacentPos = self.buildingAttackUnitPositions;
@@ -1060,6 +1031,7 @@ function mind(self) {
               //build the first unit put into the build queue
               let unit = self.buildQueue.shift(); //remove that unit
               
+              //HIGHLY SPECIFIC CODE DONT TOUCH? FOR EARLY PROPHET STRAT
               if (self.me.turn === 3 && sendEarlyProphetStrat === true && self.closestContestableSpot !== null) {
                 //tell first 2 units, probably a prophet and pilgrim, to go this spot
                 let padding = 24586;
@@ -1072,11 +1044,14 @@ function mind(self) {
                 //self.signal(padding + val, 2);
                 self.castleTalk(77 + val);
               }
+              
+              //GENERAL CODE FOR NEW PILGRIMS
               if (unit === 2 && self.searchQueue.length && self.me.turn !== 3) {
                 
                 if (self.me.turn > 3){
                   let queueToCheck = self.searchQueue;
                   if (self.searchQueueKarbonite.length) {
+                    //default pick up karbo...
                     queueToCheck = self.searchQueueKarbonite;
                   }
                   let padding = 28682;
@@ -1091,6 +1066,7 @@ function mind(self) {
                   }
                 }
                 else {
+                  //TELL NEW PILGRIM TO MINE ANYWHERE!
                   self.signal(2, 2);
                 }
               }
@@ -1140,6 +1116,7 @@ function mind(self) {
     return {action:forcedAction};
   }
   
+  //ATTACK IF WE AREN'T BUILDING
   let closestEnemy = null;
   let closestDist = 99999;
   for (let i = 0; i < robotsInVision.length; i++) {
