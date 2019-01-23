@@ -534,7 +534,7 @@ function mind(self) {
         let rels = base.rel(self.me.x, self.me.y, self.buildTarget[0], self.buildTarget[1]);
         self.log(`TRIED TO BUILD: ${rels.dx}, ${rels.dy}`);
         
-        if (self.fuel + self.me.fuel >= 250 && self.karbonite + self.me.karbonite >= 70){
+        if (self.fuel + self.me.fuel >= 250 && self.karbonite + self.me.karbonite >= 75){
           self.status = 'goingToDeposit';
           return {action:self.buildUnit(SPECS.CHURCH, rels.dx, rels.dy)}
         }

@@ -62,7 +62,7 @@ class MyRobot extends BCAbstractRobot {
   };
   
   turn() {
-    //this.log(`Turn ${this.me.turn}: ID: ${this.id} Unit Type: ${unitTypesStr[this.me.unit]}`);
+
     let startTime = new Date();
     
     if (this.me.unit === SPECS.CASTLE) {
@@ -76,30 +76,21 @@ class MyRobot extends BCAbstractRobot {
     } 
     else if (this.me.unit === SPECS.PILGRIM) {
       let result = pilgrim.mind(this);
-      //this.status = result.status;
-      //this.target = result.target;
       return result.action;
     }
     else if (this.me.unit === SPECS.CHURCH) {
       let result = church.mind(this);
-      //this.status = result.status;
-      //this.target = result.target;
       return result.action;
     }
     else if (this.me.unit === SPECS.PROPHET) {
       let result = prophet.mind(this);
-      //this.status = result.status;
-      //this.target = result.target;
       return result.action;
     }
     else if (this.me.unit === SPECS.PREACHER) {
       let result = preacher.mind(this);
-      //this.status = result.status;
-      //this.target = result.target;
       return result.action;
     }
     let endTime = new Date();
-    //this.log(`Turn took ${endTime - startTime} ms`);
   }
   
   //other helper functions
@@ -127,7 +118,6 @@ class MyRobot extends BCAbstractRobot {
   */
   readyAttack() {
     let fuelCost = SPECS.UNITS[this.me.unit].ATTACK_FUEL_COST;
-    this.log(`I have ${this.fuel} fuel, need ${fuelCost}`);
     if (this.fuel >= fuelCost) {
       return true;
     }
@@ -139,17 +129,14 @@ class MyRobot extends BCAbstractRobot {
   setFinalTarget(newTarget) {
     this.finalTarget = newTarget;
     let path = [];
-    //this.log(`New Path`);
     if (this.planner !== null) {
       this.planner.search(this.me.y,this.me.x,newTarget[1],newTarget[0],path);
     }
     else {
-      //this.log('using ez')
       path = [this.me.y,this.me.x, newTarget[1], newTarget[0]];
     }
     path.shift();
     path.shift();
-    //this.log(`My path: ${path}`);
     this.path = path;
     this.target[1] = path.shift();
     this.target[0] = path.shift();
@@ -196,7 +183,6 @@ class MyRobot extends BCAbstractRobot {
   getLocation(hash) {
     let xpos = hash % this.map[0].length;
     let ypos = (hash - xpos) / this.map[0].length;
-    //this.log(`Xy:${xpos}, ${ypos}`)
     return {x:xpos, y:ypos};
     //hash is now a value from 0 to 4095, representing every possible map location
   }

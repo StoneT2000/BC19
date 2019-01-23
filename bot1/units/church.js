@@ -29,13 +29,10 @@ function mind(self){
       self.halfPoint = mapLength/2;
       if (self.me.x < mapLength/2){
         self.lowerHalf = true;
-        
-        
       }
       else {
         self.lowerHalf = false;
       }
-      //self.log(`Half x: ${self.halfPoint}, i'm on lower half:${self.lowerHalf}`);
     }
     else {
       self.halfPoint = mapLength/2;
@@ -47,7 +44,6 @@ function mind(self){
       else {
         self.lowerHalf = false;
       }
-      //self.log(`Half y: ${self.halfPoint}, i'm on lower half:${self.lowerHalf}`);
     }
     let fuelMap = self.getFuelMap();
     let karboniteMap = self.getKarboniteMap();
@@ -73,7 +69,6 @@ function mind(self){
     //determine if the church is in danger
     let closestDepositDist = 99999;
     for (let i = 0; i < self.fuelSpots.length; i++) {
-      //self.log(`checking ${self.fuelSpots[i].x}, ${self.fuelSpots[i].y}`)
       if (ownHalf(self, self.fuelSpots[i].x, self.fuelSpots[i].y) === false){
         let distToDeposit = qmath.dist(self.fuelSpots[i].x, self.fuelSpots[i].y, self.me.x, self.me.y);
         if (distToDeposit < closestDepositDist) {
@@ -82,7 +77,6 @@ function mind(self){
       }
     }
     for (let i = 0; i < self.karboniteSpots.length; i++) {
-      //self.log(`checking ${self.karboniteSpots[i].x}, ${self.karboniteSpots[i].y}`)
       if (ownHalf(self, self.karboniteSpots[i].x, self.karboniteSpots[i].y) === false){
         let distToDeposit = qmath.dist(self.karboniteSpots[i].x, self.karboniteSpots[i].y, self.me.x, self.me.y);
         if (distToDeposit < closestDepositDist) {
@@ -95,7 +89,6 @@ function mind(self){
       self.churchNeedsProtection = true;
       self.castleTalk(75);
     }
-    //self.log(`Churche in danger: ${self.churchNeedsProtection}`);
     let numFuelSpots = self.fuelSpots.length;
     self.maxPilgrims = Math.ceil((self.fuelSpots.length + self.karboniteSpots.length)/2);
   }
@@ -154,19 +147,6 @@ function mind(self){
     if (self.sawEnemyLastTurn === true) {
       self.signal(16391, 64); //tell everyone to defend
       self.buildQueue = [];
-    }
-    if (self.karbonite >= 200) {
-      /*
-      if (unitsInVincinity[SPECS.PROPHET].length < 4){
-        self.buildQueue = [4]
-      }
-      else if (unitsInVincinity[SPECS.PREACHER].length >= 3) {
-        self.buildQueue = [4];
-      }
-      else {
-        self.buildQueue = [5];
-      }
-      */
     }
     
     if (self.karbonite >= 125 && self.fuel >= unitsInVincinity100[SPECS.PROPHET].length * 60){
@@ -238,15 +218,6 @@ function mind(self){
     if (self.buildQueue[0] !== -1){
       
       let adjacentPos = search.circle(self, self.me.x, self.me.y, 2);
-      /*
-      if (self.buildQueue[0] === 2){
-        adjacentPos = self.buildingPilgrimPositions
-      }
-      else {
-        adjacentPos = self.buildingAttackUnitPositions;
-      }
-      */
-      
       for (let i = 0; i < adjacentPos.length; i++) {
         let checkPos = adjacentPos[i];
         
@@ -315,13 +286,11 @@ function ownHalf(self, nx, ny) {
   if (!self.mapIsHorizontal) {
     if (self.lowerHalf) {
       if (nx < mapLength/2) {
-        //self.log(`X:${nx}, ${ny} is on our half`)
         return true;
       }
     }
     else {
       if (nx >= mapLength/2) {
-        //self.log(`X:${nx}, ${ny} is on our half`)
         return true;
       }
     }
@@ -329,13 +298,11 @@ function ownHalf(self, nx, ny) {
   else {
     if (self.lowerHalf) {
       if (ny < gameMap.length/2) {
-        //self.log(`Y:${nx}, ${ny} is on our half`)
         return true;
       }
     }
     else {
       if (ny >= gameMap.length/2) {
-        //self.log(`Y:${nx}, ${ny} is on our half`)
         return true;
       }
     }
