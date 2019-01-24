@@ -35,6 +35,7 @@ function mind(self){
     self.allowedToMove = true;
     self.finalTarget = [self.me.x, self.me.y];
     self.status = 'defend';
+    self.oldStatus = 'defend';
     self.lastAttackedUnit = null;
     
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
@@ -119,6 +120,7 @@ function mind(self){
     if(robotsInVision[i].id !== self.me.id){
       //process new target location
       if (msg >= 12294 && msg <= 16389) {
+        self.oldStatus = self.status;
         self.status = 'attackTarget';
         let padding = 12294;
         let targetLoc = self.getLocation(msg - padding);
@@ -126,14 +128,18 @@ function mind(self){
         self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
       }
       if (msg >= 16392 && msg <= 20487) {
+        self.oldStatus = self.status;
         self.status = 'goToTarget';
+        
         let padding = 16392;
         let targetLoc = self.getLocation(msg - padding);
         self.finalTarget = [targetLoc.x, targetLoc.y];
         self.log(`Preparing to attack enemy at ${self.finalTarget}`);
       }
       if (msg >= 20488 && msg <= 24583) {
+        self.oldStatus = self.status;
         self.status = 'goToTarget';
+        
         let padding = 20488;
         let targetLoc = self.getLocation(msg - padding);
         self.finalTarget = [targetLoc.x, targetLoc.y];
@@ -158,13 +164,13 @@ function mind(self){
   //defenders and units that are have no final target. If they did, then they must be waiting for a fuel stack to go that target
   if (self.status === 'defend' || self.status === 'defendOldPos') {
     //SPEED IMPROVEMENT USING BFS.
-    if (self.me.x % 2 === 0 || self.me.y % 2 === 0 || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true || distToStructureFromMe <= 2 || self.status === 'defendOldPos') {
+    if ((self.me.x % 2 === 1 && self.me.y % 2 === 1 ) || (self.me.x % 2 === 0 && self.me.y % 2 === 0) || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true || distToStructureFromMe <= 2 || self.status === 'defendOldPos') {
       let closestDist = 99999;
       let bestLoc = null;
       let nearestStructure = search.findNearestStructure(self);
       for (let i = 0; i < mapLength; i++) {
         for (let j = 0; j < mapLength; j++) {
-          if (i % 2 === 1 && j % 2 === 1){
+          if (i % 2 !== j % 2){
             //position can also not be next to structure
             if ((search.emptyPos(j, i , robotMap, gameMap, false) || self.me.id === robotMap[i][j]) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
               //assuming final target when rallying is the rally targt
@@ -196,7 +202,14 @@ function mind(self){
     }
     
   }
-  
+  if (self.status === 'searchAndAttack') {
+    if (self.knownStructures[otherTeamNum].length){
+      self.finalTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
+    }
+    else {
+      self.status = 'defend';
+    }
+  }
   //DECISIONS
   
   if (self.status === 'attackTarget') {
@@ -205,7 +218,7 @@ function mind(self){
   if (self.status === 'goToTarget') {
     
   }
-  if (self.status === 'defend' || self.status === 'attackTarget' || self.status === 'goToTarget') {
+  if (self.status === 'defend' || self.status === 'attackTarget' || self.status === 'goToTarget' || self.status === 'searchAndAttack') {
     //watch for enemies, then chase them
     //call out friends to chase as well?, well enemy might only send scout, so we might get led to the wrong place
     
@@ -276,6 +289,9 @@ function mind(self){
     if (self.me.turn <= 3 && self.status === 'defend') {
       //initially, allow bot to move freely if its not attackinga
       avoidFriends = false;
+    }
+    if (self.status === 'searchAndAttack') {
+      moveFast = false;
     }
     self.log(`STAUS:${self.status}`);
     action = self.navigate(self.finalTarget, avoidFriends, moveFast);

@@ -62,11 +62,12 @@ function mind(self){
   //SIGNAL PROCESSION
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
-    //self.log(`Received from ${robotsInVision[i].id}  msg: ${msg}`);
     signal.processMessageCrusader(self, msg);
     if (robotsInVision[i].team === self.me.team){
       if (msg >= 12294 && msg <= 16389) {
+        self.oldStatus = self.status;
         self.status = 'attackTarget';
+        
         let padding = 12294;
         let targetLoc = self.getLocation(msg - padding);
         self.finalTarget = [targetLoc.x, targetLoc.y];
@@ -74,6 +75,7 @@ function mind(self){
         //final target is wherever is max dist from final target
       }
       if (msg >= 16392 && msg <= 20487) {
+        self.oldStatus = self.status;
         self.status = 'goToTarget';
         let padding = 16392;
         let targetLoc = self.getLocation(msg - padding);
@@ -81,6 +83,7 @@ function mind(self){
         self.log(`Preparing to attack enemy at ${self.finalTarget}`);
       }
       if (msg >= 20488 && msg <= 24583) {
+        self.oldStatus = self.status;
         self.status = 'goToTarget';
         let padding = 20488;
         let targetLoc = self.getLocation(msg - padding);
@@ -94,6 +97,63 @@ function mind(self){
       unitsInVision[6].push(robotsInVision[i]);
     }
   }
+  
+  //avoidance code
+  
+  let enemyPositionsToAvoid = [];
+  let minDistToPreacher = 49; //distance such that crusader moving max distance is not in range of preacher attack
+  let minDistToCrusader = 49;
+  if (self.status === 'searchAndAttack') { 
+    minDistToCrusader = 32;
+    minDistToPreacher = 32;
+  }
+  /*
+  for (let i = 0; i < robotsInVision.length; i++) {
+    let obot = robotsInVision[i];
+    
+    //find position that is the farthest away from all enemies
+    if (obot.team === otherTeamNum) {
+      let distToEnemy = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
+      
+      if (obot.unit === SPECS.PREACHER && distToEnemy <= minDistToPreacher) {
+        enemyPositionsToAvoid.push([obot.x, obot.y]);
+      }
+      else if (obot.unit === SPECS.CRUSADER && distToEnemy <= minDistToCrusader) {
+        enemyPositionsToAvoid.push([obot.x, obot.y]);
+      }
+      
+    }
+  }
+  let avoidLocs = [];
+  if (self.status === 'searchAndAttack') {
+    if (enemyPositionsToAvoid.length > 0){
+      self.log(`Crusader sees enemies nearby`)
+      let positionsToGoTo = search.circle(self, self.me.x, self.me.y, 4);
+      for (let i = 0; i < positionsToGoTo.length; i++) {
+        let thisSumDist = 0;
+        let pos = positionsToGoTo[i];
+        if (search.emptyPos(pos[0], pos[1], robotMap, self.map)){
+          for (let j = 0; j < enemyPositionsToAvoid.length; j++) {
+            thisSumDist += qmath.dist(pos[0], pos[1], enemyPositionsToAvoid[j][0], enemyPositionsToAvoid[j][1]);
+          }
+          avoidLocs.push({pos:pos, dist:thisSumDist});
+        }
+      }
+    }
+    if (avoidLocs.length > 0) {
+      //FORCE A MOVE AWAY
+      self.log(`Crusader running away from enemy`)
+      avoidLocs.sort(function(a,b) {
+        return b.dist - a.dist;
+      })
+      let rels = base.rel(self.me.x, self.me.y, avoidLocs[0].pos[0], avoidLocs[0].pos[1]);
+      //search for previous deposit?
+      self.status = 'searchAndAttack';
+      return {action:self.move(rels.dx,rels.dy)}
+    }
+  }
+  */
+  
   base.updateKnownStructures(self);
   //DECISION MAKING
 
@@ -224,7 +284,12 @@ function mind(self){
   }
   
   //crusader should rush slower and then speed up when in range. Don't rush if u see enemey crusaders
-  action = self.navigate(self.finalTarget);
+  
+  let fast = true;
+  if (self.status === 'searchAndAttack') {
+    fast = false;
+  }
+  action = self.navigate(self.finalTarget, false, fast);
   return {action:action};
   
 

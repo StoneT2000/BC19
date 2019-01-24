@@ -162,6 +162,10 @@ class MyRobot extends BCAbstractRobot {
         let rels = base.relToPos(this.me.x, this.me.y, this.target[0], this.target[1], this, avoidFriends, fast);
         if (rels.dx === 0 && rels.dy === 0) {
           action = ''
+          rels = base.relToPos(this.me.x, this.me.y, this.target[0], this.target[1], this, avoidFriends, true);
+          if (rels.dx !== 0 || rels.dy !== 0) {
+            action = this.move(rels.dx, rels.dy);    
+          }
         }
         else {
           action = this.move(rels.dx, rels.dy);    
