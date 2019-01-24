@@ -240,7 +240,7 @@ function mind(self) {
       else if (obot.unit === SPECS.PREACHER && distToEnemy <= 64) {
         enemyPositionsToAvoid.push([obot.x, obot.y]);
       }
-      else if (obot.unit === SPECS.CRUSADER && distToEnemy <= 36) {
+      else if (obot.unit === SPECS.CRUSADER && distToEnemy <= 49) {
         enemyPositionsToAvoid.push([obot.x, obot.y]);
       }
       
