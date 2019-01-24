@@ -32,6 +32,7 @@ function mind(self) {
 
     // SCOUTING
     self.firstTimeScouting = true;
+    self.frontLineScoutingTarget = {x: 0, y: 0};
     //self.log(`${self.knownStructures[self.me.team][0].x}`);
     /*
     let castleId = robotMap[origCastleLoc[1]][origCastleLoc[0]];
@@ -175,12 +176,17 @@ function mind(self) {
       }
 
       else if (msg === 29002) {
-        self.status = 'scout';
+        self.status = 'scout'; // Consider changing to 'unitScout' to differentiate from 'frontLineScout'
       }
       //if waiting for command, no signal is given, go to old spot, don't wait for castle to reassign
 
     }
   }
+  // DO THIS FOR TESTING
+  /*if (self.me.turn >= 0) {
+    self.status = 'frontLineScout';
+  }*/
+
   if (self.status === 'waitingForCommand') {
     self.status = 'goingToDeposit';
     if (self.me.turn !== 1) {
@@ -189,8 +195,45 @@ function mind(self) {
     }
     self.status = 'searchForAnyDeposit';
   }
-  //DECISION MAKING
-  //PILGRIM SCOUTING LOLOLOL
+  // DECISION MAKING
+  // FRONTLINE SCOUTING
+  else if (self.status === 'frontLineScout') {
+    self.log("Hey guys, I'm a front line scout!");
+    // 1. Find the closest carbonite spot
+    if (self.firstTimeScouting) {
+      let minSpotDist = 9999;
+      let targetLoc = {x: 0, y: 0};
+      for (let i = 0; i < self.allSpots.length; i++) {
+        if (!ownHalf(self, self.allSpots[i].x, self.allSpots[i].y)) {
+          // Calculate minimum distance
+          let currentDist = qmath.dist(self.me.x, self.me.y, self.allSpots[i].x, self.allSpots[i].y)
+          if (currentDist < minSpotDist) {
+            minSpotDist = currentDist;
+            targetLoc.x = self.allSpots[i].x;
+            targetLoc.y = self.allSpots[i].y; // By end of loop, targetLoc should be minimum
+          }
+        }
+      }
+      self.log(`And I have identified the nearest enemy spot to be located at ${targetLoc.x}, ${targetLoc.y}`)
+      self.frontLineScoutingTarget = targetLoc;
+      self.finalTarget = [targetLoc.x, targetLoc.y];
+      self.firstTimeScouting = false;
+    }
+    // Search for enemy units
+    /*
+    let robotsInVision = self.getVisibleRobots();
+    for (let i = 0; i < robotsInVision.length; i++) {
+      if (robotsInVision[i].team === otherTeamNum) {
+        let distToEnemy = qmath.dist(self.me.x, self.me.y, robotsInVision[i].x, robotsInVision[i].y);
+        if (distToEnemy > 64 && distToEnemy <= 100) { // Change these values
+          // Do we care about being exposed by enemy pilgrims?
+          self.log(`I'm gonna stop for now at position: ${self.me.x}, ${self.me.y}`);
+          self.finalTarget = [self.me.x, self.me.y];
+        }
+      }
+    }*/
+  }
+  /* PILGRIM SCOUTING
   else if (self.status === 'scout') {
     // Scouting code by Tom
     // First, find the closest resource spot where enemies could build churches
@@ -221,27 +264,35 @@ function mind(self) {
         }
       }
     }
-  }
+  }*/
 
+  // CODE FOR AVOIDING ENEMIES
   //regardless, pilgrim tries to stay out of shooting range
   let farthestdist;
   let enemyPositionsToAvoid = [];
   for (let i = 0; i < robotsInVision.length; i++) {
     let obot = robotsInVision[i];
-    
     //find position that is the farthest away from all enemies
     if (obot.team === otherTeamNum) {
       let distToEnemy = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
-      if (obot.unit === SPECS.PROPHET && distToEnemy <= 100) {
-        enemyPositionsToAvoid.push([obot.x, obot.y]);
+      if (self.status === 'frontLineScout' && distToEnemy > 64 && distToEnemy < 100) {
+        self.log(`I'm gonna stop for now at position: ${self.me.x}, ${self.me.y}`);
+        self.finalTarget = [self.me.x, self.me.y];
+      } 
+      else {
+        if (self.status === 'frontLineScout' && distToEnemy < 100) { // Not sure if we need this
+          self.finalTarget = [self.frontLineScoutingTarget.x, self.frontLineScoutingTarget.y];
+        }
+        if (obot.unit === SPECS.PROPHET && distToEnemy <= 100) {
+          enemyPositionsToAvoid.push([obot.x, obot.y]);
+        }
+        else if (obot.unit === SPECS.PREACHER && distToEnemy <= 64) {
+          enemyPositionsToAvoid.push([obot.x, obot.y]);
+        }
+        else if (obot.unit === SPECS.CRUSADER && distToEnemy <= 49) {
+          enemyPositionsToAvoid.push([obot.x, obot.y]);
+        }
       }
-      else if (obot.unit === SPECS.PREACHER && distToEnemy <= 64) {
-        enemyPositionsToAvoid.push([obot.x, obot.y]);
-      }
-      else if (obot.unit === SPECS.CRUSADER && distToEnemy <= 49) {
-        enemyPositionsToAvoid.push([obot.x, obot.y]);
-      }
-      
     }
   }
   let avoidLocs = [];
