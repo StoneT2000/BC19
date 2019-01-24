@@ -60,6 +60,7 @@ The values ...
 - 0, ... 5 are reserved for units to tell all castles which unit got spawned.
 - 6 is reserved for units to tell all castles to pause building that turn.
 - 77, ..., 236 is reserved for pilgrims to tell all castles which resource tile they are mining
+- 237 is for pilgrim to tell castle it is a scout and all castle talk from that scout is location information.
 
 ## Signal Encoding
 The values ...

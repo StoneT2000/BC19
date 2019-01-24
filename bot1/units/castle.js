@@ -25,6 +25,7 @@ function mind(self) {
     //all the indicesof mining locations in self.allSpots that currently have a unit moving towards it, mining on it, or trying to build on it.
     //It is updated through self.allUnits[id].mineLoc. Pilgrim only changes mineLoc if they die (the object is gone), or if received new signal when it is on return mode
     
+    self.rallyTargets = {};//keys are the id of the robots that are scouts. rallyTargets[id].position = rally target/position of that scout
     self.sentContestableBot = false;
     self.newIndices = [];
     self.finalSignal = false;
@@ -157,6 +158,7 @@ function mind(self) {
       if (msg >= 0) {
         self.allUnits[robotsInVision[i].id] = {};
         self.allUnits[robotsInVision[i].id].unit = 0;
+        self.allUnits[robotsInVision[i].id].type = 'default';
         locCastleNum +=1;
         self.castleIds.push(robotsInVision[i].id);
         
@@ -476,7 +478,7 @@ function mind(self) {
      
       if (msg >= 77) {
         //figuring out locations of new pilgrims that will go to that castles tell us, these messages stay there for 2 rounds
-        if (self.allUnits[id].unit === SPECS.CASTLE){
+        if (self.allUnits[id].unit === SPECS.CASTLE || self.allUnits[id].unit === SPECS.CHURCH){
           //self.log(`castle-id: ${id}; msg: ${msg}; turn:${self.me.turn}`);
           self.newIndices.push({msg:msg - 77, turn: self.me.turn});
         }
@@ -550,7 +552,7 @@ function mind(self) {
     signal.processMessageCastleTalk(self, msg, robotsInVision[i].id); //process 6>=msg>=1
     
     //if msg is >= 7, it must be from a unit with a known unit type already
-    if (msg >= 7 || msg === 0) {
+    if (msg >= 0) {
       
       if (self.allUnits[heardId] === undefined) {
         self.allUnits[heardId] = {};
@@ -559,7 +561,8 @@ function mind(self) {
     }
     // 77 <= msg <= 236 is for pilgrims to tell castle which spot its mining
     if (msg >= 77 && msg <= 236) {
-      if (self.allUnits[heardId].unit === SPECS.PILGRIM) {
+      //self.log(`${heardId} said ${msg} and is type: ${self.allUnits[heardId].type}`);
+      if (self.allUnits[heardId].unit === SPECS.PILGRIM && self.allUnits[heardId].type === 'miner') {
         //update the known mining locations. Stored into self object for access of previous turn data. Important as pilgrims willl send some other signals as well
         self.allUnits[heardId].mineLoc = msg - 77;
         //self.log(`Pilgrim - ${heardId} mines at ${self.allSpots[msg - 77].x},${self.allSpots[msg - 77].y}: msg: ${msg}`);
@@ -568,82 +571,91 @@ function mind(self) {
       }
     }
     
-    if (msg >= 7 && msg <= 70) {
-      let enemyCastlePosDestroyed = msg - 7;
-      self.log(`Castle knows that enemy castle: ${enemyCastlePosDestroyed} was destroyed`);
-      
-      //TODO, create a better hash from enemy castle position, that is more likely to be correct
-      for (let i = 0; i < self.knownStructures[otherTeamNum].length; i++) {
-        if (self.mapIsHorizontal) {
-          //check xpos for almost unique castle identifier;
-          if (self.knownStructures[otherTeamNum][i].x === enemyCastlePosDestroyed) {
-            if (enemyCastlePosDestroyed === self.me.x) {
-              self.log(`Opposite castle destroyed, x:${enemyCastlePosDestroyed}`);
-              self.oppositeCastleDestroyed = true;
-            }
-            self.knownStructures[otherTeamNum].splice(i,1);
-            
-            break;
-          }
+    //if a message is received, work on it
+    if (msg >= 0){
+      if (self.allUnits[heardId].type === 'scout') {
+        if (msg >= 1 && msg <= 64) {
+          //x position of scout;
+          self.rallyTargets[heardId].position[0] = msg - 1;
         }
-        else {
-          if (self.knownStructures[otherTeamNum][i].y === enemyCastlePosDestroyed) {
-            if (enemyCastlePosDestroyed === self.me.y) {
-              self.oppositeCastleDestroyed = true;
-              self.log(`Opposite castle destroyed, y:${enemyCastlePosDestroyed}`);
-            }
-            self.knownStructures[otherTeamNum].splice(i,1);
-            break;
-          }
+        else if (msg >= 65 && msg <= 128) {
+          //y position of scout, padded of course
+          self.rallyTargets[heardId].position[1] = msg - 65;
         }
       }
-      for (let i = 0; i < self.knownStructures[otherTeamNum].length; i++) {
-        self.log(`New known structures: ${self.knownStructures[otherTeamNum][i].x}, ${self.knownStructures[otherTeamNum][i].y}`);
+      if (self.allUnits[heardId].type === 'default' || self.allUnits[heardId].type === 'miner'){
+      if (msg >= 7 && msg <= 70) {
+        let enemyCastlePosDestroyed = msg - 7;
+        self.log(`Castle knows that enemy castle: ${enemyCastlePosDestroyed} was destroyed`);
+
+        //TODO, create a better hash from enemy castle position, that is more likely to be correct
+        for (let i = 0; i < self.knownStructures[otherTeamNum].length; i++) {
+          if (self.mapIsHorizontal) {
+            //check xpos for almost unique castle identifier;
+            if (self.knownStructures[otherTeamNum][i].x === enemyCastlePosDestroyed) {
+              if (enemyCastlePosDestroyed === self.me.x) {
+                self.log(`Opposite castle destroyed, x:${enemyCastlePosDestroyed}`);
+                self.oppositeCastleDestroyed = true;
+              }
+              self.knownStructures[otherTeamNum].splice(i,1);
+
+              break;
+            }
+          }
+          else {
+            if (self.knownStructures[otherTeamNum][i].y === enemyCastlePosDestroyed) {
+              if (enemyCastlePosDestroyed === self.me.y) {
+                self.oppositeCastleDestroyed = true;
+                self.log(`Opposite castle destroyed, y:${enemyCastlePosDestroyed}`);
+              }
+              self.knownStructures[otherTeamNum].splice(i,1);
+              break;
+            }
+          }
+        }
+        for (let i = 0; i < self.knownStructures[otherTeamNum].length; i++) {
+          self.log(`New known structures: ${self.knownStructures[otherTeamNum][i].x}, ${self.knownStructures[otherTeamNum][i].y}`);
+        }
+      }
+      else if (msg === 71) {
+        //unused?
+        if (self.karbonite <= 90){
+          self.stackKarbonite = true;
+          //self.canBuildPilgrims = false;
+
+          self.buildQueue = [];
+        }
+
+        if (self.fuel <= 200) {
+
+          self.stackFuel = true;
+          self.buildQueue = [];
+        }
+      }
+      else if (msg === 72 && heardId !== self.me.id) {
+        //this castle doesn't have priority to build
+        self.status = 'pause';
+        self.log(`Caslte won't build`);
+      }
+
+      //vvv UNUSED!
+      else if (msg === 73) {
+        //self.numPilgrimsMiningKarbonite += 1;
+        //self.log(`pilgrim is mining at ${self.allUnits[heardId].mineLoc}: ${heardId} `);
+      }
+      else if (msg === 74) {
+        //self.numPilgrimsMiningFuel += 1;
+        //self.log(`pilgrim is mining at ${self.allUnits[heardId].mineLoc}: ${heardId} `);
       }
     }
-    else if (msg === 71) {
-      //unused?
-      if (self.karbonite <= 90){
-        self.stackKarbonite = true;
-        //self.canBuildPilgrims = false;
-
-        self.buildQueue = [];
-      }
-
-      if (self.fuel <= 200) {
-
-        self.stackFuel = true;
-        self.buildQueue = [];
-      }
     }
-    else if (msg === 72 && heardId !== self.me.id) {
-      //this castle doesn't have priority to build
-      self.status = 'pause';
-      self.log(`Caslte won't build`);
-    }
-    
-    //vvv UNUSED!
-    else if (msg === 73) {
-      //self.numPilgrimsMiningKarbonite += 1;
-      //self.log(`pilgrim is mining at ${self.allUnits[heardId].mineLoc}: ${heardId} `);
-    }
-    else if (msg === 74) {
-      //self.numPilgrimsMiningFuel += 1;
-      //self.log(`pilgrim is mining at ${self.allUnits[heardId].mineLoc}: ${heardId} `);
-    }
-    else if (msg === 75) {
-      //build prophet!
-
-      //
-    }
-    
-    
   }
   
   
   //Count units
   self.castles = 0;
   self.pilgrims = 0;
+  self.scouts = 0;
   self.crusaders = 0;
   self.churches = 0;
   self.prophets = 0;
@@ -668,6 +680,9 @@ function mind(self) {
           break;
         case 2:
           self.pilgrims += 1;
+          if (self.allUnits[id].type === 'scout') {
+            self.scouts += 1;
+          }
           break;
         case 3:
           self.crusaders += 1;
@@ -689,12 +704,13 @@ function mind(self) {
       self.log(`Unit ${id}, type: ${self.allUnits[id].unit} died`);
       delete self.occupiedMiningLocationsIndices[id];
       delete self.allUnits[id];
+      delete self.rallyTargets[id];
     }
   }
   
   
   //ACCURATE numbers as of the end of the last round
-  self.log(`Round ${self.me.turn}: Castle (${self.me.x}, ${self.me.y}); Status: ${self.status}; Castles:${self.castles}, Churches: ${self.churches + self.churchesThatBuild}, Pilgrims: ${self.pilgrims}, Crusaders: ${self.crusaders}, Prophets: ${self.prophets}, Preachers: ${self.preachers}, Fuel:${self.fuel}, Karbonite: ${self.karbonite}; MiningFuel:${self.numPilgrimsMiningFuel}; MiningKarb:${self.numPilgrimsMiningKarbonite} ${self.me.time} ms left`);
+  self.log(`Round ${self.me.turn}: Castle (${self.me.x}, ${self.me.y}); Status: ${self.status}; Castles:${self.castles}, Churches: ${self.churches + self.churchesThatBuild}, Pilgrims: ${self.pilgrims}, Crusaders: ${self.crusaders}, Prophets: ${self.prophets}, Preachers: ${self.preachers}, Fuel:${self.fuel}, Karbonite: ${self.karbonite}; MiningFuel:${self.numPilgrimsMiningFuel}; MiningKarb:${self.numPilgrimsMiningKarbonite}; Scouts: ${self.scouts} ${self.me.time} ms left`);
   
   //Commands code:
   //Here, castles give commands to surrounding units?

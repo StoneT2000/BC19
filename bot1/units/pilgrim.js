@@ -61,6 +61,10 @@ function mind(self) {
       self.originalCastleLocation = [self.knownStructures[self.me.team][0].x, self.knownStructures[self.me.team][0].y]
       //let castleRobot = self.getRobot(robotMap[self.knownStructures[self.me.team][0].y][self.knownStructures[self.me.team][0].y]);
       self.globalTurn = initialized.turn;
+      if (initialized.signal === 29002) {
+        self.status = 'frontLineScout';
+      }
+      
       self.globalTurn += 1;
     }
     else {
@@ -162,22 +166,32 @@ function mind(self) {
         let indice = msg - padding;
         self.status = 'goingToDeposit';
         self.miningIndex = indice;
-        self.log(`New Pilgrim was told to go mine ${self.allSpots[indice].x}, ${self.allSpots[indice].y} = ${indice}`);
-        self.finalTarget = [self.allSpots[indice].x, self.allSpots[indice].y];
+        self.log(`New Pilgrim was told to go mine ${self.allSpots[self.miningIndex].x}, ${self.allSpots[self.miningIndex].y} = ${self.miningIndex}`);
+        self.finalTarget = [self.allSpots[self.miningIndex].x, self.allSpots[self.miningIndex].y];
       }
       //use this value for prev. built bots that just returned
       else if (msg < 29002 && msg >= 28842 && self.status === 'waitingForCommand') {
         let padding = 28842;
         let indice = msg - padding;
         self.status = 'goingToDeposit';
-        self.miningIndex = indice;
-        self.log(`Old Pilgrim was told to go mine ${self.allSpots[indice].x}, ${self.allSpots[indice].y} = ${indice}`);
-        self.finalTarget = [self.allSpots[indice].x, self.allSpots[indice].y];
+        let currentSpot = self.allSpots[self.miningIndex];
+        let currentResource = currentSpot.type;
+        let newResource = self.allSpots[indice].type;
+        
+        //if resource type are the same and the unit original mining location is right next to the structure it delivered to, dont change index.
+        if (currentResource === newResource && qmath.dist(currentSpot.x, currentSpot.y, self.me.x, self.me.y) === 0) {
+          self.log(`Pilgrim was assigned a different mineloc of the same resource, but shouldn't move actually`)
+        }
+        else {
+          self.miningIndex = indice;
+        }
+        
+        //we only change index if its a different resource type from what we are on right now
+        self.log(`Old Pilgrim was told to go mine ${self.allSpots[self.miningIndex].x}, ${self.allSpots[self.miningIndex].y} = ${self.miningIndex}`);
+        self.finalTarget = [self.allSpots[self.miningIndex].x, self.allSpots[self.miningIndex].y];
       }
 
-      else if (msg === 29002) {
-        self.status = 'scout'; // Consider changing to 'unitScout' to differentiate from 'frontLineScout'
-      }
+      
       //if waiting for command, no signal is given, go to old spot, don't wait for castle to reassign
 
     }
@@ -321,6 +335,18 @@ function mind(self) {
     self.status = 'searchForAnyDeposit';
     return {action:self.move(rels.dx,rels.dy)}
   }
+  
+  //here, we tell castles our location
+  if (self.status === 'frontLineScout') {
+    if (self.me.turn % 2 === 0) { 
+      self.castleTalk(65 + self.me.y);
+    }
+    else {
+      self.castleTalk(1 + self.me.x);
+    }
+  }
+  
+  
   //CODE FOR TELLING PILGRIMS TO GO TO NEXT DEPOSIT IF THEY SEE A UNIT OVER THE DEPOSIT THEY WANT TO GO TO
   if (self.status === 'goingToKarbDeposit' || self.status === 'goingToFuelDeposit' || self.status === 'goingToAnyDeposit') {
     if (robotMap[self.finalTarget[1]][self.finalTarget[0]] !== self.me.id && robotMap[self.finalTarget[1]][self.finalTarget[0]] > 0){

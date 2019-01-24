@@ -8,27 +8,33 @@ function processMessageCastleTalk(self, msg, id) {
     case 1:
       self.allUnits[id] = {};
       self.allUnits[id].unit = msg;
+      self.allUnits[id].type = 'default';
       break;
     case 2:
       self.allUnits[id] = {};
       self.allUnits[id].unit = msg;
       self.allUnits[id].mineLoc = -1;
+      self.allUnits[id].type = 'miner';
       break;
     case 3:
       self.allUnits[id] = {};
       self.allUnits[id].unit = msg;
+      self.allUnits[id].type = 'default';
       break;
     case 4:
       self.allUnits[id] = {};
       self.allUnits[id].unit = msg;
+      self.allUnits[id].type = 'default';
       break;
     case 5:
       self.allUnits[id] = {};
       self.allUnits[id].unit = msg;
+      self.allUnits[id].type = 'default';
       break;
     case 6:
       self.allUnits[id] = {};
       self.allUnits[id].unit = 0;
+      self.allUnits[id].type = 'default';
       break;
     case 7:
       //this means castle opposing the very first castle in turnqueue is gone
@@ -43,7 +49,15 @@ function processMessageCastleTalk(self, msg, id) {
       //self.knownStructures[self.me.team].shift();
       break;
     case 75:
-      self.allUnits[id] = msg;
+      self.allUnits[id] = {};
+      self.allUnits[id].unit = 1;
+      self.allUnits[id].type = 'default';
+    case 237:
+      self.allUnits[id] = {};
+      self.allUnits[id].unit = 2;
+      self.allUnits[id].type = 'scout';
+      self.rallyTargets[id] = {};
+      self.rallyTargets[id].position = [null, null];
     default:
       break;
   }

@@ -13,7 +13,7 @@ function mind(self){
   self.log(`Church (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
   let action = '';
   let fuelMap = self.getFuelMap();
-  let karbMap = self.getKarboniteMap();
+  let karboniteMap = self.getKarboniteMap();
   let robotsMapInVision = self.getVisibleRobotMap();
   let robotMap = self.getVisibleRobotMap();
   let passableMap = self.map;
@@ -46,17 +46,17 @@ function mind(self){
         self.lowerHalf = false;
       }
     }
-    let fuelMap = self.getFuelMap();
-    let karboniteMap = self.getKarboniteMap();
     let closestKarbonitePos = null;
     let closestKarboniteDist = 999999;
     for (let i = 0; i < mapLength; i++) {
       for (let j = 0; j < mapLength; j++) {
         if (fuelMap[i][j] === true){
           self.fuelSpots.push({x:j, y:i});
+          self.allSpots.push({x:j, y:i, type:'fuel'});
         }
         if (karboniteMap[i][j] === true){
           self.karboniteSpots.push({x:j, y:i});
+          self.allSpots.push({x:j, y:i, type:'karbonite'});
           let distToKarb = qmath.dist(j, i, self.me.x, self.me.y);
           if (distToKarb < closestKarboniteDist) {
             closestKarboniteDist = distToKarb
@@ -170,7 +170,7 @@ function mind(self){
         let cx = checkPositions[i][0];
         let cy = checkPositions[i][1];
         let robotThere = self.getRobot(robotMap[cy][cx]);
-        if ((fuelMap[cy][cx] === true || karbMap[cy][cx] === true) && (robotThere === null)) {
+        if ((fuelMap[cy][cx] === true || karboniteMap[cy][cx] === true) && (robotThere === null)) {
           buildPilgrim = true;
           buildLoc = [cx, cy];
           break;
@@ -183,10 +183,15 @@ function mind(self){
       
       
       if (buildPilgrim === true){
-        self.buildQueue = [];
-        let rels = base.rel(self.me.x, self.me.y, buildLoc[0], buildLoc[1]);
-        action = self.buildUnit(2, rels.dx, rels.dy);
-        return {action:action};
+        if (enoughResourcesToBuild(self, 2)){
+          self.buildQueue = [];
+          
+          let val = getIndexAllSpots(self, buildLoc);
+          self.castleTalk(77 + val);
+          let rels = base.rel(self.me.x, self.me.y, buildLoc[0], buildLoc[1]);
+          action = self.buildUnit(2, rels.dx, rels.dy);
+          return {action:action};
+        }
       }
 
       
@@ -248,6 +253,17 @@ function mind(self){
   }
   return {action:action}; 
 }
+
+function getIndexAllSpots(self, pos){
+  for (let i = 0; i < self.allSpots.length; i++) {
+    let p = self.allSpots[i];
+    if (p.x === pos[0] && p.y === pos[1]) {
+      return i;
+    }
+  }
+  return false;
+}
+
 function canBuild(self, xpos, ypos, robotMap, passableMap) {
   if (search.inArr(xpos,ypos,robotMap)) {
     if (robotMap[ypos][xpos] === 0) {
@@ -273,11 +289,11 @@ function numberOfDeposits(self, nx, ny) {
   let checkPositions = search.circle(self, nx, ny, 2);
   let numDeposits = 0;
   let fuelMap = self.getFuelMap();
-  let karbMap = self.getKarboniteMap();
+  let karboniteMap = self.getKarboniteMap();
   for (let i = 0; i < checkPositions.length; i++) {
     let cx = checkPositions[i][0];
     let cy = checkPositions[i][1];
-    if (fuelMap[cy][cx] === true || karbMap[cy][cx] === true) {
+    if (fuelMap[cy][cx] === true || karboniteMap[cy][cx] === true) {
       numDeposits += 1;
     }
   }
