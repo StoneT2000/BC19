@@ -3,6 +3,7 @@ import search from '../search.js';
 import signal from '../signals.js';
 import qmath from '../math.js'
 import base from '../base.js'
+// unit number: 0=Castle, 1=Church, 2=Pilgrim, 3=Crusader, 4=Prophet, 5=Preacher
 function mind(self) {
   let robotsMapInVision = self.getVisibleRobotMap();
   let passableMap = self.getPassableMap();

@@ -26,7 +26,7 @@ function mind(self) {
     //for pilgrims, search first
     self.searchQueue = [];
     
-    //Mining Index: The idnex of the bots mining spot in self.allSpots. ONLY CHANGED WHEN TOLD BY CASTLE
+    //Mining Index: The index of the bots mining spot in self.allSpots. ONLY CHANGED WHEN TOLD BY CASTLE
     self.miningIndex = -1;
     self.statusBeforeReturn = '';
     self.status = 'searchForKarbDeposit';
