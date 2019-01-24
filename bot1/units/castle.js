@@ -318,6 +318,7 @@ function mind(self) {
   let sendEarlyProphetStrat = false;
   if (self.me.turn === 3) {
     sendEarlyProphetStrat = true;
+    let buildExtraPilgrim = true;
     //STORE A SORTED ENEEMY LOCATION ARRAY
     self.enemyCastlesSorted = [];
     for (let i = 0; i < self.castleIds.length; i++){
@@ -335,10 +336,14 @@ function mind(self) {
         //LOG ENEMY
         let ex = nx;
         let ey = mapLength - ny - 1;
-
+        let dist = Math.abs(ey - ny);
         if (!self.mapIsHorizontal) {
           ex = mapLength - nx - 1;
           ey = ny;
+          dist = Math.abs(ex - nx);
+        }
+        if (dist <= 21) {
+          buildExtraPilgrim = false;
         }
         base.logStructure(self,ex,ey,otherTeamNum, 0);
       }
@@ -384,6 +389,9 @@ function mind(self) {
         self.closestContestableSpot = bestSpot;
         buildEarlyProphet = true;
       }
+    }
+    if (buildExtraPilgrim === true) {
+      self.buildQueue.push(2,2);
     }
   }
   
