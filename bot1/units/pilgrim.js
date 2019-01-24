@@ -5,15 +5,13 @@ import qmath from '../math.js';
 import signal from '../signals.js';
 import pathing from '../pathing/pathing-bundled.js';
 function mind(self) {
-  const choices = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
-  const choice = choices[Math.floor(Math.random() * choices.length)]
   
   self.log(`Round: ${self.globalTurn}; Pilgrim (${self.me.x}, ${self.me.y}); Status: ${self.status}; ${self.me.time}ms left`);
   let fuelMap = self.getFuelMap();
   let karboniteMap = self.getKarboniteMap();
   
   let robotMap = self.getVisibleRobotMap();
-  //we can improve the speed here by using bfs
+
   let otherTeamNum = (self.me.team + 1) % 2;
   let action = '';
   let gameMap = self.map;

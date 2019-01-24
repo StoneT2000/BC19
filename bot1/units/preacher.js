@@ -88,6 +88,7 @@ function mind(self){
     else {
       //set defending target
       self.status = 'defend';
+      self.oldStatus = 'defend';
       self.defendTarget = [self.me.x, self.me.y];
       self.finalTarget = [self.me.x, self.me.y];
     }
@@ -120,7 +121,10 @@ function mind(self){
     if(robotsInVision[i].id !== self.me.id){
       //process new target location
       if (msg >= 12294 && msg <= 16389) {
-        self.oldStatus = self.status;
+        if (self.status !== 'attackTarget') {
+          //if setting new status, old status gets updated.
+          self.oldStatus = self.status;
+        }
         self.status = 'attackTarget';
         let padding = 12294;
         let targetLoc = self.getLocation(msg - padding);
@@ -128,7 +132,9 @@ function mind(self){
         self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
       }
       if (msg >= 16392 && msg <= 20487) {
-        self.oldStatus = self.status;
+        if (self.status !== 'goToTarget') {
+          self.oldStatus = self.status;
+        }
         self.status = 'goToTarget';
         
         let padding = 16392;
@@ -137,7 +143,9 @@ function mind(self){
         self.log(`Preparing to attack enemy at ${self.finalTarget}`);
       }
       if (msg >= 20488 && msg <= 24583) {
-        self.oldStatus = self.status;
+        if (self.status !== 'goToTarget') {
+          self.oldStatus = self.status;
+        }
         self.status = 'goToTarget';
         
         let padding = 20488;

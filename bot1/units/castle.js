@@ -964,7 +964,29 @@ function mind(self) {
         self.buildQueue = [4];
         self.log(`${unitsInVincinity[SPECS.PROPHET].length} prop near, opp destroyed: ${self.oppositeCastleDestroyed}`)
         if (unitsInVincinity[SPECS.PROPHET].length >= 11 && self.oppositeCastleDestroyed === false) {
-          self.buildQueue = [3];
+          let numCrusadersPast10 = 0;
+          let numPreachersPast10 = 0;
+          for (let k = 0; k < self.pastBuildQueue.length; k++) {
+            let ud = self.pastBuildQueue[k];
+            if (ud === 3) {
+              numCrusadersPast10 += 1;
+            }
+            else if (ud === 5) {
+              numPreachersPast10 += 1;
+            }
+          }
+          if (numPreachersPast10 <= 1){
+            self.buildQueue = [5];
+            preacherAttacks = true;
+          }
+          else if (numCrusadersPast10 === 0 || numCrusadersPast10/numPreachersPast10 < 4){
+            self.buildQueue = [3];
+            
+          }
+          else {
+            self.buildQueue = [5];
+            preacherAttacks = true;
+          }
         }
       }
 

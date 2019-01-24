@@ -71,7 +71,7 @@ function processMessageCrusader(self, msg){
       //self.finalTarget = self.rallyTarget;
       break;
     case 16391:
-      if (self.oldStatus !== 'searchAndAttack'){
+      if (self.oldStatus !== 'searchAndAttack' && self.status !== 'searchAndAttack'){
         self.status = 'defendOldPos';
       }
       else {
@@ -103,7 +103,7 @@ function processMessagePreacher(self, msg){
       //self.finalTarget = self.rallyTarget;
       break;
     case 16391:
-      if (self.oldStatus !== 'searchAndAttack'){
+      if (self.oldStatus !== 'searchAndAttack' && self.status !== 'searchAndAttack'){
         self.status = 'defendOldPos';
       }
       else {

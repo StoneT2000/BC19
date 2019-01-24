@@ -27,7 +27,7 @@ function mind(self){
       let enemyCastle = self.knownStructures[otherTeamNum][0]
       //rally means crusader goes to a rally point
       self.status = 'searchAndAttack';
-
+      self.oldStatus = 'searchAndAttack';
       let rels = base.relToPos(self.me.x, self.me.y, enemyCastle[0], enemyCastle[1], self);
       self.finalTarget = [self.me.x + rels.dx, self.me.y+rels.dy];
       self.defendTarget = [self.me.x, self.me.y];
@@ -35,6 +35,7 @@ function mind(self){
     else {
       //set defending target
       self.status = 'defend';
+      self.oldStatus = 'defend';
       self.defendTarget = [self.me.x, self.me.y];
       self.finalTarget = [self.me.x, self.me.y];
     }
@@ -65,7 +66,9 @@ function mind(self){
     signal.processMessageCrusader(self, msg);
     if (robotsInVision[i].team === self.me.team){
       if (msg >= 12294 && msg <= 16389) {
-        self.oldStatus = self.status;
+        if (self.status !== 'attackTarget') {
+          self.oldStatus = self.status;
+        }
         self.status = 'attackTarget';
         
         let padding = 12294;
@@ -75,7 +78,9 @@ function mind(self){
         //final target is wherever is max dist from final target
       }
       if (msg >= 16392 && msg <= 20487) {
-        self.oldStatus = self.status;
+        if (self.status !== 'goToTarget') {
+          self.oldStatus = self.status;
+        }
         self.status = 'goToTarget';
         let padding = 16392;
         let targetLoc = self.getLocation(msg - padding);
@@ -83,7 +88,9 @@ function mind(self){
         self.log(`Preparing to attack enemy at ${self.finalTarget}`);
       }
       if (msg >= 20488 && msg <= 24583) {
-        self.oldStatus = self.status;
+        if (self.status !== 'goToTarget') {
+          self.oldStatus = self.status;
+        }
         self.status = 'goToTarget';
         let padding = 20488;
         let targetLoc = self.getLocation(msg - padding);
