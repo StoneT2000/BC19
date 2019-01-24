@@ -342,7 +342,7 @@ function mind(self) {
           ey = ny;
           dist = Math.abs(ex - nx);
         }
-        if (dist <= 21) {
+        if (dist <= 31) {
           buildExtraPilgrim = false;
         }
         base.logStructure(self,ex,ey,otherTeamNum, 0);
