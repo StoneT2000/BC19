@@ -80,6 +80,7 @@ The values ...
 - 24586, ... 28681 is for telling prophets to move and defend a new location.
 - 28682 to 28841  is for telling newly built pilgrims to mine that location. (Specify type?)
 - 28842 to 29001 is for telling old pilgrims to mine that location.
+- 
 
 
 ## STRATEGIES

@@ -71,8 +71,9 @@ function processMessageCrusader(self, msg){
       //self.finalTarget = self.rallyTarget;
       break;
     case 16391:
-      self.status = 'defend';
+      self.status = 'defendOldPos';
       //self.finalTarget = self.defendTarget;
+      self.defendTarget = self.origStructureLoc;
       break;
   }
 }

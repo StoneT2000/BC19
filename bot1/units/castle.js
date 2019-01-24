@@ -446,7 +446,7 @@ function mind(self) {
   //COUNTING NUMBER OF UNITS PLANNING TO OR ALREADY MINING FUEL OR KARB.
   for (let index in self.occupiedMiningLocationsIndices) {
     let ind = self.occupiedMiningLocationsIndices[index];
-    self.log(`Occupied positions of ${index}: (${self.allSpots[ind].x}, ${self.allSpots[ind].y})`);
+    //self.log(`Occupied positions of ${index}: (${self.allSpots[ind].x}, ${self.allSpots[ind].y})`);
     if (self.allSpots[ind].type === 'fuel') {
       self.numPilgrimsMiningFuel += 1;
     }
@@ -566,8 +566,8 @@ function mind(self) {
         if (self.mapIsHorizontal) {
           //check xpos for almost unique castle identifier;
           if (self.knownStructures[otherTeamNum][i].x === enemyCastlePosDestroyed) {
-            if (enemyCastlePosDestroyed === gameMap[0].length - self.me.x - 1) {
-              self.log(`Opposite castle destroyed`);
+            if (enemyCastlePosDestroyed === self.me.x) {
+              self.log(`Opposite castle destroyed, x:${enemyCastlePosDestroyed}`);
               self.oppositeCastleDestroyed = true;
             }
             self.knownStructures[otherTeamNum].splice(i,1);
@@ -577,9 +577,9 @@ function mind(self) {
         }
         else {
           if (self.knownStructures[otherTeamNum][i].y === enemyCastlePosDestroyed) {
-            if (enemyCastlePosDestroyed === gameMap.length - self.me.y - 1) {
+            if (enemyCastlePosDestroyed === self.me.y) {
               self.oppositeCastleDestroyed = true;
-              self.log(`Opposite castle destroyed`);
+              self.log(`Opposite castle destroyed, y:${enemyCastlePosDestroyed}`);
             }
             self.knownStructures[otherTeamNum].splice(i,1);
             break;
@@ -844,6 +844,11 @@ function mind(self) {
           //self.castleTalk(72);
           self.buildQueue = [4];
         }
+        //IMPROVEMNTNTTNT
+        self.log(`${unitsInVincinity[SPECS.PROPHET].length} prop near, opp destroyed: ${self.oppositeCastleDestroyed}`)
+        if (unitsInVincinity[SPECS.PROPHET].length >= 11 && self.oppositeCastleDestroyed === false) {
+          self.buildQueue = [3];
+        }
       }
       if (self.karbonite > 200) {
         self.buildQueue = [4];
@@ -918,6 +923,10 @@ function mind(self) {
       }
       else if ((self.karbonite >= 100 && self.fuel > self.prophets * 50)){
         self.buildQueue = [4];
+        self.log(`${unitsInVincinity[SPECS.PROPHET].length} prop near, opp destroyed: ${self.oppositeCastleDestroyed}`)
+        if (unitsInVincinity[SPECS.PROPHET].length >= 11 && self.oppositeCastleDestroyed === false) {
+          self.buildQueue = [3];
+        }
       }
 
 

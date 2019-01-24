@@ -21,6 +21,7 @@ function mind(self){
   if (self.me.turn === 1) {
     self.castleTalk(self.me.unit);
     self.buildQueue = [];
+    self.builtDirect = false;
     
     self.churchNeedsProtection = false;
     
@@ -161,7 +162,7 @@ function mind(self){
     
     
     //THIS CODE MUST BE AT THE END OF THIS IF STATEMENT BECAUSE WE PREEMPTIVELY RETURNA  BUILD
-    if (self.karbonite >= 50) {
+    if (self.karbonite >= 50 && self.builtDirect === false) {
       let buildPilgrim = false;
       let buildLoc = null;
       let checkPositions = search.circle(self, self.me.x, self.me.y, 2);
@@ -174,6 +175,10 @@ function mind(self){
           buildLoc = [cx, cy];
           break;
         }
+      }
+      if (buildLoc === null) {
+        self.builtDirect = true;
+        //this way church doesn't accidentally spam pilgrims
       }
       
       

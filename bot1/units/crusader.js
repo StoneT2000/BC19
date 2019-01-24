@@ -13,6 +13,7 @@ function mind(self){
   let forcedAction = null;
   let robotMap = self.getVisibleRobotMap();
   let fuelMap = self.getFuelMap();
+  let mapLength = gameMap.length;
   let karboniteMap = self.getKarboniteMap();
   //INITIALIZATION
   if (self.me.turn === 1) {
@@ -25,7 +26,7 @@ function mind(self){
     if (initialized){
       let enemyCastle = self.knownStructures[otherTeamNum][0]
       //rally means crusader goes to a rally point
-      self.status = 'defend';
+      self.status = 'searchAndAttack';
 
       let rels = base.relToPos(self.me.x, self.me.y, enemyCastle[0], enemyCastle[1], self);
       self.finalTarget = [self.me.x + rels.dx, self.me.y+rels.dy];
@@ -37,6 +38,18 @@ function mind(self){
       self.defendTarget = [self.me.x, self.me.y];
       self.finalTarget = [self.me.x, self.me.y];
     }
+    self.origStructureLoc = [self.me.x, self.me.y];
+    let possibleStructureLocs = search.circle(self, self.me.x, self.me.y, 2);
+    for (let i = 0; i < possibleStructureLocs.length; i++) {
+      let pos = possibleStructureLocs[i];
+      let rid = robotMap[pos[1]][pos[0]];
+      let obot = self.getRobot(rid);
+      if (obot !== null && obot.team === self.me.team && (obot.unit === SPECS.CASTLE || obot.unit === SPECS.CHURCH)) {
+        self.origStructureLoc = pos;
+        self.log('Im from' + pos);
+        break;
+      }
+    }
   }
   if (self.me.turn === 5) {
     pathing.initializePlanner(self);
@@ -45,28 +58,29 @@ function mind(self){
   
   
   let robotsInVision = self.getVisibleRobots();
-  
+  let unitsInVision = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
   //SIGNAL PROCESSION
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
     //self.log(`Received from ${robotsInVision[i].id}  msg: ${msg}`);
     signal.processMessageCrusader(self, msg);
-    if (msg >= 12294 && msg <= 16389) {
-      self.status = 'attackTarget';
-      let padding = 12294;
-      let targetLoc = self.getLocation(msg - padding);
-      self.finalTarget = [targetLoc.x, targetLoc.y];
-      self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
-      //final target is wherever is max dist from final target
-    }
-    if (msg >= 16392 && msg <= 20487) {
+    if (robotsInVision[i].team === self.me.team){
+      if (msg >= 12294 && msg <= 16389) {
+        self.status = 'attackTarget';
+        let padding = 12294;
+        let targetLoc = self.getLocation(msg - padding);
+        self.finalTarget = [targetLoc.x, targetLoc.y];
+        self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
+        //final target is wherever is max dist from final target
+      }
+      if (msg >= 16392 && msg <= 20487) {
         self.status = 'goToTarget';
         let padding = 16392;
         let targetLoc = self.getLocation(msg - padding);
         self.finalTarget = [targetLoc.x, targetLoc.y];
         self.log(`Preparing to attack enemy at ${self.finalTarget}`);
       }
-    if (msg >= 20488 && msg <= 24583) {
+      if (msg >= 20488 && msg <= 24583) {
         self.status = 'goToTarget';
         let padding = 20488;
         let targetLoc = self.getLocation(msg - padding);
@@ -74,24 +88,44 @@ function mind(self){
         self.log(`Preparing to attack enemy castle at ${self.finalTarget}`);
         base.logStructure(self,self.finalTarget[0], self.finalTarget[1], otherTeamNum, 0);
       }
+    }
+    
+    if (robotsInVision[i].unit === SPECS.CHURCH) {
+      unitsInVision[6].push(robotsInVision[i]);
+    }
   }
   base.updateKnownStructures(self);
   //DECISION MAKING
 
-  if (self.status === 'defend') {
+  if (self.status === 'defend' || self.status === 'defendOldPos' || self.status === 'defendSpot') {
     //follow lattice structure
-    if ((self.me.x % 2 === 1 && self.me.y % 2 === 1 ) || (self.me.x % 2 === 0 && self.me.y % 2 === 0) || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true) {
+    
+    let nearestStructure = search.findNearestStructure(self);
+    let distToStructureFromMe = qmath.dist(self.me.x, self.me.y, nearestStructure.x, nearestStructure.y);
+    
+    //if status === defendOldPos, we force unit to reposition itself.
+    if ((self.me.x % 2 === 1 && self.me.y % 2 === 1 ) || (self.me.x % 2 === 0 && self.me.y % 2 === 0) || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true || distToStructureFromMe <= 2 || self.status === 'defendOldPos') {
+        
         let closestDist = 99999;
         let bestLoc = null;
-        for (let i = 0; i < gameMap.length; i++) {
-          for (let j = 0; j < gameMap[0].length; j++) {
+        
+
+        for (let i = 0; i < mapLength; i++) {
+          for (let j = 0; j < mapLength; j++) {
             if (i % 2 !== j % 2 ){
-              if (search.emptyPos(j, i , robotMap, gameMap) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
-                //assuming final target when rallying is the rally targt
-                let thisDist = qmath.dist(self.defendTarget[0], self.defendTarget[1], j, i);
-                if (thisDist < closestDist) {
-                  closestDist = thisDist;
-                  bestLoc = [j, i];
+              if ((search.emptyPos(j, i , robotMap, gameMap, false) || self.me.id === robotMap[i][j]) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
+                let nearestStructureHere = search.findNearestStructureHere(self, j, i, unitsInVision[6]);
+                let distToStructure = qmath.dist(j, i, nearestStructureHere.x, nearestStructureHere.y);
+                if (distToStructure > 2){
+                  let tgt = [self.me.x, self.me.y]
+                  if (self.status === 'defendOldPos' || self.status === 'defendSpot') {
+                    tgt = self.defendTarget;
+                  }
+                  let thisDist = qmath.dist(tgt[0], tgt[1], j, i);
+                  if (thisDist < closestDist) {
+                    closestDist = thisDist;
+                    bestLoc = [j, i];
+                  }
                 }
               }
             }
@@ -99,12 +133,20 @@ function mind(self){
         }
         if (bestLoc !== null) {
           self.finalTarget = bestLoc;
-          self.log('New location near rally point :' + self.finalTarget);
+          self.log('New location near defend point :' + self.finalTarget);
+        }
+      if (self.status === 'defendOldPos') {
+          self.status = 'defend';
         }
     }
   }
   if (self.status === 'searchAndAttack') {
-    self.finalTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
+    if (self.knownStructures[otherTeamNum].length){
+      self.finalTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
+    }
+    else {
+      self.status = 'defend';
+    }
   }
   
   //at any time
@@ -154,6 +196,14 @@ function mind(self){
         return {action:action};
       }
     }
+    if (self.destroyedCastle === true) {
+      self.destroyedCastle = false;
+      //go back home
+      
+      let newLoc = [self.knownStructures[self.me.team][0].x,self.knownStructures[self.me.team][0].y];
+      self.log('Destroyed castle, now going to: ' + newLoc);
+      self.status = 'defend';
+    }
   }
   if (self.status === 'attackTarget') {
     //finaltarget is enemy target pos.
@@ -172,6 +222,8 @@ function mind(self){
   if (forcedAction !== null) {
     return {action:forcedAction};
   }
+  
+  //crusader should rush slower and then speed up when in range. Don't rush if u see enemey crusaders
   action = self.navigate(self.finalTarget);
   return {action:action};
   

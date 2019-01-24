@@ -113,29 +113,6 @@ function mind(self){
   //it also sets self.destroyedCastle to true if the castle that it knew about is no longer there anymore
   base.updateKnownStructures(self);
   
-  
-  //DECISIONS
-  /*
-  if (self.status === 'attackTarget') {
-    if(seeMage === true && self.me.turn <= 50){
-      //kite mages if its early game
-      let distToEnemy = qmath.dist(self.me.x, self.me.y, closestMage.x, closestMage.y);
-      if (distToEnemy <= 16) {
-        let rels = self.avoidEnemyLocations([[closestMage.x, closestMage.y]]);
-        if (rels !== null) {
-          return {action:self.move(rels.dx,rels.dy)} 
-        }
-        else {
-          
-        }
-      }
-      
-      
-    }
-    
-  }
-  
-  */
   if (self.status === 'defend' || self.status === 'defendOldPos' || self.status === 'defendSpot') {
     //follow lattice structure
     

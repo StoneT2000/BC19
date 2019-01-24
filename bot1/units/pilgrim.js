@@ -178,8 +178,11 @@ function mind(self) {
   }
   if (self.status === 'waitingForCommand') {
     self.status = 'goingToDeposit';
-    self.log(`Pilgrim didn't receive command, going to ${self.allSpots[self.miningIndex].x}, ${self.allSpots[self.miningIndex].y} = ${self.miningIndex}`);
-    self.finalTarget = [self.allSpots[self.miningIndex].x, self.allSpots[self.miningIndex].y];
+    if (self.me.turn !== 1) {
+      self.log(`Pilgrim didn't receive command, going to ${self.allSpots[self.miningIndex].x}, ${self.allSpots[self.miningIndex].y} = ${self.miningIndex}`);
+      self.finalTarget = [self.allSpots[self.miningIndex].x, self.allSpots[self.miningIndex].y];
+    }
+    self.status = 'searchForAnyDeposit';
   }
   //DECISION MAKING
   
