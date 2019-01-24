@@ -43,7 +43,7 @@ function mind(self) {
     
     //self.log(`We have ${robotsInVision.length - offsetVal} castles`);
     self.castles = robotsInVision.length - offsetVal;
-    self.castleCount = self.castles;
+    self.castleCount = self.castles; //self.castleCount is always accurate. self.castles is only accurate if its round >=2
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
     
     self.initializeCastleLocations();
@@ -52,7 +52,7 @@ function mind(self) {
     
     self.oppositeCastleDestroyed = false; //doesn't seem to be used
     
-    
+    self.pastBuildQueue = [];
     
     let closestKarbonitePos = null;
     let closestKarboniteDist = 999999;
@@ -832,6 +832,8 @@ function mind(self) {
   }
   //BUILDING DECISION CODE. DYNAMIC PART
   
+  let preacherAttacks = false;
+  
   if (sawEnemyThisTurn === false) {
     if (self.sawEnemyLastTurn === true) {
       let range = 64;
@@ -845,7 +847,7 @@ function mind(self) {
     if (sawEnemyThisTurn === false && self.me.turn > 4 && self.stackKarbonite === false && self.stackFuel === false) {
 
       if (self.pilgrims <= self.maxPilgrims && self.pilgrims < (self.prophets + 2) * 2) {
-        self.buildQueue = [2];
+        self.buildQueue.push(2);
       }
       else if (self.karbonite >= 100){
 
@@ -856,11 +858,37 @@ function mind(self) {
         //IMPROVEMNTNTTNT
         self.log(`${unitsInVincinity[SPECS.PROPHET].length} prop near, opp destroyed: ${self.oppositeCastleDestroyed}`)
         if (unitsInVincinity[SPECS.PROPHET].length >= 11 && self.oppositeCastleDestroyed === false) {
-          self.buildQueue = [3];
+          //if in past 10 turns we built 3 crusaders, build 1 preacher
+          let numCrusadersPast10 = 0;
+          let numPreachersPast10 = 0;
+          for (let k = 0; k < self.pastBuildQueue.length; k++) {
+            let ud = self.pastBuildQueue[k];
+            if (ud === 3) {
+              numCrusadersPast10 += 1;
+            }
+            else if (ud === 5) {
+              numPreachersPast10 += 1;
+            }
+          }
+          if (numPreachersPast10 <= 1){
+            self.buildQueue = [5];
+            preacherAttacks = true;
+          }
+          else if (numCrusadersPast10 === 0 || numCrusadersPast10/numPreachersPast10 < 4){
+            self.buildQueue = [3];
+            
+          }
+          else {
+            self.buildQueue = [5];
+            preacherAttacks = true;
+          }
+          
         }
       }
       if (self.karbonite > 200) {
-        self.buildQueue = [4];
+        if (self.buildQueue.length === 0){
+          self.buildQueue = [4];
+        }
       }
       self.sawEnemyLastTurn = false;
 
@@ -1088,6 +1116,9 @@ function mind(self) {
                   self.signal(2, 2);
                 }
               }
+              if (unit === 5 && preacherAttacks === true) {
+                self.signal(1, 2);
+              }
               //if we are naturally building a prophet not because of incoming enemies, and it is after we decide on that early strategy, send prophet to closest contestable spot. We should instead actually just have the prophet that is going to the contestable spot that is on defendSpot mode to send thru castle talk if they made it there or not.
               /*
               if (self.me.turn > 3 && sawEnemyThisTurn === false && self.closestContestableSpot !== null && self.sentContestableBot === false) {
@@ -1097,6 +1128,10 @@ function mind(self) {
                 self.signal(padding + compressedLocNum,  2);
               }
               */
+              self.pastBuildQueue.push(unit)
+              if (self.pastBuildQueue.length >= 10) {
+                self.pastBuildQueue.shift();
+              }
               let rels = base.rel(self.me.x, self.me.y, checkPos[0], checkPos[1]);
               action = self.buildUnit(unit, rels.dx, rels.dy);
               return {action:action};
@@ -1113,6 +1148,10 @@ function mind(self) {
             if (self.buildQueue.length > 0 && enoughResourcesToBuild(self, self.buildQueue[0])) {
               //build the first unit put into the build queue
               let unit = self.buildQueue.shift(); //remove that unit
+              self.pastBuildQueue.push(unit)
+              if (self.pastBuildQueue.length >= 10) {
+                self.pastBuildQueue.shift();
+              }
               let rels = base.rel(self.me.x, self.me.y, checkPos[0], checkPos[1]);
               action = self.buildUnit(unit, rels.dx, rels.dy);
               return {action:action};

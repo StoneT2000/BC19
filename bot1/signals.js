@@ -71,8 +71,12 @@ function processMessageCrusader(self, msg){
       //self.finalTarget = self.rallyTarget;
       break;
     case 16391:
-      self.status = 'defendOldPos';
-      //self.finalTarget = self.defendTarget;
+      if (self.oldStatus !== 'searchAndAttack'){
+        self.status = 'defendOldPos';
+      }
+      else {
+        self.status = 'searchAndAttack';
+      }
       self.defendTarget = self.origStructureLoc;
       break;
   }
@@ -82,7 +86,7 @@ function processMessagePreacher(self, msg){
     case 0:
       break;
     case 1:
-      //self.status = 'searchAndAttack';
+      self.status = 'searchAndAttack';
       break;
     case 5:
       //preachers waiting for stack of fuel to engage in next venture stay as that status
@@ -99,7 +103,12 @@ function processMessagePreacher(self, msg){
       //self.finalTarget = self.rallyTarget;
       break;
     case 16391:
-      self.status = 'defendOldPos';
+      if (self.oldStatus !== 'searchAndAttack'){
+        self.status = 'defendOldPos';
+      }
+      else {
+        self.status = 'searchAndAttack';
+      }
       self.defendTarget = self.origStructureLoc;
       break;
   }
