@@ -31,6 +31,9 @@ function mind(self) {
     self.statusBeforeReturn = '';
     self.status = 'searchForKarbDeposit';
     self.status = 'waitingForCommand';
+
+    // SCOUTING
+    self.firstTimeScouting = true;
     //self.log(`${self.knownStructures[self.me.team][0].x}`);
     /*
     let castleId = robotMap[origCastleLoc[1]][origCastleLoc[0]];
@@ -172,6 +175,10 @@ function mind(self) {
         self.log(`Old Pilgrim was told to go mine ${self.allSpots[indice].x}, ${self.allSpots[indice].y} = ${indice}`);
         self.finalTarget = [self.allSpots[indice].x, self.allSpots[indice].y];
       }
+
+      else if (msg === 29002) {
+        self.status = 'scout';
+      }
       //if waiting for command, no signal is given, go to old spot, don't wait for castle to reassign
 
     }
@@ -185,7 +192,39 @@ function mind(self) {
     self.status = 'searchForAnyDeposit';
   }
   //DECISION MAKING
-  
+  //PILGRIM SCOUTING LOLOLOL
+  else if (self.status === 'scout') {
+    // Scouting code by Tom
+    // First, find the closest resource spot where enemies could build churches
+    // Could we improve this to be resource clumps?
+    if (self.firstTimeScouting) {
+      let minSpotDist = 9999;
+      let targetLoc = [0, 0];
+      for (let i = 0; i < self.allSpots.length; i++) {
+        if (!ownHalf(self, self.allSpots[i].x, self.allSpots[i].y)) {
+          // Calculate minimum distance
+          let currentDist = qmath.dist(self.me.x, self.me.y, self.allSpots[i].x, self.allSpots[i].y)
+          if (currentDist < minSpotDist) {
+            minSpotDist = currentDist;
+            targetLoc = [self.allSpots[i].x, self.allSpots[i].y]; // By end of loop, targetLoc should be minimum
+          }
+        }
+      }
+      self.finalTarget = [targetLoc[0], targetLoc[1]];
+      self.firstTimeScouting = false;
+    }
+
+    // Constantly search for enemy churches
+    let robotsInVision = self.getVisibleRobots();
+    for (let i = 0; i < robotsInVision.length; i++) {
+      if (robotsInVision[i].team !== self.me.team) { // If on other team
+        if (robotsInVision[i].unit === SPECS.CHURCH) {
+          // Do some nice castleTalk stuff to send the info back
+        }
+      }
+    }
+  }
+
   //regardless, pilgrim tries to stay out of shooting range
   let farthestdist;
   let enemyPositionsToAvoid = [];
