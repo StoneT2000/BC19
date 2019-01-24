@@ -43,7 +43,9 @@ function mind(self) {
     
     //self.log(`We have ${robotsInVision.length - offsetVal} castles`);
     self.castles = robotsInVision.length - offsetVal;
-    self.castleCount = self.castles; //self.castleCount is always accurate. self.castles is only accurate if its round >=2
+    self.castleCount = self.castles;
+    self.maxScoutingPilgrims = self.castleCount;
+    self.currentScoutingPilgrims = 0;
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
     
     self.initializeCastleLocations();
