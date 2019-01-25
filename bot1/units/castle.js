@@ -898,7 +898,7 @@ function mind(self) {
         }
         //IMPROVEMNTNTTNT
         self.log(`${unitsInVincinity[SPECS.PROPHET].length} prop near, opp destroyed: ${self.oppositeCastleDestroyed}`)
-        if (unitsInVincinity[SPECS.PROPHET].length >= 1 && self.oppositeCastleDestroyed === false && self.castleHasScout === true) {
+        if (unitsInVincinity[SPECS.PROPHET].length >= 11 && self.oppositeCastleDestroyed === false && self.castleHasScout === true) {
           //if in past 10 turns we built 3 crusaders, build 1 preacher
           let numCrusadersPast10 = 0;
           let numPreachersPast10 = 0;
@@ -925,7 +925,7 @@ function mind(self) {
           }
           
         }
-        else if (self.castleHasScout === false && unitsInVincinity[SPECS.PROPHET].length >= 1) {
+        else if (self.castleHasScout === false && unitsInVincinity[SPECS.PROPHET].length >= 11) {
           buildScout = true;
           self.buildQueue = [2];
         }
