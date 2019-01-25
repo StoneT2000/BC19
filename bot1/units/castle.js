@@ -28,6 +28,7 @@ function mind(self) {
     self.rallyTargets = {};//keys are the id of the robots that are scouts. rallyTargets[id].position = rally target/position of that scout
     
     self.castleHasScout = false;
+    self.myScoutsId = -1;
     self.sentContestableBot = false;
     self.newIndices = [];
     self.finalSignal = false;
@@ -575,6 +576,7 @@ function mind(self) {
     //if a message is received, work on it
     if (msg >= 0){
       if (self.allUnits[heardId].type === 'scout') {
+        self.log(`Scout msg: ${msg}`);
         if (msg >= 1 && msg <= 64) {
           //x position of scout;
           self.rallyTargets[heardId].position[0] = msg - 1;
@@ -583,72 +585,81 @@ function mind(self) {
           //y position of scout, padded of course
           self.rallyTargets[heardId].position[1] = msg - 65;
         }
+        else if (msg === 237) {
+          let rob = self.getRobot(heardId);
+          self.log(`just built scout is at ${rob.x}, ${rob.y}`);
+          if (rob !== null && qmath.dist(self.me.x, self.me.y, rob.x, rob.y) <= 16) {
+            self.log(`Scout ${heardId} is my scout`);
+            self.myScoutsId = heardId;
+          }
+        }
       }
       if (self.allUnits[heardId].type === 'default' || self.allUnits[heardId].type === 'miner'){
-      if (msg >= 7 && msg <= 70) {
-        let enemyCastlePosDestroyed = msg - 7;
-        self.log(`Castle knows that enemy castle: ${enemyCastlePosDestroyed} was destroyed`);
+        if (msg >= 7 && msg <= 70) {
+          let enemyCastlePosDestroyed = msg - 7;
+          self.log(`Castle knows that enemy castle: ${enemyCastlePosDestroyed} was destroyed`);
 
-        //TODO, create a better hash from enemy castle position, that is more likely to be correct
-        for (let i = 0; i < self.knownStructures[otherTeamNum].length; i++) {
-          if (self.mapIsHorizontal) {
-            //check xpos for almost unique castle identifier;
-            if (self.knownStructures[otherTeamNum][i].x === enemyCastlePosDestroyed) {
-              if (enemyCastlePosDestroyed === self.me.x) {
-                self.log(`Opposite castle destroyed, x:${enemyCastlePosDestroyed}`);
-                self.oppositeCastleDestroyed = true;
+          //TODO, create a better hash from enemy castle position, that is more likely to be correct
+          for (let i = 0; i < self.knownStructures[otherTeamNum].length; i++) {
+            if (self.mapIsHorizontal) {
+              //check xpos for almost unique castle identifier;
+              if (self.knownStructures[otherTeamNum][i].x === enemyCastlePosDestroyed) {
+                if (enemyCastlePosDestroyed === self.me.x) {
+                  self.log(`Opposite castle destroyed, x:${enemyCastlePosDestroyed}`);
+                  self.oppositeCastleDestroyed = true;
+                }
+                self.knownStructures[otherTeamNum].splice(i,1);
+
+                break;
               }
-              self.knownStructures[otherTeamNum].splice(i,1);
-
-              break;
+            }
+            else {
+              if (self.knownStructures[otherTeamNum][i].y === enemyCastlePosDestroyed) {
+                if (enemyCastlePosDestroyed === self.me.y) {
+                  self.oppositeCastleDestroyed = true;
+                  self.log(`Opposite castle destroyed, y:${enemyCastlePosDestroyed}`);
+                }
+                self.knownStructures[otherTeamNum].splice(i,1);
+                break;
+              }
             }
           }
-          else {
-            if (self.knownStructures[otherTeamNum][i].y === enemyCastlePosDestroyed) {
-              if (enemyCastlePosDestroyed === self.me.y) {
-                self.oppositeCastleDestroyed = true;
-                self.log(`Opposite castle destroyed, y:${enemyCastlePosDestroyed}`);
-              }
-              self.knownStructures[otherTeamNum].splice(i,1);
-              break;
-            }
+          for (let i = 0; i < self.knownStructures[otherTeamNum].length; i++) {
+            self.log(`New known structures: ${self.knownStructures[otherTeamNum][i].x}, ${self.knownStructures[otherTeamNum][i].y}`);
           }
         }
-        for (let i = 0; i < self.knownStructures[otherTeamNum].length; i++) {
-          self.log(`New known structures: ${self.knownStructures[otherTeamNum][i].x}, ${self.knownStructures[otherTeamNum][i].y}`);
+        else if (msg === 71) {
+          //unused?
+          if (self.karbonite <= 90){
+            self.stackKarbonite = true;
+            //self.canBuildPilgrims = false;
+
+            self.buildQueue = [];
+          }
+
+          if (self.fuel <= 200) {
+
+            self.stackFuel = true;
+            self.buildQueue = [];
+          }
         }
-      }
-      else if (msg === 71) {
-        //unused?
-        if (self.karbonite <= 90){
-          self.stackKarbonite = true;
-          //self.canBuildPilgrims = false;
-
-          self.buildQueue = [];
+        else if (msg === 72 && heardId !== self.me.id) {
+          //this castle doesn't have priority to build
+          self.status = 'pause';
+          self.log(`Caslte won't build`);
         }
 
-        if (self.fuel <= 200) {
-
-          self.stackFuel = true;
-          self.buildQueue = [];
+        //vvv UNUSED!
+        else if (msg === 73) {
+          //self.numPilgrimsMiningKarbonite += 1;
+          //self.log(`pilgrim is mining at ${self.allUnits[heardId].mineLoc}: ${heardId} `);
         }
-      }
-      else if (msg === 72 && heardId !== self.me.id) {
-        //this castle doesn't have priority to build
-        self.status = 'pause';
-        self.log(`Caslte won't build`);
-      }
+        else if (msg === 74) {
+          //self.numPilgrimsMiningFuel += 1;
+          //self.log(`pilgrim is mining at ${self.allUnits[heardId].mineLoc}: ${heardId} `);
+        }
 
-      //vvv UNUSED!
-      else if (msg === 73) {
-        //self.numPilgrimsMiningKarbonite += 1;
-        //self.log(`pilgrim is mining at ${self.allUnits[heardId].mineLoc}: ${heardId} `);
       }
-      else if (msg === 74) {
-        //self.numPilgrimsMiningFuel += 1;
-        //self.log(`pilgrim is mining at ${self.allUnits[heardId].mineLoc}: ${heardId} `);
-      }
-    }
     }
   }
   for (let tt in self.rallyTargets) {
@@ -705,10 +716,18 @@ function mind(self) {
     }
     else {
       //if dead, clear out some things
-      self.log(`Unit ${id}, type: ${self.allUnits[id].unit} died`);
+      self.log(`Unit ${id}, type: ${self.allUnits[id].unit} died; Scout id: ${self.myScoutsId}`);
       delete self.occupiedMiningLocationsIndices[id];
       delete self.allUnits[id];
       delete self.rallyTargets[id];
+      
+      /* DONT CHANGE TO === BECAUSE FOR SOME DUMB REASON ID IS A STRING NOT A NUMBER?!?!?!?!*/
+      if (id == self.myScoutsId) {
+        //our scout died
+        self.log(`Our scout ${id} died`);
+        self.castleHasScout = false;
+        self.myScoutsId = -1;
+      }
     }
   }
   
@@ -879,7 +898,7 @@ function mind(self) {
         }
         //IMPROVEMNTNTTNT
         self.log(`${unitsInVincinity[SPECS.PROPHET].length} prop near, opp destroyed: ${self.oppositeCastleDestroyed}`)
-        if (unitsInVincinity[SPECS.PROPHET].length >= 11 && self.oppositeCastleDestroyed === false && self.castleHasScout === true) {
+        if (unitsInVincinity[SPECS.PROPHET].length >= 1 && self.oppositeCastleDestroyed === false && self.castleHasScout === true) {
           //if in past 10 turns we built 3 crusaders, build 1 preacher
           let numCrusadersPast10 = 0;
           let numPreachersPast10 = 0;
@@ -906,7 +925,7 @@ function mind(self) {
           }
           
         }
-        else if (self.castleHasScout === false && unitsInVincinity[SPECS.PROPHET].length >= 11) {
+        else if (self.castleHasScout === false && unitsInVincinity[SPECS.PROPHET].length >= 1) {
           buildScout = true;
           self.buildQueue = [2];
         }
@@ -1179,15 +1198,21 @@ function mind(self) {
                 let closestDist = 99999;
                 for (let ab in self.rallyTargets) {
                   let bc = self.rallyTargets[ab];
-                  let thisDist = qmath.dist(self.me.x, self.me.y, bc.position[0], bc.position[1])
-                  if (thisDist < closestDist) {
-                    closestDist = thisDist;
-                    closestRallyTarget = bc.position;
+                  if (bc.position[0] !== null && bc.position[1] !== null){
+                    self.log(`Rally Target: ${bc.position[0]}, ${bc.position[1]}`);
+                    let thisDist = qmath.dist(self.me.x, self.me.y, bc.position[0], bc.position[1])
+                    if (thisDist < closestDist) {
+                      closestDist = thisDist;
+                      closestRallyTarget = bc.position;
+                    }
                   }
                 }
-                let padding = 29003
-                let compressedLocationNum = self.compressLocation(closestRallyTarget[0], closestRallyTarget[1]);
-                self.signal(padding + compressedLocationNum, 2);
+                if (closestRallyTarget !== null){
+                  let padding = 29003
+                  let compressedLocationNum = self.compressLocation(closestRallyTarget[0], closestRallyTarget[1]);
+                  self.signal(padding + compressedLocationNum, 2);
+                  
+                }
               }
               //if we are naturally building a prophet not because of incoming enemies, and it is after we decide on that early strategy, send prophet to closest contestable spot. We should instead actually just have the prophet that is going to the contestable spot that is on defendSpot mode to send thru castle talk if they made it there or not.
               /*

@@ -24,6 +24,8 @@ function mind(self) {
     //for pilgrims, search first
     self.searchQueue = [];
     
+    self.lastWarCry = -100;
+    
     //Mining Index: The index of the bots mining spot in self.allSpots. ONLY CHANGED WHEN TOLD BY CASTLE
     self.miningIndex = -1;
     self.statusBeforeReturn = '';
@@ -237,7 +239,7 @@ function mind(self) {
       self.firstTimeScouting = false;
       */
       self.frontLineScoutingTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
-      self.finalTarget = [targetLoc.x, targetLoc.y];
+      self.finalTarget = self.frontLineScoutingTarget;
     }
     // Search for enemy units
     /*
@@ -299,8 +301,9 @@ function mind(self) {
   //If we are a scout, and we see a good number of peachers and crusaders nearby, send a signal to tell them to go forward and attack.
   let unitsInVincinity = search.unitsInRadius(self, 64);
   if (self.status === 'frontLineScout' ) {
-    if (unitsInVincinity[SPECS.PREACHER].length + unitsInVincinity[SPECS.CRUSADER].length > 8) {
+    if (unitsInVincinity[SPECS.PREACHER].length + unitsInVincinity[SPECS.CRUSADER].length > 8 && self.me.turn - self.lastWarCry > 10) {
       self.signal(1, 64);
+      self.lastWarCry = self.me.turn;
     }
   }
   
@@ -313,7 +316,7 @@ function mind(self) {
     //find position that is the farthest away from all enemies
     if (obot.team === otherTeamNum) {
       let distToEnemy = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
-      if (self.status === 'frontLineScout' && distToEnemy > 64 && distToEnemy <= 100) {
+      if (self.status === 'frontLineScout' && distToEnemy > 64 && distToEnemy <= 100 && obot.unit !== SPECS.PILGRIM) {
         self.log(`I'm gonna stop for now at position: ${self.me.x}, ${self.me.y}`);
         self.finalTarget = [self.me.x, self.me.y];
       } 

@@ -79,7 +79,7 @@ function processMessageCrusader(self, msg){
     case 0:
       break;
     case 1:
-      //self.status = 'searchAndAttack';
+      self.status = 'searchAndAttack';
       break;
     case 16390:
       //self.status = 'rally';
