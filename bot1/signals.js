@@ -52,6 +52,7 @@ function processMessageCastleTalk(self, msg, id) {
       self.allUnits[id] = {};
       self.allUnits[id].unit = 1;
       self.allUnits[id].type = 'default';
+      break;
     case 237:
       self.allUnits[id] = {};
       self.allUnits[id].unit = 2;

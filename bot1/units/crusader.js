@@ -26,8 +26,8 @@ function mind(self){
     if (initialized){
       let enemyCastle = self.knownStructures[otherTeamNum][0]
       //rally means crusader goes to a rally point
-      self.status = 'searchAndAttack';
-      self.oldStatus = 'searchAndAttack';
+      self.status = 'defend';
+      self.oldStatus = 'defend';
       let rels = base.relToPos(self.me.x, self.me.y, enemyCastle[0], enemyCastle[1], self);
       self.finalTarget = [self.me.x + rels.dx, self.me.y+rels.dy];
       self.defendTarget = [self.me.x, self.me.y];
@@ -98,6 +98,18 @@ function mind(self){
         self.log(`Preparing to attack enemy castle at ${self.finalTarget}`);
         base.logStructure(self,self.finalTarget[0], self.finalTarget[1], otherTeamNum, 0);
       }
+      else if (msg >= 29003 && msg <= 33098) {
+        if (self.status !== 'rally') {
+          self.oldStatus = self.status;
+        }
+        
+        self.status = 'rally';
+        let padding = 29003;
+        let targetLoc = self.getLocation(msg - padding);
+        self.finalTarget = [targetLoc.x, targetLoc.y];
+        self.rallyTarget = self.finalTarget;
+        self.log(`Preparing to rally at ${self.finalTarget}`);
+      }
     }
     
     if (robotsInVision[i].unit === SPECS.CHURCH) {
@@ -164,7 +176,7 @@ function mind(self){
   base.updateKnownStructures(self);
   //DECISION MAKING
 
-  if (self.status === 'defend' || self.status === 'defendOldPos' || self.status === 'defendSpot') {
+  if (self.status === 'defend' || self.status === 'defendOldPos' || self.status === 'defendSpot' || self.status === 'rally') {
     //follow lattice structure
     
     let nearestStructure = search.findNearestStructure(self);
@@ -187,6 +199,9 @@ function mind(self){
                   let tgt = [self.me.x, self.me.y]
                   if (self.status === 'defendOldPos' || self.status === 'defendSpot') {
                     tgt = self.defendTarget;
+                  }
+                  else if (self.status === 'rally') {
+                    tgt = self.rallyTarget;
                   }
                   let thisDist = qmath.dist(tgt[0], tgt[1], j, i);
                   if (thisDist < closestDist) {
@@ -217,7 +232,7 @@ function mind(self){
   }
   
   //at any time
-  if (self.status === 'searchAndAttack' || self.status === 'rally' || self.status === 'defend' || self.status === 'attackTarget' || self.status === 'goToTarget') {
+  if (self.status === 'searchAndAttack' || self.status === 'rally' || self.status === 'defend' || self.status === 'attackTarget' || self.status === 'goToTarget' || self.status === 'rally') {
     //watch for enemies, then chase them
     //call out friends to chase as well?, well enemy might only send scout, so we might get led to the wrong place
     let leastDistToTarget = 99999999;
@@ -293,7 +308,7 @@ function mind(self){
   //crusader should rush slower and then speed up when in range. Don't rush if u see enemey crusaders
   
   let fast = true;
-  if (self.status === 'searchAndAttack') {
+  if (self.status === 'rally') {
     fast = false;
   }
   action = self.navigate(self.finalTarget, false, fast);

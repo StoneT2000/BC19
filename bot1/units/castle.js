@@ -26,6 +26,8 @@ function mind(self) {
     //It is updated through self.allUnits[id].mineLoc. Pilgrim only changes mineLoc if they die (the object is gone), or if received new signal when it is on return mode
     
     self.rallyTargets = {};//keys are the id of the robots that are scouts. rallyTargets[id].position = rally target/position of that scout
+    
+    self.castleHasScout = false;
     self.sentContestableBot = false;
     self.newIndices = [];
     self.finalSignal = false;
@@ -475,8 +477,7 @@ function mind(self) {
     for (let i = 0; i < robotsInVision.length; i++) {
       let msg = robotsInVision[i].castle_talk;
       let id = robotsInVision[i].id;
-     
-      if (msg >= 77) {
+      if (msg >= 77 && self.allUnits[id] !== undefined) {
         //figuring out locations of new pilgrims that will go to that castles tell us, these messages stay there for 2 rounds
         if (self.allUnits[id].unit === SPECS.CASTLE || self.allUnits[id].unit === SPECS.CHURCH){
           //self.log(`castle-id: ${id}; msg: ${msg}; turn:${self.me.turn}`);
@@ -550,7 +551,7 @@ function mind(self) {
     let orobot = robotsInVision[i];
     let heardId = orobot.id;
     signal.processMessageCastleTalk(self, msg, robotsInVision[i].id); //process 6>=msg>=1
-    
+    //self.log(`Heard ${msg} from ${heardId}`);
     //if msg is >= 7, it must be from a unit with a known unit type already
     if (msg >= 0) {
       
@@ -650,7 +651,10 @@ function mind(self) {
     }
     }
   }
-  
+  for (let tt in self.rallyTargets) {
+    let k = self.rallyTargets[tt];
+    self.log(`Rally targets: ${k.position}`);
+  }
   
   //Count units
   self.castles = 0;
@@ -851,7 +855,7 @@ function mind(self) {
   //BUILDING DECISION CODE. DYNAMIC PART
   
   let preacherAttacks = false;
-  
+  let buildScout = false;
   if (sawEnemyThisTurn === false) {
     if (self.sawEnemyLastTurn === true) {
       let range = 64;
@@ -875,7 +879,7 @@ function mind(self) {
         }
         //IMPROVEMNTNTTNT
         self.log(`${unitsInVincinity[SPECS.PROPHET].length} prop near, opp destroyed: ${self.oppositeCastleDestroyed}`)
-        if (unitsInVincinity[SPECS.PROPHET].length >= 11 && self.oppositeCastleDestroyed === false) {
+        if (unitsInVincinity[SPECS.PROPHET].length >= 11 && self.oppositeCastleDestroyed === false && self.castleHasScout === true) {
           //if in past 10 turns we built 3 crusaders, build 1 preacher
           let numCrusadersPast10 = 0;
           let numPreachersPast10 = 0;
@@ -901,6 +905,10 @@ function mind(self) {
             preacherAttacks = true;
           }
           
+        }
+        else if (self.castleHasScout === false && unitsInVincinity[SPECS.PROPHET].length >= 11) {
+          buildScout = true;
+          self.buildQueue = [2];
         }
       }
       if (self.karbonite > 200) {
@@ -979,7 +987,7 @@ function mind(self) {
       else if ((self.karbonite >= 100 && self.fuel > self.prophets * 50)){
         self.buildQueue = [4];
         self.log(`${unitsInVincinity[SPECS.PROPHET].length} prop near, opp destroyed: ${self.oppositeCastleDestroyed}`)
-        if (unitsInVincinity[SPECS.PROPHET].length >= 11 && self.oppositeCastleDestroyed === false) {
+        if (unitsInVincinity[SPECS.PROPHET].length >= 11 && self.oppositeCastleDestroyed === false && self.castleHasScout === true) {
           let numCrusadersPast10 = 0;
           let numPreachersPast10 = 0;
           for (let k = 0; k < self.pastBuildQueue.length; k++) {
@@ -1003,6 +1011,10 @@ function mind(self) {
             self.buildQueue = [5];
             preacherAttacks = true;
           }
+        }
+        else if (self.castleHasScout === false && unitsInVincinity[SPECS.PROPHET].length >= 11) {
+          buildScout = true;
+          self.buildQueue = [2];
         }
       }
 
@@ -1132,7 +1144,7 @@ function mind(self) {
               }
               
               //GENERAL CODE FOR NEW PILGRIMS
-              if (unit === 2 && self.searchQueue.length && self.me.turn !== 3) {
+              if (unit === 2 && self.searchQueue.length && self.me.turn !== 3 && buildScout === false) {
                 
                 if (self.me.turn > 3){
                   let queueToCheck = self.searchQueue;
@@ -1156,8 +1168,26 @@ function mind(self) {
                   self.signal(2, 2);
                 }
               }
-              if (unit === 5 && preacherAttacks === true) {
-                self.signal(1, 2);
+              else if (unit === 2 && buildScout === true) {
+                self.signal(29002,2);
+                self.castleHasScout = true;
+              }
+              if ((unit === 5 && preacherAttacks === true) || unit === 3) {
+                //signal to preacher the rally location
+                //find closest rally taget
+                let closestRallyTarget = null;
+                let closestDist = 99999;
+                for (let ab in self.rallyTargets) {
+                  let bc = self.rallyTargets[ab];
+                  let thisDist = qmath.dist(self.me.x, self.me.y, bc.position[0], bc.position[1])
+                  if (thisDist < closestDist) {
+                    closestDist = thisDist;
+                    closestRallyTarget = bc.position;
+                  }
+                }
+                let padding = 29003
+                let compressedLocationNum = self.compressLocation(closestRallyTarget[0], closestRallyTarget[1]);
+                self.signal(padding + compressedLocationNum, 2);
               }
               //if we are naturally building a prophet not because of incoming enemies, and it is after we decide on that early strategy, send prophet to closest contestable spot. We should instead actually just have the prophet that is going to the contestable spot that is on defendSpot mode to send thru castle talk if they made it there or not.
               /*

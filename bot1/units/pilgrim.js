@@ -63,6 +63,8 @@ function mind(self) {
       self.globalTurn = initialized.turn;
       if (initialized.signal === 29002) {
         self.status = 'frontLineScout';
+        self.castleTalk(237);
+        self.log(`Castle talking 237`);
       }
       
       self.globalTurn += 1;
@@ -215,6 +217,7 @@ function mind(self) {
     self.log("Hey guys, I'm a front line scout!");
     // 1. Find the closest carbonite spot
     if (self.firstTimeScouting) {
+      /*
       let minSpotDist = 9999;
       let targetLoc = {x: 0, y: 0};
       for (let i = 0; i < self.allSpots.length; i++) {
@@ -232,6 +235,9 @@ function mind(self) {
       self.frontLineScoutingTarget = targetLoc;
       self.finalTarget = [targetLoc.x, targetLoc.y];
       self.firstTimeScouting = false;
+      */
+      self.frontLineScoutingTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
+      self.finalTarget = [targetLoc.x, targetLoc.y];
     }
     // Search for enemy units
     /*
@@ -280,6 +286,24 @@ function mind(self) {
     }
   }*/
 
+    //here, we tell castles our location
+  if (self.status === 'frontLineScout' && self.me.turn > 1) {
+    if (self.me.turn % 2 === 0) { 
+      self.castleTalk(65 + self.me.y);
+    }
+    else {
+      self.castleTalk(1 + self.me.x);
+    }
+  }
+  
+  //If we are a scout, and we see a good number of peachers and crusaders nearby, send a signal to tell them to go forward and attack.
+  let unitsInVincinity = search.unitsInRadius(self, 64);
+  if (self.status === 'frontLineScout' ) {
+    if (unitsInVincinity[SPECS.PREACHER].length + unitsInVincinity[SPECS.CRUSADER].length > 8) {
+      self.signal(1, 64);
+    }
+  }
+  
   // CODE FOR AVOIDING ENEMIES
   //regardless, pilgrim tries to stay out of shooting range
   let farthestdist;
@@ -289,21 +313,28 @@ function mind(self) {
     //find position that is the farthest away from all enemies
     if (obot.team === otherTeamNum) {
       let distToEnemy = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
-      if (self.status === 'frontLineScout' && distToEnemy > 64 && distToEnemy < 100) {
+      if (self.status === 'frontLineScout' && distToEnemy > 64 && distToEnemy <= 100) {
         self.log(`I'm gonna stop for now at position: ${self.me.x}, ${self.me.y}`);
         self.finalTarget = [self.me.x, self.me.y];
       } 
       else {
-        if (self.status === 'frontLineScout' && distToEnemy < 100) { // Not sure if we need this
-          self.finalTarget = [self.frontLineScoutingTarget.x, self.frontLineScoutingTarget.y];
+        if (self.status === 'frontLineScout' && distToEnemy <= 100) { // Not sure if we need this
+          //we use this to tell the pilgrim to move onto the scouting target if it is open
+          //self.finalTarget = [self.frontLineScoutingTarget.x, self.frontLineScoutingTarget.y];
         }
-        if (obot.unit === SPECS.PROPHET && distToEnemy <= 100) {
+        if (obot.unit === SPECS.PROPHET && distToEnemy < 100) {
           enemyPositionsToAvoid.push([obot.x, obot.y]);
         }
         else if (obot.unit === SPECS.PREACHER && distToEnemy <= 64) {
           enemyPositionsToAvoid.push([obot.x, obot.y]);
         }
-        else if (obot.unit === SPECS.CRUSADER && distToEnemy <= 49) {
+        else if (obot.unit === SPECS.CRUSADER && distToEnemy <= 64) {
+          enemyPositionsToAvoid.push([obot.x, obot.y]);
+        }
+        else if (obot.unit === SPECS.CHURCH && distToEnemy < 80) {
+          enemyPositionsToAvoid.push([obot.x, obot.y]);
+        }
+        else if (obot.unit === SPECS.CASTLE && distToEnemy < 100) {
           enemyPositionsToAvoid.push([obot.x, obot.y]);
         }
       }
@@ -332,19 +363,14 @@ function mind(self) {
     })
     let rels = base.rel(self.me.x, self.me.y, avoidLocs[0].pos[0], avoidLocs[0].pos[1]);
     //search for previous deposit?
-    self.status = 'searchForAnyDeposit';
+    if (self.status !== 'frontLineScout') {
+      self.status = 'searchForAnyDeposit';
+    }
+    
     return {action:self.move(rels.dx,rels.dy)}
   }
   
-  //here, we tell castles our location
-  if (self.status === 'frontLineScout') {
-    if (self.me.turn % 2 === 0) { 
-      self.castleTalk(65 + self.me.y);
-    }
-    else {
-      self.castleTalk(1 + self.me.x);
-    }
-  }
+
   
   
   //CODE FOR TELLING PILGRIMS TO GO TO NEXT DEPOSIT IF THEY SEE A UNIT OVER THE DEPOSIT THEY WANT TO GO TO

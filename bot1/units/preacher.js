@@ -131,7 +131,7 @@ function mind(self){
         self.finalTarget = [targetLoc.x, targetLoc.y];
         self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
       }
-      if (msg >= 16392 && msg <= 20487) {
+      else if (msg >= 16392 && msg <= 20487) {
         if (self.status !== 'goToTarget') {
           self.oldStatus = self.status;
         }
@@ -142,7 +142,7 @@ function mind(self){
         self.finalTarget = [targetLoc.x, targetLoc.y];
         self.log(`Preparing to attack enemy at ${self.finalTarget}`);
       }
-      if (msg >= 20488 && msg <= 24583) {
+      else if (msg >= 20488 && msg <= 24583) {
         if (self.status !== 'goToTarget') {
           self.oldStatus = self.status;
         }
@@ -153,6 +153,17 @@ function mind(self){
         self.finalTarget = [targetLoc.x, targetLoc.y];
         self.log(`Preparing to attack enemy castle at ${self.finalTarget}`);
         base.logStructure(self,self.finalTarget[0], self.finalTarget[1], otherTeamNum, 0);
+      }
+      else if (msg >= 29003 && msg <= 33098) {
+        if (self.status !== 'rally') {
+          self.oldStatus = self.status;
+        }
+        self.status = 'rally';
+        let padding = 29003;
+        let targetLoc = self.getLocation(msg - padding);
+        self.finalTarget = [targetLoc.x, targetLoc.y];
+        self.rallyTarget = self.finalTarget;
+        self.log(`Preparing to rally at ${self.finalTarget}`);
       }
       if (msg === 5) {
         self.log(`Received ${msg} from ${robotsInVision[i].id}`);
@@ -298,7 +309,7 @@ function mind(self){
       //initially, allow bot to move freely if its not attackinga
       avoidFriends = false;
     }
-    if (self.status === 'searchAndAttack') {
+    if (self.status === 'rally') {
       moveFast = false;
     }
     self.log(`STAUS:${self.status}`);
