@@ -463,6 +463,7 @@ function mind(self) {
   for (let index in self.occupiedMiningLocationsIndices) {
     let ind = self.occupiedMiningLocationsIndices[index];
     //self.log(`Occupied positions of ${index}: (${self.allSpots[ind].x}, ${self.allSpots[ind].y})`);
+    self.log(`mine index: ${ind}`);
     if (self.allSpots[ind].type === 'fuel') {
       self.numPilgrimsMiningFuel += 1;
     }
@@ -741,7 +742,8 @@ function mind(self) {
   //Give commands to pilgrims who then relay the message to other units?
   
   for (let i = 0; i < robotsInVision.length; i++) {
-    
+    let msg = robotsInVision[i].castle_talk;
+    let heardId = robotsInVision[i].id;
     let signalmsg = robotsInVision[i].signal;
     if (signalmsg === 4) {
       //pilgrim is nearby, assign it new mining status if needed. Alow it to mine anything if we have enough pilgrims
@@ -805,6 +807,25 @@ function mind(self) {
         //no places to mine? mine anything
         self.log(`told ${robotsInVision[i].id} to mine anything there are no safe spots left`);
         self.signal(24584, 2);
+      }
+    }
+    if (msg === 129 && self.allUnits[heardId].type === 'scout') {
+      let newRallyTarget = null;
+      //go to our own rally target
+      self.log(`heard scout stopped`);
+      let bc = self.rallyTargets[self.myScoutsId];
+      if (bc !== undefined && bc.position !== undefined) {
+        if (bc.position[0] !== null && bc.position[1] !== null){ 
+          newRallyTarget = bc.position;
+        }
+      }
+
+      if (newRallyTarget !== null){
+        let padding = 29003
+        //reduce the number of times this signal is sent later
+        let compressedLocationNum = self.compressLocation(newRallyTarget[0], newRallyTarget[1]);
+        self.signal(padding + compressedLocationNum, 64);
+        return '';
       }
     }
   }
@@ -875,6 +896,7 @@ function mind(self) {
   
   let preacherAttacks = false;
   let buildScout = false;
+  let prophetAttacks = false;
   if (sawEnemyThisTurn === false) {
     if (self.sawEnemyLastTurn === true) {
       let range = 64;
@@ -890,7 +912,7 @@ function mind(self) {
       if (self.pilgrims <= self.maxPilgrims && self.pilgrims < (self.prophets + 2) * 2) {
         self.buildQueue.push(2);
       }
-      else if (self.karbonite >= 100){
+      else if (self.karbonite >= 100 && self.fuel > self.prophets * 50){
 
         if (unitsInVincinity[SPECS.PROPHET].length <= self.prophets/(self.castles) && self.status !== 'pause') {
           //self.castleTalk(72);
@@ -912,7 +934,8 @@ function mind(self) {
             }
           }
           if (numPreachersPast10 <= 1){
-            self.buildQueue = [5];
+            self.buildQueue = [5,4];
+            prophetAttacks = true;
             preacherAttacks = true;
           }
           else if (numCrusadersPast10 === 0 || numCrusadersPast10/numPreachersPast10 < 4){
@@ -920,7 +943,8 @@ function mind(self) {
             
           }
           else {
-            self.buildQueue = [5];
+            self.buildQueue = [5,4];
+            prophetAttacks = true;
             preacherAttacks = true;
           }
           
@@ -930,7 +954,7 @@ function mind(self) {
           self.buildQueue = [2];
         }
       }
-      if (self.karbonite > 200) {
+      if (self.karbonite > 200 && self.fuel > self.prophets * 50) {
         if (self.buildQueue.length === 0){
           self.buildQueue = [4];
         }
@@ -1019,15 +1043,17 @@ function mind(self) {
             }
           }
           if (numPreachersPast10 <= 1){
-            self.buildQueue = [5];
+            self.buildQueue = [5,4];
             preacherAttacks = true;
+            prophetAttacks = true;
           }
           else if (numCrusadersPast10 === 0 || numCrusadersPast10/numPreachersPast10 < 4){
             self.buildQueue = [3];
             
           }
           else {
-            self.buildQueue = [5];
+            self.buildQueue = [5,4];
+            prophetAttacks = true;
             preacherAttacks = true;
           }
         }
@@ -1096,6 +1122,8 @@ function mind(self) {
     self.finalSignal = true;
     self.signal (padding + compressedLocationHash, 100);
   }
+  
+
   
   //BUILDING CODE
   //only build if we have sufficient fuel for our units to perform attack manuevers
@@ -1191,11 +1219,13 @@ function mind(self) {
                 self.signal(29002,2);
                 self.castleHasScout = true;
               }
-              if ((unit === 5 && preacherAttacks === true) || unit === 3) {
+              if ((unit === 5 && preacherAttacks === true) || unit === 3 || (unit === 4 && prophetAttacks === true)) {
                 //signal to preacher the rally location
                 //find closest rally taget
+                /*
                 let closestRallyTarget = null;
                 let closestDist = 99999;
+                
                 for (let ab in self.rallyTargets) {
                   let bc = self.rallyTargets[ab];
                   if (bc.position[0] !== null && bc.position[1] !== null){
@@ -1207,9 +1237,21 @@ function mind(self) {
                     }
                   }
                 }
-                if (closestRallyTarget !== null){
+                */
+                let newRallyTarget = null;
+                //go to our own rally target
+                
+                let bc = self.rallyTargets[self.myScoutsId];
+                if (bc !== undefined) {
+                  if (bc.position[0] !== null && bc.position[1] !== null){ 
+                    newRallyTarget = bc.position;
+                  }
+                }
+                
+                
+                if (newRallyTarget !== null){
                   let padding = 29003
-                  let compressedLocationNum = self.compressLocation(closestRallyTarget[0], closestRallyTarget[1]);
+                  let compressedLocationNum = self.compressLocation(newRallyTarget[0], newRallyTarget[1]);
                   self.signal(padding + compressedLocationNum, 2);
                   
                 }

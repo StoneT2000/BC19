@@ -4,63 +4,65 @@
 * @param {number} msg - the message value
 */
 function processMessageCastleTalk(self, msg, id) {
-  switch(msg) {
-    case 1:
-      self.allUnits[id] = {};
-      self.allUnits[id].unit = msg;
-      self.allUnits[id].type = 'default';
-      break;
-    case 2:
-      self.allUnits[id] = {};
-      self.allUnits[id].unit = msg;
-      self.allUnits[id].mineLoc = -1;
-      self.allUnits[id].type = 'miner';
-      break;
-    case 3:
-      self.allUnits[id] = {};
-      self.allUnits[id].unit = msg;
-      self.allUnits[id].type = 'default';
-      break;
-    case 4:
-      self.allUnits[id] = {};
-      self.allUnits[id].unit = msg;
-      self.allUnits[id].type = 'default';
-      break;
-    case 5:
-      self.allUnits[id] = {};
-      self.allUnits[id].unit = msg;
-      self.allUnits[id].type = 'default';
-      break;
-    case 6:
-      self.allUnits[id] = {};
-      self.allUnits[id].unit = 0;
-      self.allUnits[id].type = 'default';
-      break;
-    case 7:
-      //this means castle opposing the very first castle in turnqueue is gone
-      //let pmsg = msg - 7;
-      //self.knownStructures[self.me.team].shift();
-    case 8:
-      //this means castle opposing the 2nd caslte in queue is gone
-      //self.knownStructures[self.me.team].shift();
-      break;
-    case 9:
-      //this means castle oppoisng the 3rd caslte in queue is gone
-      //self.knownStructures[self.me.team].shift();
-      break;
-    case 75:
-      self.allUnits[id] = {};
-      self.allUnits[id].unit = 1;
-      self.allUnits[id].type = 'default';
-      break;
-    case 237:
-      self.allUnits[id] = {};
-      self.allUnits[id].unit = 2;
-      self.allUnits[id].type = 'scout';
-      self.rallyTargets[id] = {};
-      self.rallyTargets[id].position = [null, null];
-    default:
-      break;
+  if (self.allUnits[id] === undefined || self.allUnits[id].type === undefined){
+    switch(msg) {
+      case 1:
+        self.allUnits[id] = {};
+        self.allUnits[id].unit = msg;
+        self.allUnits[id].type = 'default';
+        break;
+      case 2:
+        self.allUnits[id] = {};
+        self.allUnits[id].unit = msg;
+        self.allUnits[id].mineLoc = -1;
+        self.allUnits[id].type = 'miner';
+        break;
+      case 3:
+        self.allUnits[id] = {};
+        self.allUnits[id].unit = msg;
+        self.allUnits[id].type = 'default';
+        break;
+      case 4:
+        self.allUnits[id] = {};
+        self.allUnits[id].unit = msg;
+        self.allUnits[id].type = 'default';
+        break;
+      case 5:
+        self.allUnits[id] = {};
+        self.allUnits[id].unit = msg;
+        self.allUnits[id].type = 'default';
+        break;
+      case 6:
+        self.allUnits[id] = {};
+        self.allUnits[id].unit = 0;
+        self.allUnits[id].type = 'default';
+        break;
+      case 7:
+        //this means castle opposing the very first castle in turnqueue is gone
+        //let pmsg = msg - 7;
+        //self.knownStructures[self.me.team].shift();
+      case 8:
+        //this means castle opposing the 2nd caslte in queue is gone
+        //self.knownStructures[self.me.team].shift();
+        break;
+      case 9:
+        //this means castle oppoisng the 3rd caslte in queue is gone
+        //self.knownStructures[self.me.team].shift();
+        break;
+      case 75:
+        self.allUnits[id] = {};
+        self.allUnits[id].unit = 1;
+        self.allUnits[id].type = 'default';
+        break;
+      case 237:
+        self.allUnits[id] = {};
+        self.allUnits[id].unit = 2;
+        self.allUnits[id].type = 'scout';
+        self.rallyTargets[id] = {};
+        self.rallyTargets[id].position = [null, null];
+      default:
+        break;
+    }
   }
 }
 function processMessageCastle (self, msg, id) {
@@ -133,7 +135,9 @@ function processMessageProphet(self, msg){
     case 0:
       break;
     case 1:
-      //self.status = 'searchAndAttack';
+      if (self.status !== 'defend') {
+        self.status = 'searchAndAttack';
+      }
       break;
     case 5:
       //preachers waiting for stack of fuel to engage in next venture stay as that status
@@ -165,17 +169,17 @@ function processMessageChurch(self, msg){
 function processMessagePilgrim(self, msg){
   switch (msg){
     case 2:
-      if (self.status !== 'mineKarb' && self.status !== 'mineFuel'){
+      if (self.status !== 'mineKarb' && self.status !== 'mineFuel' && self.status !== 'frontLineScout'){
         self.status = 'searchForKarbDeposit'
       }
       break;
     case 3:
-      if (self.status !== 'mineKarb' && self.status !== 'mineFuel'){
+      if (self.status !== 'mineKarb' && self.status !== 'mineFuel' && self.status !== 'frontLineScout'){
         self.status = 'searchForFuelDeposit'
       }
       break;
     case 24584:
-      if (self.status !== 'mineKarb' && self.status !== 'mineFuel'){
+      if (self.status !== 'mineKarb' && self.status !== 'mineFuel' && self.status !== 'frontLineScout'){
         self.status = 'searchForAnyDeposit';
         self.searchAny = true;
       }

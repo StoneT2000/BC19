@@ -181,7 +181,7 @@ function mind(self){
   let nearestStructure = search.findNearestStructure(self);
   let distToStructureFromMe = qmath.dist(self.me.x, self.me.y, nearestStructure.x, nearestStructure.y);
   //defenders and units that are have no final target. If they did, then they must be waiting for a fuel stack to go that target
-  if (self.status === 'defend' || self.status === 'defendOldPos') {
+  if (self.status === 'defend' || self.status === 'defendOldPos' || self.status === 'rally') {
     //SPEED IMPROVEMENT USING BFS.
     if ((self.me.x % 2 === 1 && self.me.y % 2 === 1 ) || (self.me.x % 2 === 0 && self.me.y % 2 === 0) || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true || distToStructureFromMe <= 2 || self.status === 'defendOldPos') {
       let closestDist = 99999;
@@ -198,10 +198,13 @@ function mind(self){
                 let distToStructure = qmath.dist(j, i, nearestStructureHere.x, nearestStructureHere.y);
               if (distToStructure > 2){
                 let tgt = [self.me.x, self.me.y]
-                  if (self.status === 'defendOldPos') {
-                    tgt = self.defendTarget;
+                if (self.status === 'defendOldPos') {
+                  tgt = self.defendTarget;
+                }
+                else if (self.status === 'rally' && qmath.dist(self.me.x, self.me.y, self.rallyTarget[0], self.rallyTarget[1]) >= 16) {
+                    tgt = self.rallyTarget;
                   }
-                  let thisDist = qmath.dist(tgt[0], tgt[1], j, i);
+                let thisDist = qmath.dist(tgt[0], tgt[1], j, i);
                 if (thisDist < closestDist) {
                   closestDist = thisDist;
                   bestLoc = [j, i];

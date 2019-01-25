@@ -80,7 +80,7 @@ function mind(self){
         if (msg >= 20488 && msg <= 24583) {
           self.status = 'goToTarget';
           let padding = 20488;
-          self.moveSpeed = 'slow';
+
           let targetLoc = self.getLocation(msg - padding);
           self.finalTarget = [targetLoc.x, targetLoc.y];
           self.log(`Preparing to attack enemey castle at ${self.finalTarget}`);
@@ -96,7 +96,19 @@ function mind(self){
         self.finalTarget = [targetLoc.x, targetLoc.y];
         self.log(`Preparing to surround spot at ${self.finalTarget}`);
       }
+      else if (msg >= 29003 && msg <= 33098) {
+        if (self.status !== 'rally') {
+          self.oldStatus = self.status;
+        }
+        self.status = 'rally';
+        let padding = 29003;
+        let targetLoc = self.getLocation(msg - padding);
+        self.finalTarget = [targetLoc.x, targetLoc.y];
+        self.rallyTarget = self.finalTarget;
+        self.log(`Preparing to rally at ${self.finalTarget}`);
+      }
     }
+    
     if (robotsInVision[i].unit === SPECS.PREACHER && robotsInVision[i].team === otherTeamNum) {
       seeMage = true;
       let distToEnemy = qmath.dist(self.me.x, self.me.y, robotsInVision[i].x, robotsInVision[i].y);
@@ -113,7 +125,7 @@ function mind(self){
   //it also sets self.destroyedCastle to true if the castle that it knew about is no longer there anymore
   base.updateKnownStructures(self);
   
-  if (self.status === 'defend' || self.status === 'defendOldPos' || self.status === 'defendSpot') {
+  if (self.status === 'defend' || self.status === 'defendOldPos' || self.status === 'defendSpot' || self.status === 'rally' || self.status === 'defend2nd') {
     //follow lattice structure
     
     let nearestStructure = search.findNearestStructure(self);
@@ -137,6 +149,9 @@ function mind(self){
                   if (self.status === 'defendOldPos' || self.status === 'defendSpot') {
                     tgt = self.defendTarget;
                   }
+                  else if (self.status === 'rally' && qmath.dist(self.me.x, self.me.y, self.rallyTarget[0], self.rallyTarget[1]) >= 16) {
+                    tgt = self.rallyTarget;
+                  }
                   let thisDist = qmath.dist(tgt[0], tgt[1], j, i);
                   if (thisDist < closestDist) {
                     closestDist = thisDist;
@@ -156,13 +171,17 @@ function mind(self){
         }
     }
   }
-  
-  if (self.status === 'defendPilgrim') {
-    //follow nearest pilgrim?
+  if (self.status === 'searchAndAttack') {
+    if (self.knownStructures[otherTeamNum].length){
+      self.finalTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
+    }
+    else {
+      self.status = 'defend2nd'; // the same as status = defend, but is allowed to go forward and attack
+    }
   }
   
   //kiting code
-  if (self.status === 'defend' || self.status === 'attackTarget' || self.status === 'defendSpot') {
+  if (self.status === 'defend' || self.status === 'attackTarget' || self.status === 'defendSpot' || self.status === 'defend2nd') {
     //if defending, and not evenough friends nearby, perform kite manuevers
     let enemyPositionsToAvoid = [];
     let friendsNearby = 0;
@@ -225,7 +244,7 @@ function mind(self){
       }
     }
   }
-  if (self.status === 'defend' || self.status === 'attackTarget' || self.status === 'goToTarget' || self.status === 'defendSpot') {
+  if (self.status === 'defend' || self.status === 'attackTarget' || self.status === 'goToTarget' || self.status === 'defendSpot' || self.status === 'rally' || self.status === 'defend2nd') {
     //watch for enemies, then chase them
     //call out friends to chase as well?, well enemy might only send scout, so we might get led to the wrong place
     let leastDistToTarget = 99999999;
@@ -287,7 +306,6 @@ function mind(self){
   else if (self.status === 'goToTarget') {
     let distToEnemy = qmath.dist(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
     if (distToEnemy <= 82) {
-      self.moveSpeed = 'fast';
       self.signal(24585, 100);
     }
   }
@@ -298,7 +316,7 @@ function mind(self){
     return {action:forcedAction};
   }
   let moveFast = true;
-  if (self.moveSpeed === 'slow' || self.status === 'defend' || self.status === 'defendOldPos' || self.status === 'attackTarget') {
+  if (self.moveSpeed === 'slow' || self.status === 'defend' || self.status === 'defendOldPos' || self.status === 'attackTarget' || self.status === 'rally' || self.status === 'defend2nd') {
     moveFast = false;
   }
   if (self.me.turn <= 3) {

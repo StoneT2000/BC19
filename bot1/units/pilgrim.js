@@ -127,7 +127,7 @@ function mind(self) {
     if (robotsInVision[i].team === self.me.team){
       let msg = robotsInVision[i].signal;
       signal.processMessagePilgrim(self, msg);
-      if (msg >= 24586 && msg <= 28681){
+      if (msg >= 24586 && msg <= 28681 && self.status !== 'frontLineScout'){
         self.status = 'goingToDeposit';
         let padding = 24586;
         
@@ -165,7 +165,7 @@ function mind(self) {
       }
       //this is used for newly built bots, no prior indice
       //29682 value is subject to change. should be changed in pilgrim and castle.js. 28842 is based on fact max 160 resource tiles per map
-      else if (msg < 28842 && msg >= 28682 && self.status === 'waitingForCommand' && self.miningIndex === -1) {
+      else if (msg < 28842 && msg >= 28682 && self.status === 'waitingForCommand' && self.miningIndex === -1 && self.status !== 'frontLineScout') {
         let padding = 28682;
         let indice = msg - padding;
         self.status = 'goingToDeposit';
@@ -174,7 +174,7 @@ function mind(self) {
         self.finalTarget = [self.allSpots[self.miningIndex].x, self.allSpots[self.miningIndex].y];
       }
       //use this value for prev. built bots that just returned
-      else if (msg < 29002 && msg >= 28842 && self.status === 'waitingForCommand') {
+      else if (msg < 29002 && msg >= 28842 && self.status === 'waitingForCommand' && self.status !== 'frontLineScout') {
         let padding = 28842;
         let indice = msg - padding;
         self.status = 'goingToDeposit';
@@ -301,7 +301,7 @@ function mind(self) {
   //If we are a scout, and we see a good number of peachers and crusaders nearby, send a signal to tell them to go forward and attack.
   let unitsInVincinity = search.unitsInRadius(self, 64);
   if (self.status === 'frontLineScout' ) {
-    if (unitsInVincinity[SPECS.PREACHER].length + unitsInVincinity[SPECS.CRUSADER].length > 8 && self.me.turn - self.lastWarCry > 10) {
+    if (unitsInVincinity[SPECS.PREACHER].length + unitsInVincinity[SPECS.CRUSADER].length > 10 && self.me.turn - self.lastWarCry > 10) {
       self.signal(1, 64);
       self.lastWarCry = self.me.turn;
     }
@@ -319,6 +319,8 @@ function mind(self) {
       if (self.status === 'frontLineScout' && distToEnemy > 64 && distToEnemy <= 100 && obot.unit !== SPECS.PILGRIM) {
         self.log(`I'm gonna stop for now at position: ${self.me.x}, ${self.me.y}`);
         self.finalTarget = [self.me.x, self.me.y];
+        
+        //self.castleTalk(129); //tell castle in position along frontline
       } 
       else {
         if (self.status === 'frontLineScout' && distToEnemy <= 100) { // Not sure if we need this

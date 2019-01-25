@@ -150,7 +150,7 @@ function mind(self){
       self.buildQueue = [];
     }
     
-    if (self.karbonite >= 125 && self.fuel >= unitsInVincinity100[SPECS.PROPHET].length * 60){
+    if (self.karbonite >= 125 && self.fuel >= unitsInVincinity100[SPECS.PROPHET].length * 60 && unitsInVincinity100[SPECS.PROPHET].length < 12){
       if (self.churchNeedsProtection === true){
         self.log(`Building prophet`)
         self.buildQueue = [4];

@@ -200,7 +200,7 @@ function mind(self){
                   if (self.status === 'defendOldPos' || self.status === 'defendSpot') {
                     tgt = self.defendTarget;
                   }
-                  else if (self.status === 'rally') {
+                  else if (self.status === 'rally' && qmath.dist(self.me.x, self.me.y, self.rallyTarget[0], self.rallyTarget[1]) >= 16) {
                     tgt = self.rallyTarget;
                   }
                   let thisDist = qmath.dist(tgt[0], tgt[1], j, i);
