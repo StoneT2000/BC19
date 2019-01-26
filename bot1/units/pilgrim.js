@@ -198,13 +198,13 @@ function mind(self) {
 
       // Should pilgrims also send side information to each other?
       // EDIT THIS: Watch out for slightly crossing the border and being on the wrong side
-      else if (msg === 29003 || msg === 29004) {
+      else if (msg === 33099 || msg === 33100) {
         if (robotsInVision[i].unit === SPECS.CHURCH) {
-          if (msg === 29003) {
+          if (msg === 33099) {
             self.occupiedHalf = "own";
           }
 
-          else if (msg === 29004) {
+          else if (msg === 33100) {
             self.occupiedHalf = "enemy";
           }
         }
@@ -702,9 +702,9 @@ function mind(self) {
             self.log("Castle-built pilgrim is building church");
             let msg = null;
             if (self.occupiedHalf === "own") {
-              msg = 29003;
+              msg = 33099;
             } else {
-              msg = 29004;
+              msg = 33100;
             }
             // Send this message to all units in surrounding area, though it is specifically aimed at churches
             self.signal(msg, 2);

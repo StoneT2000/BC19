@@ -156,10 +156,10 @@ function processMessageChurch(self, msg){
       break;
     case 1:
       break;
-    case 29003:
+    case 33099:
       self.occupiedHalf = "own";
       break;
-    case 29004:
+    case 33100:
       self.occupiedHalf = "enemy";
       break;
   }

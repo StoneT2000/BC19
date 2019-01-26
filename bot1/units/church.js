@@ -212,9 +212,9 @@ function mind(self){
           // Tom is assuming this is where we build pilgrims
           // EDIT THIS
           if (self.occupiedHalf === "own") {
-            self.signal(29003, 2);
+            self.signal(33099, 2);
           } else if (self.occupiedHalf === "enemy") {
-            self.signal(29004, 2);
+            self.signal(33100, 2);
           }
           
           action = self.buildUnit(2, rels.dx, rels.dy);
