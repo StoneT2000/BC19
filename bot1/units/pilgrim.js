@@ -6,7 +6,7 @@ import signal from '../signals.js';
 import pathing from '../pathing/pathing-bundled.js';
 function mind(self) {
   
-  self.log(`Round: ${self.globalTurn}; Pilgrim (${self.me.x}, ${self.me.y}); Status: ${self.status}; ${self.me.time}ms left`);
+  //self.log(`Round: ${self.globalTurn}; Pilgrim (${self.me.x}, ${self.me.y}); Status: ${self.status}; ${self.me.time}ms left`);
   let fuelMap = self.getFuelMap();
   let karboniteMap = self.getKarboniteMap();
   
@@ -216,7 +216,7 @@ function mind(self) {
   // DECISION MAKING
   // FRONTLINE SCOUTING
   else if (self.status === 'frontLineScout') {
-    self.log("Hey guys, I'm a front line scout!");
+    //self.log("Hey guys, I'm a front line scout!");
     // 1. Find the closest carbonite spot
     if (self.firstTimeScouting) {
       /*
@@ -302,7 +302,7 @@ function mind(self) {
   let unitsInVincinity = search.unitsInRadius(self, 64);
   if (self.status === 'frontLineScout' ) {
     if (unitsInVincinity[SPECS.PREACHER].length + unitsInVincinity[SPECS.CRUSADER].length > 10 && self.me.turn - self.lastWarCry > 10) {
-      self.signal(1, 64);
+      //self.signal(1, 64);
       self.lastWarCry = self.me.turn;
     }
   }
@@ -317,7 +317,7 @@ function mind(self) {
     if (obot.team === otherTeamNum) {
       let distToEnemy = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
       if (self.status === 'frontLineScout' && distToEnemy > 64 && distToEnemy <= 100 && obot.unit !== SPECS.PILGRIM) {
-        self.log(`I'm gonna stop for now at position: ${self.me.x}, ${self.me.y}`);
+        //self.log(`I'm gonna stop for now at position: ${self.me.x}, ${self.me.y}`);
         self.finalTarget = [self.me.x, self.me.y];
         
         //self.castleTalk(129); //tell castle in position along frontline
@@ -347,7 +347,7 @@ function mind(self) {
   }
   let avoidLocs = [];
   if (enemyPositionsToAvoid.length > 0){
-    self.log(`Pilgrim sees enemies nearby`)
+    //self.log(`Pilgrim sees enemies nearby`)
     let positionsToGoTo = search.circle(self, self.me.x, self.me.y, 4);
     for (let i = 0; i < positionsToGoTo.length; i++) {
       let thisSumDist = 0;
@@ -362,7 +362,7 @@ function mind(self) {
   }
   if (avoidLocs.length > 0) {
     //FORCE A MOVE AWAY
-    self.log(`Pilgrim running away from enemy`)
+    //self.log(`Pilgrim running away from enemy`)
     avoidLocs.sort(function(a,b) {
       return b.dist - a.dist;
     })
@@ -608,7 +608,7 @@ function mind(self) {
     if (proceed == true) {
       if (self.me.turn > 1){
         //make sure we don't confuddle the signal for counting units
-        self.log(`Pilgrim might build`)
+        //self.log(`Pilgrim might build`)
         //self.castleTalk(71);
       }
     }
@@ -675,7 +675,7 @@ function mind(self) {
     let robotThere = self.getRobot(robotMap[self.buildTarget[1]][self.buildTarget[0]]);
     if (robotThere !== null && (robotThere.unit === SPECS.CHURCH)){
       self.status = 'goingToDeposit';
-      self.log(`Church built already`);
+      //self.log(`Church built already`);
     }
     else {
       if (self.me.x === self.finalTarget[0] && self.me.y === self.finalTarget[1]) {
@@ -748,6 +748,8 @@ function mind(self) {
     return {action:forcedAction};
   }
   action = self.navigate(self.finalTarget);
+  
+  //if we are next to a resource deposit and are getting blocked, send signal to units that aren't pilgrims on a resource block to move away
   return {action:action};
 
   //return self.move(0,0);
@@ -798,7 +800,7 @@ function safeDeposit(self, nx, ny) {
   }
   //check if nx, ny is in vision
   let robotMap = self.getVisibleRobotMap();
-  let unitsInVincinity = search.unitsInRadius(self, 9, self.me.team, nx, ny);
+  let unitsInVincinity = search.unitsInRadius(self, 64, self.me.team, nx, ny);
   if (unitsInVincinity[SPECS.PROPHET].length + unitsInVincinity[SPECS.PREACHER].length >= 1) {
     return true;
   }

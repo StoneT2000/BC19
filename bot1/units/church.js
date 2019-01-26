@@ -10,7 +10,7 @@ function mind(self){
   let mapLength = self.map.length;
   let otherTeamNum = (self.me.team + 1) % 2;
   let forcedAction = null;
-  self.log(`Church (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
+  //self.log(`Church (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
   let action = '';
   let fuelMap = self.getFuelMap();
   let karboniteMap = self.getKarboniteMap();
@@ -22,6 +22,8 @@ function mind(self){
     self.castleTalk(self.me.unit);
     self.buildQueue = [];
     self.builtDirect = false;
+    
+    
     
     self.churchNeedsProtection = false;
     
@@ -46,6 +48,9 @@ function mind(self){
         self.lowerHalf = false;
       }
     }
+    
+    self.enemyDirection = self.determineEnemyDirection();
+    
     let closestKarbonitePos = null;
     let closestKarboniteDist = 999999;
     for (let i = 0; i < mapLength; i++) {
@@ -93,6 +98,13 @@ function mind(self){
     }
     let numFuelSpots = self.fuelSpots.length;
     self.maxPilgrims = Math.ceil((self.fuelSpots.length + self.karboniteSpots.length)/2);
+    
+    
+    //general enemy direction
+    self.enemyDirection = self.determineEnemyDirection();
+    self.buildingAttackUnitPositions = [];
+    self.setBuildTowardsEnemyDirections(self);
+    
   }
   
   let robotsInVision = self.getVisibleRobots();
@@ -239,10 +251,13 @@ function mind(self){
   //DECISION MAKING
   if (self.status === 'build') {
     
-    self.log(`BuildQueue: ${self.buildQueue}`)
+    //self.log(`BuildQueue: ${self.buildQueue}`)
     if (self.buildQueue[0] !== -1){
       
       let adjacentPos = search.circle(self, self.me.x, self.me.y, 2);
+      if (self.buildQueue[0] > 2) {
+        adjacentPos = self.buildingAttackUnitPositions;
+      }
       for (let i = 0; i < adjacentPos.length; i++) {
         let checkPos = adjacentPos[i];
         

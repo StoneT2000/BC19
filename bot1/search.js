@@ -30,6 +30,7 @@ function circle(self, xpos, ypos, radius) {
 function emptyPos(xpos, ypos, robotMap, passableMap, inVision = true) {
   if (inArr(xpos,ypos, robotMap)) {
     if (inVision === false){
+      //means we consider a position empty if its not invision either
       if (robotMap[ypos][xpos] <= 0) {
         if (passableMap[ypos][xpos] === true){
           return true;

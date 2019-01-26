@@ -280,6 +280,147 @@ class MyRobot extends BCAbstractRobot {
     }
   }
   
+  /*
+  * Returns the best defending location that is available between x1 and x2 and between y1 and y2
+  * @param{robot} self
+  * @param{array} unitsInVision - Units In vision array, used to make lookup faster when looking for certain units
+  * @param{num} x1
+  * @param{num} x2
+  * @param{num} y1
+  * @param{num} y2
+  */
+  findDefendLoc(self, unitsInVision, x1, x2, y1, y2) {
+    let robotMap = self.getVisibleRobotMap();
+    let gameMap = self.map;
+    let fuelMap = self.getFuelMap();
+    let karboniteMap = self.getKarboniteMap();
+    let mapLength = self.map.length;
+    let nearestStructure = search.findNearestStructure(self);
+    let distToStructureFromMe = qmath.dist(self.me.x, self.me.y, nearestStructure.x, nearestStructure.y);
+    let closestDist = 99999;
+    let bestLoc = null;
+    
+    
+    //restrict our search area to these positions
+    let distToDefenceTarget = 0;
+    if (self.status === 'defendOldPos' || self.status === 'defendSpot') {
+      distToDefenceTarget = qmath.dist(self.me.x, self.me.y, self.defendTarget[0], self.defendTarget[1]);
+      
+    }
+    if (self.status === 'rally') {
+      distToDefenceTarget = qmath.dist(self.me.x, self.me.y, self.rallyTarget[0], self.rallyTarget[1]);
+    }
+    let allowOutOfVisionSpots = true;
+    if (distToDefenceTarget >= SPECS.UNITS[this.me.unit].VISION_RADIUS) {
+      //if we are out of vision range of likely good defence spots near the target, when finding new spots allow the position to be empty
+      allowOutOfVisionSpots = false;
+    }
+    
+    for (let i = y1; i < y2; i++) {
+      for (let j = x1; j < x2; j++) {
+        if (i % 2 !== j % 2 ){
+
+          //x:j, y:i
+          if ((search.emptyPos(j, i , robotMap, gameMap, allowOutOfVisionSpots) || self.me.id === robotMap[i][j]) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
+            let nearestStructureHere = search.findNearestStructureHere(self, j, i, unitsInVision[6]);
+            let distToStructure = qmath.dist(j, i, nearestStructureHere.x, nearestStructureHere.y);
+            if (distToStructure > 2){
+              let tgt = [self.me.x, self.me.y]
+              if (self.status === 'defendOldPos' || self.status === 'defendSpot') {
+                tgt = self.defendTarget;
+              }
+              else if (self.status === 'rally' && distToDefenceTarget >= SPECS.UNITS[this.me.unit].VISION_RADIUS/4) {
+                tgt = self.rallyTarget;
+              }
+              let thisDist = qmath.dist(tgt[0], tgt[1], j, i);
+              if (thisDist < closestDist) {
+                closestDist = thisDist;
+                bestLoc = [j, i];
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    //if for some reason in this search area we don't have anything, search the rest
+    if (bestLoc === null) {
+      this.log(`HELP, WE HAD TO SEARCH MAP AGAIN BECAUSE WE COULDNT FIND A GOOD SPOT!!!`)
+      for (let i = mapLength; i < mapLength; i++) {
+        for (let j = 0; j < mapLength; j++) {
+          if (i % 2 !== j % 2 ){
+
+            //x:j, y:i
+            if ((search.emptyPos(j, i , robotMap, gameMap, false) || self.me.id === robotMap[i][j]) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
+              let nearestStructureHere = search.findNearestStructureHere(self, j, i, unitsInVision[6]);
+              let distToStructure = qmath.dist(j, i, nearestStructureHere.x, nearestStructureHere.y);
+              if (distToStructure > 2){
+                let tgt = [self.me.x, self.me.y]
+                let thisDist = qmath.dist(tgt[0], tgt[1], j, i);
+                if (thisDist < closestDist) {
+                  closestDist = thisDist;
+                  bestLoc = [j, i];
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return bestLoc;
+  }
+  
+  /*
+  * Determines which direction the enemy will come from. ONLY USED UPON INITIALIZATION!
+  * If unit is spawned on the enemy half, uh idk
+  */
+  determineEnemyDirection() {
+    let mapLength = this.map.length;
+    if (this.mapIsHorizontal) {
+      //reflection across x-axis
+      //up or down
+      if (this.me.y <= mapLength/2) {
+        return 'down';
+      }
+      else  {
+        return 'up';
+      }
+    }
+    else {
+      if (this.me.x <= mapLength/2) {
+        return 'right';
+      }
+      else  {
+        return 'left';
+      }
+    }
+    return null;
+  }
+  
+  
+  setBuildTowardsEnemyDirections(self) {
+    if (self.enemyDirection === 'left') {
+      //self.buildingAttackUnitPositions should be sorted by which is more close to the left
+      self.buildingAttackUnitPositions = [[self.me.x - 1, self.me.y - 1], [self.me.x - 1, self.me.y], [self.me.x - 1, self.me.y + 1], [self.me.x, self.me.y -1], [self.me.x, self.me.y + 1], [self.me.x + 1, self.me.y - 1], [self.me.x + 1, self.me.y], [self.me.x + 1, self.me.y + 1]]
+    }
+    else if (self.enemyDirection === 'right') {
+      self.buildingAttackUnitPositions = [[self.me.x + 1, self.me.y - 1], [self.me.x + 1, self.me.y], [self.me.x + 1, self.me.y + 1], [self.me.x, self.me.y -1], [self.me.x, self.me.y + 1], [self.me.x - 1, self.me.y - 1], [self.me.x - 1, self.me.y], [self.me.x - 1, self.me.y + 1]]
+    }
+    else if (self.enemyDirection === 'down') {
+      self.buildingAttackUnitPositions = [[self.me.x - 1, self.me.y + 1],[self.me.x, self.me.y + 1],[self.me.x + 1, self.me.y + 1],
+                                          [self.me.x - 1, self.me.y], [self.me.x +1, self.me.y],
+                                          [self.me.x - 1, self.me.y - 1],[self.me.x, self.me.y - 1],[self.me.x + 1, self.me.y - 1]
+                                         ]
+    }
+    else if (self.enemyDirection === 'up') {
+      self.buildingAttackUnitPositions = [[self.me.x - 1, self.me.y - 1],[self.me.x, self.me.y - 1],[self.me.x + 1, self.me.y - 1],
+                                          [self.me.x - 1, self.me.y], [self.me.x +1, self.me.y],
+                                          [self.me.x - 1, self.me.y + 1],[self.me.x, self.me.y + 1],[self.me.x + 1, self.me.y + 1],
+                                         ]
+    }
+  }
+  
+  
   
 }
 
