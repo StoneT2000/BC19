@@ -88,7 +88,8 @@ function mind(self){
     self.log(`Closest dist: ${closestDepositDist}`)
     if (closestDepositDist <= 256) {
       self.churchNeedsProtection = true;
-      self.castleTalk(75);
+      self.buildQueue = [4];
+      //self.castleTalk(75);
     }
     let numFuelSpots = self.fuelSpots.length;
     self.maxPilgrims = Math.ceil((self.fuelSpots.length + self.karboniteSpots.length)/2);
@@ -110,8 +111,10 @@ function mind(self){
   let sawEnemyThisTurn = false;
   let nearestEnemyLoc = null
   let closestEnemyDist = 1000;
+  let closestEnemyType = null;
   let sawChurch = false;
   let sawCrusader = false;
+  let sawProphet = false;
   for (let i = 0; i < robotsInVision.length; i++) {
     let obot = robotsInVision[i];
     if (obot.unit === SPECS.CRUSADER) {
@@ -132,10 +135,14 @@ function mind(self){
       else if (obot.unit === SPECS.CRUSADER) {
         sawCrusader = true;
       }
+      else if (obot.unit === SPECS.PROPHET) {
+        sawProphet = true;
+      }
       let distToUnit = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
       if (distToUnit < closestEnemyDist) {
         nearestEnemyLoc = {x: obot.x, y: obot.y};
         closestEnemyDist = distToUnit
+        closestEnemyType = obot.unit;
         self.log(`Nearest to church is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
         sawEnemyThisTurn = true;
       }
@@ -201,10 +208,18 @@ function mind(self){
   else {
     let unitsInVincinity36 = search.unitsInRadius(self, 36);
     let compressedLocationHash = self.compressLocation(nearestEnemyLoc.x, nearestEnemyLoc.y);
-    self.signal(12294 + compressedLocationHash, 64);
+    let padding = 12294;
+    //tell units to hold from moving towards enenmy if the nearest enenmy isn't a prophet
+    //if a pilgrim, chase it as it is safe to chase
+    if (closestEnemyType === SPECS.PROPHET || closestEnemyType === SPECS.PILGRIM || closestEnemyType === SPECS.CHURCH) {
+      padding = 20488;
+    }
+    self.signal(padding + compressedLocationHash, 64);
     //self.log(`Nearest to castle is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
     self.sawEnemyLastTurn = true;
     //self.buildQueue.unshift(5);
+    
+    
     if ((sawChurch || sawCrusader) && unitsInVincinity36[SPECS.PREACHER].length < 1){
       if (self.fuel >= 50 && self.karbonite >= 30){
         self.buildQueue.unshift(5);

@@ -65,8 +65,8 @@ function mind(self) {
       self.globalTurn = initialized.turn;
       if (initialized.signal === 29002) {
         self.status = 'frontLineScout';
-        self.castleTalk(237);
-        self.log(`Castle talking 237`);
+        self.castleTalk(6);
+        self.log(`Castle talking 6`);
       }
       
       self.globalTurn += 1;
@@ -291,10 +291,10 @@ function mind(self) {
     //here, we tell castles our location
   if (self.status === 'frontLineScout' && self.me.turn > 1) {
     if (self.me.turn % 2 === 0) { 
-      self.castleTalk(65 + self.me.y);
+      self.castleTalk(71 + self.me.y);
     }
     else {
-      self.castleTalk(1 + self.me.x);
+      self.castleTalk(7 + self.me.x);
     }
   }
   

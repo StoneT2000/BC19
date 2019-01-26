@@ -4,7 +4,6 @@
 * @param {number} msg - the message value
 */
 function processMessageCastleTalk(self, msg, id) {
-  if (self.allUnits[id] === undefined || self.allUnits[id].type === undefined){
     switch(msg) {
       case 1:
         self.allUnits[id] = {};
@@ -34,8 +33,10 @@ function processMessageCastleTalk(self, msg, id) {
         break;
       case 6:
         self.allUnits[id] = {};
-        self.allUnits[id].unit = 0;
-        self.allUnits[id].type = 'default';
+        self.allUnits[id].unit = 2;
+        self.allUnits[id].type = 'scout';
+        self.rallyTargets[id] = {};
+        self.rallyTargets[id].position = [null, null];
         break;
       case 7:
         //this means castle opposing the very first castle in turnqueue is gone
@@ -50,20 +51,11 @@ function processMessageCastleTalk(self, msg, id) {
         //self.knownStructures[self.me.team].shift();
         break;
       case 75:
-        self.allUnits[id] = {};
-        self.allUnits[id].unit = 1;
-        self.allUnits[id].type = 'default';
-        break;
       case 237:
-        self.allUnits[id] = {};
-        self.allUnits[id].unit = 2;
-        self.allUnits[id].type = 'scout';
-        self.rallyTargets[id] = {};
-        self.rallyTargets[id].position = [null, null];
+        break;
       default:
         break;
     }
-  }
 }
 function processMessageCastle (self, msg, id) {
   switch (msg) {

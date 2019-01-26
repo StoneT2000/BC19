@@ -552,14 +552,12 @@ function mind(self) {
     
     let orobot = robotsInVision[i];
     let heardId = orobot.id;
-    signal.processMessageCastleTalk(self, msg, robotsInVision[i].id); //process 6>=msg>=1
+    signal.processMessageCastleTalk(self, msg, heardId); //process 6>=msg>=1
     //self.log(`Heard ${msg} from ${heardId}`);
     //if msg is >= 7, it must be from a unit with a known unit type already
     if (msg >= 0) {
       
-      if (self.allUnits[heardId] === undefined) {
-        self.allUnits[heardId] = {};
-      }
+ 
 
     }
     // 77 <= msg <= 236 is for pilgrims to tell castle which spot its mining
@@ -575,18 +573,18 @@ function mind(self) {
     }
     
     //if a message is received, work on it
-    if (msg >= 0){
+    if (msg >= 1){
       if (self.allUnits[heardId].type === 'scout') {
         self.log(`Scout msg: ${msg}`);
-        if (msg >= 1 && msg <= 64) {
+        if (msg >= 7 && msg <= 70) {
           //x position of scout;
-          self.rallyTargets[heardId].position[0] = msg - 1;
+          self.rallyTargets[heardId].position[0] = msg - 7;
         }
-        else if (msg >= 65 && msg <= 128) {
+        else if (msg >= 71 && msg <= 134) {
           //y position of scout, padded of course
-          self.rallyTargets[heardId].position[1] = msg - 65;
+          self.rallyTargets[heardId].position[1] = msg - 71;
         }
-        else if (msg === 237) {
+        else if (msg === 6) {
           let rob = self.getRobot(heardId);
           self.log(`just built scout is at ${rob.x}, ${rob.y}`);
           if (rob !== null && qmath.dist(self.me.x, self.me.y, rob.x, rob.y) <= 16) {
@@ -689,6 +687,7 @@ function mind(self) {
     if (alive === true){      
       switch(self.allUnits[id].unit) {
         case 0:
+          self.log(`castle ${id}`);
           self.castles += 1;
           break;
         case 1:
