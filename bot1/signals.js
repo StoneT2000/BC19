@@ -156,6 +156,12 @@ function processMessageChurch(self, msg){
       break;
     case 1:
       break;
+    case 29003:
+      self.occupiedHalf = "own";
+      break;
+    case 29004:
+      self.occupiedHalf = "enemy";
+      break;
   }
 }
 function processMessagePilgrim(self, msg){

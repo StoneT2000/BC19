@@ -35,6 +35,7 @@ function mind(self) {
     // SCOUTING
     self.firstTimeScouting = true;
     self.frontLineScoutingTarget = {x: 0, y: 0};
+    self.occupiedHalf = null;
     //self.log(`${self.knownStructures[self.me.team][0].x}`);
     /*
     let castleId = robotMap[origCastleLoc[1]][origCastleLoc[0]];
@@ -195,6 +196,19 @@ function mind(self) {
         self.finalTarget = [self.allSpots[self.miningIndex].x, self.allSpots[self.miningIndex].y];
       }
 
+      // Should pilgrims also send side information to each other?
+      // EDIT THIS: Watch out for slightly crossing the border and being on the wrong side
+      else if (msg === 29003 || msg === 29004) {
+        if (robotsInVision[i].unit === SPECS.CHURCH) {
+          if (msg === 29003) {
+            self.occupiedHalf = "own";
+          }
+
+          else if (msg === 29004) {
+            self.occupiedHalf = "enemy";
+          }
+        }
+      }
       
       //if waiting for command, no signal is given, go to old spot, don't wait for castle to reassign
 
@@ -684,6 +698,17 @@ function mind(self) {
         
         if (self.fuel + self.me.fuel >= 250 && self.karbonite + self.me.karbonite >= 75){
           self.status = 'goingToDeposit';
+          if (!self.churchBuilt && self.occupiedHalf !== null) {
+            self.log("Castle-built pilgrim is building church");
+            let msg = null;
+            if (self.occupiedHalf === "own") {
+              msg = 29003;
+            } else {
+              msg = 29004;
+            }
+            // Send this message to all units in surrounding area, though it is specifically aimed at churches
+            self.signal(msg, 2);
+          }
           return {action:self.buildUnit(SPECS.CHURCH, rels.dx, rels.dy)}
         }
         else {
@@ -739,6 +764,33 @@ function mind(self) {
     return {action:action}; 
   }
   
+  // HALF-DETERMINING STUFF!
+  let ownCastlePos = {x: 0, y: 0}; // EDIT THIS! A church-built pilgrim needs some way of knowing the castlePos
+  /* Own castles should be transferred whenever a castle builds a pilgrim. The pilgrim should get the position of our castles with the lookup table */
+  // Watch out for odd maps! -> Ask Stone!
+  if (!self.churchBuilt && ownCastlePos !== null) {
+    if (self.mapIsHorizontal) {
+     if (self.me.x < mapLength/2) { // < and >= should work for even maps
+       // Left half
+       if (ownCastlePos.x < mapLength/2) {
+         // You're on left half, your home castle is on left half
+        self.occupiedHalf = "own";
+       } else {
+         // You're on left half, your home castle is on right half
+         self.occupiedHalf = "enemy";
+       }
+     } else {
+      // Right half
+      if (ownCastlePos.x > mapLength/2) {
+        // You're on right half, your home castle is on right half
+        self.occupiedHalf = "own";
+      } else {
+        // You're on right half, your home castle is on left half
+        self.occupiedHalf = "enemy";
+      }
+     }
+    }
+  }
   //When mining, check if building a church nearby is a good idea or not
   
   

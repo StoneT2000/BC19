@@ -23,7 +23,8 @@ function mind(self){
     self.buildQueue = [];
     self.builtDirect = false;
     
-    
+    // Occupied half
+    self.occupiedHalf = null;
     
     self.churchNeedsProtection = false;
     
@@ -112,7 +113,7 @@ function mind(self){
   //SIGNAL PROCESSION
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
-    signal.processMessageChurch(self, msg);
+    signal.processMessageChurch(self, msg); // Occupied half stuff is in here
     let signalmsg = robotsInVision[i].signal;
     if (msg === 4) {
     }
@@ -208,6 +209,14 @@ function mind(self){
           let val = getIndexAllSpots(self, buildLoc);
           self.castleTalk(77 + val);
           let rels = base.rel(self.me.x, self.me.y, buildLoc[0], buildLoc[1]);
+          // Tom is assuming this is where we build pilgrims
+          // EDIT THIS
+          if (self.occupiedHalf === "own") {
+            self.signal(29003, 2);
+          } else if (self.occupiedHalf === "enemy") {
+            self.signal(29004, 2);
+          }
+          
           action = self.buildUnit(2, rels.dx, rels.dy);
           return {action:action};
         }
