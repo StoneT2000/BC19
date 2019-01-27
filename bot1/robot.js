@@ -379,7 +379,7 @@ class MyRobot extends BCAbstractRobot {
     if (this.mapIsHorizontal) {
       //reflection across x-axis
       //up or down
-      if (this.me.y <= mapLength/2) {
+      if (ny <= mapLength/2) {
         return 'down';
       }
       else  {
@@ -387,7 +387,7 @@ class MyRobot extends BCAbstractRobot {
       }
     }
     else {
-      if (this.me.x <= mapLength/2) {
+      if (nx <= mapLength/2) {
         return 'right';
       }
       else  {

@@ -112,9 +112,10 @@ function mind(self){
     let msg = robotsInVision[i].signal;
     // signal.processMessageChurch(self, msg); // Occupied half stuff is in here
     if (robotsInVision[i].team === self.me.team) {
-      let padding = 33099;
-      if (msg >= padding && msg <= 37194) {
-        let enemyPos =  getLocation(msg-padding);
+      
+      if (msg >= 33099 && msg <= 37194) {
+        let padding = 33099;
+        let enemyPos = self.getLocation(msg - padding);
         base.logStructure(self, enemyPos.x, enemyPos.y, otherTeamNum, 0);
         let ox = enemyPos.x;
         let oy = enemyPos.y
@@ -127,7 +128,26 @@ function mind(self){
         base.logStructure(self, ox, oy, self.me.team, 0);
         
         self.enemyDirection = self.determineEnemyDirection(ox, oy);
-        self.log(`Enemy Direction from chuch at ${self.me.x}, ${self.me.y} is ${self.enemyDirection}`);
+        self.log(`Enemy Direction from church at ${self.me.x}, ${self.me.y} is ${self.enemyDirection}`);
+        let needsdefence = false;
+        if (self.mapIsHorizontal) {
+          if (oy <= mapLength/2 && self.me.y > mapLength/2) {
+            needsdefence = true;
+          }
+          else if (oy >= mapLength/2 && self.me.y < mapLength/2) {
+            needsdefence = true;
+          }
+        }
+        else {
+          if (ox <= mapLength/2 && self.me.x > mapLength/2) {
+            needsdefence = true;
+          }
+          else if (ox >= mapLength/2 && self.me.x < mapLength/2) {
+            needsdefence = true;
+          }
+        }
+        self.churchNeedsProtection = needsdefence;
+        self.log(`Church needs protection?:${needsdefence}`)
       }
     }
   }
