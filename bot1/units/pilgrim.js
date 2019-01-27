@@ -198,7 +198,7 @@ function mind(self) {
       // Transfer location of enemy location        
       else if (msg >= 33099 && msg <= 37194) {
         let padding = 33099;
-        let enemyPos =  getLocation(msg-padding);
+        let enemyPos = self.getLocation(msg-padding);
         base.logStructure(self, enemyPos.x, enemyPos.y, otherTeamNum, 0);
         let ox = enemyPos.x;
         let oy = enemyPos.y
@@ -210,7 +210,7 @@ function mind(self) {
         }
         base.logStructure(self, ox, oy, self.me.team, 0);
         self.enemyDirection = self.determineEnemyDirection(ox, oy);
-        self.log(`Enemy Direction from chuch at ${self.me.x}, ${self.me.y} is ${self.enemyDirection}`);
+        self.log(`Enemy Direction from pilgrim at ${self.me.x}, ${self.me.y} is ${self.enemyDirection}`);
       }
     }
     //if waiting for command, no signal is given, go to old spot, don't wait for castle to reassign
