@@ -201,7 +201,7 @@ function mind(self) {
         let enemyPos = self.getLocation(msg-padding);
         base.logStructure(self, enemyPos.x, enemyPos.y, otherTeamNum, 0);
         let ox = enemyPos.x;
-        let oy = enemyPos.y
+        let oy = enemyPos.y;
         if (self.mapIsHorizontal) {
           oy = mapLength - oy - 1;
         }
