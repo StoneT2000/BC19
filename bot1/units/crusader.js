@@ -22,6 +22,7 @@ function mind(self){
     
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
     self.useRallyTargetToMakeLattice = true;
+    self.defendLocChosen = false;
     let initialized = self.initializeCastleLocations();
     if (initialized){
       let enemyCastle = self.knownStructures[otherTeamNum][0]
@@ -51,6 +52,7 @@ function mind(self){
         break;
       }
     }
+    self.enemyDirection = self.determineEnemyDirection();
   }
   if (self.me.turn === 5) {
     pathing.initializePlanner(self);
@@ -193,7 +195,7 @@ function mind(self){
   
   base.updateKnownStructures(self);
   //DECISION MAKING
-  f (self.status !== 'rally') {
+  if (self.status !== 'rally') {
     self.useRallyTargetToMakeLattice = true;
   }
   if (self.status === 'defend' || self.status === 'defendOldPos' || self.status === 'defendSpot' || self.status === 'rally') {
@@ -202,41 +204,54 @@ function mind(self){
     let nearestStructure = search.findNearestStructure(self);
     let distToStructureFromMe = qmath.dist(self.me.x, self.me.y, nearestStructure.x, nearestStructure.y);
     
+    if (robotMap[self.finalTarget[1]][self.finalTarget[0]] > 0 && robotMap[self.finalTarget[1]][self.finalTarget[0]] !== self.me.id) {
+      self.defendLocChosen = false;
+    }
     //if status === defendOldPos, we force unit to reposition itself.
     if ((self.me.x % 2 === 1 && self.me.y % 2 === 1 ) || (self.me.x % 2 === 0 && self.me.y % 2 === 0) || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true || distToStructureFromMe <= 2 || self.status === 'defendOldPos') {
         
-        let closestDist = 99999;
-        let bestLoc = null;
+         let bestLoc = null;
+      if (self.defendLocChosen === false){
         
-
-        for (let i = 0; i < mapLength; i++) {
-          for (let j = 0; j < mapLength; j++) {
-            if (i % 2 !== j % 2 ){
-              if ((search.emptyPos(j, i , robotMap, gameMap, false) || self.me.id === robotMap[i][j]) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
-                let nearestStructureHere = search.findNearestStructureHere(self, j, i, unitsInVision[6]);
-                let distToStructure = qmath.dist(j, i, nearestStructureHere.x, nearestStructureHere.y);
-                if (distToStructure > 2){
-                  let tgt = [self.me.x, self.me.y]
-                  if (self.status === 'defendOldPos' || self.status === 'defendSpot') {
-                    tgt = self.defendTarget;
-                  }
-                  else if (self.status === 'rally' && qmath.dist(self.me.x, self.me.y, self.rallyTarget[0], self.rallyTarget[1]) >= 16) {
-                    tgt = self.rallyTarget;
-                  }
-                  let thisDist = qmath.dist(tgt[0], tgt[1], j, i);
-                  if (thisDist < closestDist) {
-                    closestDist = thisDist;
-                    bestLoc = [j, i];
-                  }
-                }
-              }
-            }
-          }
+      if (self.enemyDirection === 'left'){
+        if (self.status === 'rally') {
+          bestLoc = self.findDefendLoc(self, unitsInVision, self.rallyTarget[0], mapLength, 0, mapLength)
         }
-        if (bestLoc !== null) {
-          self.finalTarget = bestLoc;
-          self.log('New location near defend point :' + self.finalTarget);
+        else {
+          bestLoc = self.findDefendLoc(self, unitsInVision, 0, self.defendTarget[0], 0, mapLength);
         }
+      }
+      else if (self.enemyDirection === 'right') {
+        if (self.status === 'rally') {
+          bestLoc = self.findDefendLoc(self, unitsInVision, 0, self.rallyTarget[0], 0, mapLength)
+        }
+        else {
+          bestLoc = self.findDefendLoc(self, unitsInVision, self.defendTarget[0], mapLength, 0, mapLength);
+        }
+        
+      }
+      else if (self.enemyDirection === 'up') {
+        if (self.status === 'rally') {
+          bestLoc = self.findDefendLoc(self, unitsInVision, 0, mapLength, self.rallyTarget[1], mapLength)
+        }
+        else {
+          bestLoc = self.findDefendLoc(self, unitsInVision, 0, mapLength, 0, self.defendTarget[1]);
+        }
+      }
+      else if (self.enemyDirection === 'down') {
+        if (self.status === 'rally') {
+          bestLoc = self.findDefendLoc(self, unitsInVision, 0, mapLength, 0, self.rallyTarget[1])
+        }
+        else {
+          bestLoc = self.findDefendLoc(self, unitsInVision, 0, mapLength, self.defendTarget[1], mapLength);
+        }
+      }
+        self.defendLocChosen = true;
+      }
+      if (bestLoc !== null) {
+        self.finalTarget = bestLoc;
+        self.log('New location near defend point :' + self.finalTarget);
+      }
       if (self.status === 'defendOldPos') {
           self.status = 'defend';
         }

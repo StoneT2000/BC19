@@ -326,7 +326,7 @@ class MyRobot extends BCAbstractRobot {
               if (self.status === 'defendOldPos' || self.status === 'defendSpot') {
                 tgt = self.defendTarget;
               }
-              else if (self.status === 'rally'self.useRallyTargetToMakeLattice === true) {
+              else if (self.status === 'rally' && self.useRallyTargetToMakeLattice === true) {
                 tgt = self.rallyTarget;
                 //once we use rally target to find nearest position, we don't use it again
                 if (distToDefenceTarget <= SPECS.UNITS[this.me.unit].VISION_RADIUS/4) {
