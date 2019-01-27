@@ -133,22 +133,27 @@ function mind(self){
         if (self.mapIsHorizontal) {
           if (oy <= mapLength/2 && self.me.y > mapLength/2) {
             needsdefence = true;
+            self.lowerHalf = !self.lowerHalf
           }
           else if (oy >= mapLength/2 && self.me.y < mapLength/2) {
             needsdefence = true;
+            self.lowerHalf = !self.lowerHalf
           }
         }
         else {
           if (ox <= mapLength/2 && self.me.x > mapLength/2) {
             needsdefence = true;
+            self.lowerHalf = !self.lowerHalf
           }
           else if (ox >= mapLength/2 && self.me.x < mapLength/2) {
             needsdefence = true;
+            self.lowerHalf = !self.lowerHalf
           }
         }
         if (needsdefence === true){
           self.churchNeedsProtection = needsdefence;
         }
+        self.log(`Church on own half: ${ownHalf(self,self.me.x, self.me.y)}`);
       }
     }
   }

@@ -210,7 +210,25 @@ function mind(self) {
         }
         base.logStructure(self, ox, oy, self.me.team, 0);
         self.enemyDirection = self.determineEnemyDirection(ox, oy);
+        
+        if (self.mapIsHorizontal) {
+          if (oy <= mapLength/2 && self.me.y > mapLength/2) {
+            self.lowerHalf = !self.lowerHalf
+          }
+          else if (oy >= mapLength/2 && self.me.y < mapLength/2) {
+            self.lowerHalf = !self.lowerHalf
+          }
+        }
+        else {
+          if (ox <= mapLength/2 && self.me.x > mapLength/2) {
+            self.lowerHalf = !self.lowerHalf
+          }
+          else if (ox >= mapLength/2 && self.me.x < mapLength/2) {
+            self.lowerHalf = !self.lowerHalf
+          }
+        }
         self.log(`Enemy Direction from pilgrim at ${self.me.x}, ${self.me.y} is ${self.enemyDirection}`);
+        self.log(`Pilgrim on own half: ${ownHalf(self,self.me.x, self.me.y)}`);
       }
     }
     //if waiting for command, no signal is given, go to old spot, don't wait for castle to reassign
