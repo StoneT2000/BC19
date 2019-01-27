@@ -146,8 +146,9 @@ function mind(self){
             needsdefence = true;
           }
         }
-        self.churchNeedsProtection = needsdefence;
-        self.log(`Church needs protection?:${needsdefence}`)
+        if (needsdefence === true){
+          self.churchNeedsProtection = needsdefence;
+        }
       }
     }
   }
