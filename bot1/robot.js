@@ -374,7 +374,7 @@ class MyRobot extends BCAbstractRobot {
   * Determines which direction the enemy will come from. ONLY USED UPON INITIALIZATION!
   * If unit is spawned on the enemy half, uh idk
   */
-  determineEnemyDirection() {
+  determineEnemyDirection(nx = this.me.x, ny = this.me.y) {
     let mapLength = this.map.length;
     if (this.mapIsHorizontal) {
       //reflection across x-axis
