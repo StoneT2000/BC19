@@ -19,6 +19,7 @@ function mind(self){
   //INITIALIZATION
   if (self.me.turn === 1) {
     self.defendLocChosen = false;
+    self.useRallyTargetToMakeLattice = true;
     self.castleTalk(self.me.unit);
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
     self.initializeCastleLocations();
@@ -99,7 +100,7 @@ function mind(self){
         self.finalTarget = [targetLoc.x, targetLoc.y];
         self.log(`Preparing to surround spot at ${self.finalTarget}`);
       }
-      else if (msg >= 29003 && msg <= 33098) {
+      else if (msg >= 29003 && msg <= 33098 && self.status !== 'rally') {
         if (self.status !== 'rally') {
           self.oldStatus = self.status;
         }
@@ -145,6 +146,10 @@ function mind(self){
   //it also sets self.destroyedCastle to true if the castle that it knew about is no longer there anymore
   base.updateKnownStructures(self);
   
+  if (self.status !== 'rally') {
+    self.useRallyTargetToMakeLattice = true;
+  }
+  
   if (self.status === 'defend' || self.status === 'defendOldPos' || self.status === 'defendSpot' || self.status === 'rally' || self.status === 'defend2nd') {
     //follow lattice structure
     
@@ -167,6 +172,7 @@ function mind(self){
       
       //search for all left positions
       if (self.defendLocChosen === false){
+        
       if (self.enemyDirection === 'left'){
         if (self.status === 'rally') {
           bestLoc = self.findDefendLoc(self, unitsInVision, self.rallyTarget[0], mapLength, 0, mapLength)

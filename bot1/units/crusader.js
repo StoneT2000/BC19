@@ -21,7 +21,7 @@ function mind(self){
     self.castleTalk(self.me.unit);
     
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
-    
+    self.useRallyTargetToMakeLattice = true;
     let initialized = self.initializeCastleLocations();
     if (initialized){
       let enemyCastle = self.knownStructures[otherTeamNum][0]
@@ -98,7 +98,7 @@ function mind(self){
         self.log(`Preparing to attack enemy castle at ${self.finalTarget}`);
         base.logStructure(self,self.finalTarget[0], self.finalTarget[1], otherTeamNum, 0);
       }
-      else if (msg >= 29003 && msg <= 33098) {
+      else if (msg >= 29003 && msg <= 33098 && self.status !== 'rally') {
         if (self.status !== 'rally') {
           self.oldStatus = self.status;
         }
@@ -193,7 +193,9 @@ function mind(self){
   
   base.updateKnownStructures(self);
   //DECISION MAKING
-
+  f (self.status !== 'rally') {
+    self.useRallyTargetToMakeLattice = true;
+  }
   if (self.status === 'defend' || self.status === 'defendOldPos' || self.status === 'defendSpot' || self.status === 'rally') {
     //follow lattice structure
     

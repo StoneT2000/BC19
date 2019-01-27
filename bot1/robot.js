@@ -310,18 +310,15 @@ class MyRobot extends BCAbstractRobot {
     if (self.status === 'rally') {
       distToDefenceTarget = qmath.dist(self.me.x, self.me.y, self.rallyTarget[0], self.rallyTarget[1]);
     }
-    let allowOutOfVisionSpots = true;
-    if (distToDefenceTarget >= SPECS.UNITS[this.me.unit].VISION_RADIUS) {
-      //if we are out of vision range of likely good defence spots near the target, when finding new spots allow the position to be empty
-      allowOutOfVisionSpots = false;
-    }
+    let spotHasToBeInVision = false;
     
+    //self.useRallyTargetToMakeLattice = true;
     for (let i = y1; i < y2; i++) {
       for (let j = x1; j < x2; j++) {
         if (i % 2 !== j % 2 ){
 
           //x:j, y:i
-          if ((search.emptyPos(j, i , robotMap, gameMap, allowOutOfVisionSpots) || self.me.id === robotMap[i][j]) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
+          if ((search.emptyPos(j, i , robotMap, gameMap, spotHasToBeInVision) || self.me.id === robotMap[i][j]) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
             let nearestStructureHere = search.findNearestStructureHere(self, j, i, unitsInVision[6]);
             let distToStructure = qmath.dist(j, i, nearestStructureHere.x, nearestStructureHere.y);
             if (distToStructure > 2){
@@ -329,8 +326,12 @@ class MyRobot extends BCAbstractRobot {
               if (self.status === 'defendOldPos' || self.status === 'defendSpot') {
                 tgt = self.defendTarget;
               }
-              else if (self.status === 'rally' && distToDefenceTarget >= SPECS.UNITS[this.me.unit].VISION_RADIUS/4) {
+              else if (self.status === 'rally'self.useRallyTargetToMakeLattice === true) {
                 tgt = self.rallyTarget;
+                //once we use rally target to find nearest position, we don't use it again
+                if (distToDefenceTarget <= SPECS.UNITS[this.me.unit].VISION_RADIUS/4) {
+                  self.useRallyTargetToMakeLattice = false;
+                }
               }
               let thisDist = qmath.dist(tgt[0], tgt[1], j, i);
               if (thisDist < closestDist) {

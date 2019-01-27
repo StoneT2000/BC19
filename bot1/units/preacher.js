@@ -30,6 +30,7 @@ function mind(self){
     self.setFinalTarget(self.finalTarget);
   }
   if (self.me.turn === 1) {
+    self.useRallyTargetToMakeLattice = true;
     self.defendLocChosen = false;
     self.castleTalk(self.me.unit);
     self.allowedToMove = true;
@@ -121,7 +122,7 @@ function mind(self){
         self.log(`Preparing to attack enemy castle at ${self.finalTarget}`);
         base.logStructure(self,self.finalTarget[0], self.finalTarget[1], otherTeamNum, 0);
       }
-      else if (msg >= 29003 && msg <= 33098) {
+      else if (msg >= 29003 && msg <= 33098 && self.status !== 'rally') {
         if (self.status !== 'rally') {
           self.oldStatus = self.status;
         }
@@ -163,6 +164,10 @@ function mind(self){
   //always update our locations and send death of enemy castle signal if possible
   base.updateKnownStructures(self);
 
+  if (self.status !== 'rally') {
+    self.useRallyTargetToMakeLattice = true;
+  }
+  
   let nearestStructure = search.findNearestStructure(self);
   let distToStructureFromMe = qmath.dist(self.me.x, self.me.y, nearestStructure.x, nearestStructure.y);
   if (robotMap[self.finalTarget[1]][self.finalTarget[0]] > 0 && robotMap[self.finalTarget[1]][self.finalTarget[0]] !== self.me.id) {
