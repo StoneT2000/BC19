@@ -224,10 +224,13 @@ function mind(self){
           let rels = base.rel(self.me.x, self.me.y, buildLoc[0], buildLoc[1]);
           // Tom is assuming this is where we build pilgrims
           // EDIT THIS
-          if (self.occupiedHalf === "own") {
-            self.signal(33099, 2);
-          } else if (self.occupiedHalf === "enemy") {
-            self.signal(33100, 2);
+          if (self.knownStructures[otherTeamNum].length) {
+            let nx = self.knownStructures[otherTeamNum][0].x;
+            let ny = self.knownStructures[otherTeamNum][0].y;
+            let msg = self.compressLocation(nx, ny); // Eventually = compressed location
+            let padding = 33099;
+            // Send this message to all units in surrounding area, though it is specifically aimed at churches
+            self.signal(padding + msg, 2);
           }
           
           action = self.buildUnit(2, rels.dx, rels.dy);
@@ -288,6 +291,16 @@ function mind(self){
           if (self.buildQueue.length > 0 && enoughResourcesToBuild(self, self.buildQueue[0])) {
             let unit = self.buildQueue.shift();
             let rels = base.rel(self.me.x, self.me.y, checkPos[0], checkPos[1]);
+
+            if (self.knownStructures[otherTeamNum].length) {
+              let nx = self.knownStructures[otherTeamNum][0].x;
+              let ny = self.knownStructures[otherTeamNum][0].y;
+              let msg = self.compressLocation(nx, ny); // Eventually = compressed location
+              let padding = 33099;
+              // Send this message to all units in surrounding area, though it is specifically aimed at churches
+              self.signal(padding + msg, 2);
+            }
+
             action = self.buildUnit(unit, rels.dx, rels.dy);
             return {action:action};
           }

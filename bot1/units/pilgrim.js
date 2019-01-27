@@ -125,7 +125,7 @@ function mind(self) {
   let robotsInVision = self.getVisibleRobots();
   for (let i = 0; i < robotsInVision.length; i++) {
     //we don't process the signal if the signal isn't from a unit that is visible and is on our team
-    if (robotsInVision[i].team === self.me.team){
+    if (robotsInVision[i].team === self.me.team) {
       let msg = robotsInVision[i].signal;
       signal.processMessagePilgrim(self, msg);
       if (msg >= 24586 && msg <= 28681 && self.status !== 'frontLineScout'){
@@ -195,24 +195,25 @@ function mind(self) {
         self.log(`Old Pilgrim was told to go mine ${self.allSpots[self.miningIndex].x}, ${self.allSpots[self.miningIndex].y} = ${self.miningIndex}`);
         self.finalTarget = [self.allSpots[self.miningIndex].x, self.allSpots[self.miningIndex].y];
       }
-
-      // Should pilgrims also send side information to each other?
-      // EDIT THIS: Watch out for slightly crossing the border and being on the wrong side
-      else if (msg === 33099 || msg === 33100) {
-        if (robotsInVision[i].unit === SPECS.CHURCH) {
-          if (msg === 33099) {
-            self.occupiedHalf = "own";
-          }
-
-          else if (msg === 33100) {
-            self.occupiedHalf = "enemy";
-          }
+      // Transfer location of enemy location        
+      else if (msg >= 33099 && msg <= 37194) {
+        let padding = 33099;
+        let enemyPos =  getLocation(msg-padding);
+        base.logStructure(self, enemyPos.x, enemyPos.y, otherTeamNum, 0);
+        let ox = enemyPos.x;
+        let oy = enemyPos.y
+        if (self.mapIsHorizontal) {
+          oy = mapLength - oy - 1;
         }
+        else {
+          ox = mapLength - ox - 1;
+        }
+        base.logStructure(self, ox, oy, self.me.team, 0);
+        self.enemyDirection = self.determineEnemyDirection(ox, oy);
+        self.log(`Enemy Direction from chuch at ${self.me.x}, ${self.me.y} is ${self.enemyDirection}`);
       }
-      
-      //if waiting for command, no signal is given, go to old spot, don't wait for castle to reassign
-
     }
+    //if waiting for command, no signal is given, go to old spot, don't wait for castle to reassign
   }
   // DO THIS FOR TESTING
   /*if (self.me.turn >= 0) {

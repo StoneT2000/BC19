@@ -58,7 +58,7 @@ function mind(self){
   let unitsInVision = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
-    if (robotsInVision[i].team === self.me.team){
+    if (robotsInVision[i].team === self.me.team) {
       signal.processMessageProphet(self, msg);
       if (msg >= 12294 && msg <= 24583){
         if (msg >= 12294 && msg <= 16389) {
@@ -109,6 +109,23 @@ function mind(self){
         self.finalTarget = [targetLoc.x, targetLoc.y];
         self.rallyTarget = self.finalTarget;
         self.log(`Preparing to rally at ${self.finalTarget}`);
+      }
+      // Determine position of enemy castle
+      else if (msg >= 33099 && msg <= 37194) {
+        let padding = 33099;
+        let enemyPos =  getLocation(msg-padding);
+        base.logStructure(self, enemyPos.x, enemyPos.y, otherTeamNum, 0);
+        let ox = enemyPos.x;
+        let oy = enemyPos.y
+        if (self.mapIsHorizontal) {
+          oy = mapLength - oy - 1;
+        }
+        else {
+          ox = mapLength - ox - 1;
+        }
+        base.logStructure(self, ox, oy, self.me.team, 0);
+        self.enemyDirection = self.determineEnemyDirection(ox, oy);
+        self.log(`Enemy Direction from chuch at ${self.me.x}, ${self.me.y} is ${self.enemyDirection}`);
       }
     }
     

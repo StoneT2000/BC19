@@ -140,6 +140,24 @@ function mind(self){
     if (robotsInVision[i].unit === SPECS.CHURCH) {
       unitsInVision[6].push(robotsInVision[i]);
     }
+    if (robotsInVision[i].team === self.me.team) {
+      if (msg >= 33099 && msg <= 37194) {
+        let padding = 33099;
+        let enemyPos =  getLocation(msg-padding);
+        base.logStructure(self, enemyPos.x, enemyPos.y, otherTeamNum, 0);
+        let ox = enemyPos.x;
+        let oy = enemyPos.y
+        if (self.mapIsHorizontal) {
+          oy = mapLength - oy - 1;
+        }
+        else {
+          ox = mapLength - ox - 1;
+        }
+        base.logStructure(self, ox, oy, self.me.team, 0);
+        self.enemyDirection = self.determineEnemyDirection(ox, oy);
+        self.log(`Enemy Direction from chuch at ${self.me.x}, ${self.me.y} is ${self.enemyDirection}`);
+      }
+    }
   }
   
   //always update our locations and send death of enemy castle signal if possible
