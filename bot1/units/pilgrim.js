@@ -696,19 +696,18 @@ function mind(self) {
         let rels = base.rel(self.me.x, self.me.y, self.buildTarget[0], self.buildTarget[1]);
         self.log(`TRIED TO BUILD: ${rels.dx}, ${rels.dy}`);
         
-        if (self.fuel + self.me.fuel >= 250 && self.karbonite + self.me.karbonite >= 75){
+        if (self.fuel + self.me.fuel >= 300 && self.karbonite + self.me.karbonite >= 75){
           self.status = 'goingToDeposit';
-          if (!self.churchBuilt && self.occupiedHalf !== null) {
-            self.log("Castle-built pilgrim is building church");
-            let msg = null;
-            if (self.occupiedHalf === "own") {
-              msg = 33099;
-            } else {
-              msg = 33100;
-            }
+
+          if (self.knownStructures[otherTeamNum].length) {
+            let nx = self.knownStructures[otherTeamNum][0].x;
+            let ny = self.knownStructures[otherTeamNum][0].y;
+            let msg = self.compressLocation(nx, ny); // Eventually = compressed location
+            let padding = 33099;
             // Send this message to all units in surrounding area, though it is specifically aimed at churches
-            self.signal(msg, 2);
+            self.signal(padding + msg, 2);
           }
+
           return {action:self.buildUnit(SPECS.CHURCH, rels.dx, rels.dy)}
         }
         else {
@@ -765,8 +764,9 @@ function mind(self) {
   }
   
   // HALF-DETERMINING STUFF!
+  /*
   let ownCastlePos = {x: 0, y: 0}; // EDIT THIS! A church-built pilgrim needs some way of knowing the castlePos
-  /* Own castles should be transferred whenever a castle builds a pilgrim. The pilgrim should get the position of our castles with the lookup table */
+  // Own castles should be transferred whenever a castle builds a pilgrim. The pilgrim should get the position of our castles with the lookup table
   // Watch out for odd maps! -> Ask Stone!
   if (!self.churchBuilt && ownCastlePos !== null) {
     if (self.mapIsHorizontal) {
@@ -790,7 +790,10 @@ function mind(self) {
       }
      }
     }
-  }
+  }*/
+
+
+
   //When mining, check if building a church nearby is a good idea or not
   
   

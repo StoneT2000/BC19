@@ -25,7 +25,6 @@ function mind(self){
     
     // Occupied half
     self.occupiedHalf = null;
-    
     self.churchNeedsProtection = false;
     
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
@@ -49,8 +48,6 @@ function mind(self){
         self.lowerHalf = false;
       }
     }
-    
-    self.enemyDirection = self.determineEnemyDirection();
     
     let closestKarbonitePos = null;
     let closestKarboniteDist = 999999;
@@ -113,9 +110,25 @@ function mind(self){
   //SIGNAL PROCESSION
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
-    signal.processMessageChurch(self, msg); // Occupied half stuff is in here
-    let signalmsg = robotsInVision[i].signal;
-    if (msg === 4) {
+    // signal.processMessageChurch(self, msg); // Occupied half stuff is in here
+    if (robotsInVision[i].team === self.me.team) {
+      let padding = 33099;
+      if (msg >= padding && msg <= 37194) {
+        let enemyPos =  getLocation(msg-padding);
+        base.logStructure(self, enemyPos.x, enemyPos.y, otherTeamNum, 0);
+        let ox = enemyPos.x;
+        let oy = enemyPos.y
+        if (self.mapIsHorizontal) {
+          oy = mapLength - oy - 1;
+        }
+        else {
+          ox = mapLength - ox - 1;
+        }
+        base.logStructure(self, ox, oy, self.me.team, 0);
+        
+        self.enemyDirection = self.determineEnemyDirection(ox, oy);
+        self.log(`Enemy Direction from chuch at ${self.me.x}, ${self.me.y} is ${self.enemyDirection}`);
+      }
     }
   }
   self.status = 'build';
