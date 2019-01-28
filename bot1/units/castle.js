@@ -941,6 +941,9 @@ function mind(self) {
         if (unitsInVincinity[SPECS.PROPHET].length <= self.prophets/(self.castles) && self.status !== 'pause') {
           //self.castleTalk(72);
           self.buildQueue = [4];
+          if (self.prophets > 15 * self.crusaders) {
+            self.buildQueue = [3];
+          }
         }
         //IMPROVEMNTNTTNT
         if (unitsInVincinity[SPECS.PROPHET].length >= 11 && self.oppositeCastleDestroyed === false && self.castleHasScout === true) {
@@ -983,6 +986,9 @@ function mind(self) {
       if (self.karbonite > 200 && self.fuel > self.prophets * 50) {
         if (self.buildQueue.length === 0){
           self.buildQueue = [4];
+          if (self.prophets > 15 * self.crusaders) {
+            self.buildQueue = [3];
+          }
         }
       }
       self.sawEnemyLastTurn = false;
@@ -1054,6 +1060,9 @@ function mind(self) {
       }
       else if ((self.karbonite >= 200 && self.fuel > (self.prophets + self.preachers) * 50)){
         self.buildQueue = [4];
+        if (self.prophets > 15 * self.crusaders) {
+            self.buildQueue = [3];
+          }
         //self.log(`${unitsInVincinity[SPECS.PROPHET].length} prop near, opp destroyed: ${self.oppositeCastleDestroyed}`)
         if (unitsInVincinity[SPECS.PROPHET].length >= 11 && self.oppositeCastleDestroyed === false && self.castleHasScout === true) {
           /*
@@ -1148,6 +1157,9 @@ function mind(self) {
     let padding = 20488;
     self.finalSignal = true;
     self.signal (padding + compressedLocationHash, 100);
+  }
+  else if (self.me.turn >= 920 && self.fuel >= 1000) {
+    self.buildQueue = [3];
   }
   
 
