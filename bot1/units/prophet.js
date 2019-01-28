@@ -40,6 +40,21 @@ function mind(self){
         break;
       }
     }
+    for (let i = 0; i < mapLength; i++) {
+      for (let j = 0; j < mapLength; j++) {
+        if (fuelMap[i][j] === true){
+          self.fuelSpots.push({x:j, y:i});
+          self.allSpots.push({x:j, y:i, type:'fuel'});
+        }
+        if (karboniteMap[i][j] === true){
+          self.karboniteSpots.push({x:j, y:i});
+          self.allSpots.push({x:j, y:i, type:'karbonite'});
+        }
+      }
+    }
+    
+    
+    
     self.enemyDirection = self.determineEnemyDirection();
     
   }
@@ -142,6 +157,37 @@ function mind(self){
       unitsInVision[6].push(robotsInVision[i]);
     }
   }
+  //each turn using calte talk tell castles which places are empty and free if we see them
+  
+  if (self.me.turn > 1){
+    //find closest
+    let cdist = 99999;
+    let cSpot = null;
+    for (let i = 0; i < self.allSpots.length; i++) {
+      let spot = self.allSpots[i];
+      let id = robotMap[spot.y][spot.x];
+      let robotThere = self.getRobot(robotMap[spot.y][spot.x]);
+      if (id === 0 || (robotThere !== null && robotThere.team === self.me.team && robotThere.unit !== SPECS.PILGRIM)) {
+        let distToSpot = qmath.dist(self.me.x, self.me.y, spot.x, spot.y);
+        if (distToSpot <  cdist) {
+          cdist = distToSpot;
+          cSpot = spot;
+         
+        }
+      }
+
+
+    }
+    if (cSpot !== null) {
+      let indexOfspot = getIndexAllSpots(self, [cSpot.x, cSpot.y]);
+      //self.log(`Spot ${cSpot.x}, ${cSpot.y} is free; index: ${indexOfspot + 77}`);
+      self.castleTalk(indexOfspot + 77);
+      
+    }
+  }
+  
+  
+  
   //each turn, we update our local self.knownStructures list.
   //it also sets self.destroyedCastle to true if the castle that it knew about is no longer there anymore
   base.updateKnownStructures(self);
@@ -372,4 +418,14 @@ function mind(self){
   return {action:action}; 
 }
 
+
+function getIndexAllSpots(self, pos){
+  for (let i = 0; i < self.allSpots.length; i++) {
+    let p = self.allSpots[i];
+    if (p.x === pos[0] && p.y === pos[1]) {
+      return i;
+    }
+  }
+  return null;
+}
 export default {mind}

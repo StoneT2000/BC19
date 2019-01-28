@@ -455,6 +455,22 @@ function mind(self) {
       self.searchQueue.push({position: [nx,ny], distance: distToThere, type:'karbonite'});
     }
   }
+  //then we add more based on castle talked positions from prophets
+  for (let i = 0; i < robotsInVision.length; i++) {
+    let msg = robotsInVision[i].castle_talk;
+    let id = robotsInVision[i].id;
+    if (msg >= 77 && self.allUnits[id] !== undefined) {
+      if (self.allUnits[id].unit === SPECS.PROPHET) {
+        let newInd = msg - 77;
+        //self.log(`Heard ${msg}`);
+        let oml = self.allSpots[newInd];
+        let distToThere = qmath.dist(self.me.x, self.me.y, oml.x, oml.y);
+        self.log(`Heard that ${oml.x}, ${oml.y} is open (${oml.type})`);
+        self.searchQueue.push({position: [oml.x, oml.y], distance: distToThere, type:oml.type});
+      }
+    }
+  }
+  
   self.searchQueue.sort(function(a,b){
     return a.distance - b.distance
   });
