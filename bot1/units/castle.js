@@ -81,6 +81,7 @@ function mind(self) {
     }
     let numFuelSpots = self.fuelSpots.length;
     self.maxPilgrims = Math.ceil((numFuelSpots + self.karboniteSpots.length)/2);
+    self.maxHalf = Math.ceil((numFuelSpots + self.karboniteSpots.length)/2);;
     
     if (!self.mapIsHorizontal) {
       self.halfPoint = mapLength/2;
@@ -465,15 +466,36 @@ function mind(self) {
         //self.log(`Heard ${msg}`);
         let oml = self.allSpots[newInd];
         let distToThere = qmath.dist(self.me.x, self.me.y, oml.x, oml.y);
-        self.log(`Heard that ${oml.x}, ${oml.y} is open (${oml.type})`);
+        //self.log(`Heard that ${oml.x}, ${oml.y} is open (${oml.type})`);
         self.searchQueue.push({position: [oml.x, oml.y], distance: distToThere, type:oml.type});
+        
       }
     }
   }
-  
+  //make sure we dont have the same positions in searchQueue
+  let uniqueQueue = [];
+  for (let i = 0; i < self.searchQueue.length; i++) {
+    //check to submit
+    let pushThis = true;
+    let thisSpot = self.searchQueue[i];
+    let checkVal = thisSpot.position;
+    for (let j = 0; j < uniqueQueue.length; j++) {
+      let uspot = uniqueQueue[j];
+      if (uspot.position[0] === checkVal[0] && uspot.position[1] === checkVal[1]) {
+        pushThis = false;
+        break;
+      }
+    }
+    if (pushThis === true) {
+      uniqueQueue.push(thisSpot);
+    }
+  }
+  self.searchQueue = uniqueQueue;
   self.searchQueue.sort(function(a,b){
     return a.distance - b.distance
   });
+  //self.log(`Avaible spots: ${self.searchQueue.length}`);
+  self.maxPilgrims = Math.max(self.searchQueue.length, self.maxHalf);
   //self.log(`Safe spots:${self.searchQueue.length}`);
   //COUNTING NUMBER OF UNITS PLANNING TO OR ALREADY MINING FUEL OR KARB.
   for (let index in self.occupiedMiningLocationsIndices) {
