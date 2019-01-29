@@ -298,16 +298,27 @@ function mind(self) {
     //find position that is the farthest away from all enemies
     if (obot.team === otherTeamNum) {
       let distToEnemy = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
-      if (self.status === 'frontLineScout' && distToEnemy > 64 && distToEnemy <= 100 && obot.unit !== SPECS.PILGRIM) {
+      
+      //if enemy is preacher, stay within 16 to 100
+      //if anything else but a pilgrim, stay within 64 to 100
+      if (((distToEnemy > 64 && obot.unit !== SPECS.PREACHER) || (distToEnemy >= 36 && obot.unit === SPECS.PREACHER)) && distToEnemy <= 100 && obot.unit !== SPECS.PILGRIM) {
         //enemies just out of range of attack but inside vision don't need to be avoided, we can proceed as normal.
         
         //self.log(`I'm gonna stop for now at position: ${self.me.x}, ${self.me.y}`);
-        self.finalTarget = [self.me.x, self.me.y];
-        if (self.onFrontLine === true) {
-          //tell castle in position along frontline
-          
+        if (self.status === 'frontLineScout' ){
+          self.finalTarget = [self.me.x, self.me.y];
+          if (self.onFrontLine === true) {
+            //tell castle in position along frontline
+
+          }
+          self.onFrontLine = true;
         }
-        self.onFrontLine = true;
+        else {
+          //return a forced action if the bot is mining. if the bot is trying to go to a spot, allow it to keep testing the bounds and go to its desired spot
+          if (self.status === 'mineKarb' || self.status === 'mineFuel'){
+            forcedAction = '';
+          }
+        }
       } 
       else {
         //enemies that are possibly in range of attack may need to be avoided
