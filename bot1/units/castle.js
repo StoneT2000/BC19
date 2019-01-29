@@ -772,7 +772,20 @@ function mind(self) {
   
   //ACCURATE numbers as of the end of the last round
   self.log(`Round ${self.me.turn}: Castle (${self.me.x}, ${self.me.y}); Status: ${self.status}; Castles:${self.castles}, Churches: ${self.churches + self.churchesThatBuild}, Pilgrims: ${self.pilgrims}, Crusaders: ${self.crusaders}, Prophets: ${self.prophets}, Preachers: ${self.preachers}, Fuel:${self.fuel}, Karbonite: ${self.karbonite}; MiningFuel:${self.numPilgrimsMiningFuel}; MiningKarb:${self.numPilgrimsMiningKarbonite}; Scouts: ${self.scouts} ${self.me.time} ms left`);
-  
+  let unitsInVincinity = {0:[],1:[],2:[],3:[],4:[],5:[]};
+  let farthestUnitDist = {0:0,1:0,2:0,3:0,4:0,5:0};
+  for (let i = 0; i < robotsInVision.length; i++) {
+    let obot = robotsInVision[i];
+    if (obot.team === self.me.team){
+      let distToUnit = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
+      if (distToUnit <= 100) {
+        unitsInVincinity[obot.unit].push(obot);
+        if (distToUnit > farthestUnitDist[obot.unit]) {
+          farthestUnitDist[obot.unit] = distToUnit;
+        }
+      }
+    }
+  }
   //Commands code:
   //Here, castles give commands to surrounding units?
   //Give commands to rally units to attack a known castle
@@ -847,22 +860,24 @@ function mind(self) {
       }
     }
     if (msg === 135 && self.allUnits[heardId].type === 'scout') {
-      let newRallyTarget = null;
-      //go to our own rally target
-      //self.log(`heard scout stopped`);
-      let bc = self.rallyTargets[self.myScoutsId];
-      if (bc !== undefined && bc.position !== undefined) {
-        if (bc.position[0] !== null && bc.position[1] !== null){ 
-          newRallyTarget = bc.position;
+      if (unitsInVincinity[SPECS.PROPHET].length >= 12) {
+        let newRallyTarget = null;
+        //go to our own rally target
+        let bc = self.rallyTargets[self.myScoutsId];
+        if (bc !== undefined && bc.position !== undefined) {
+          if (bc.position[0] !== null && bc.position[1] !== null){ 
+            newRallyTarget = bc.position;
+          }
         }
-      }
 
-      if (newRallyTarget !== null){
-        let padding = 29003
-        //reduce the number of times this signal is sent later
-        let compressedLocationNum = self.compressLocation(newRallyTarget[0], newRallyTarget[1]);
-        //self.signal(padding + compressedLocationNum, 64);
-        //return '';
+        if (newRallyTarget !== null && self.lastRallySignal < self.me.turn - 5){
+          let padding = 29003
+          //reduce the number of times this signal is sent later
+          let compressedLocationNum = self.compressLocation(newRallyTarget[0], newRallyTarget[1]);
+          self.signal(padding + compressedLocationNum, 64);
+          self.lastRallySignal = self.me.turn
+          //return '';
+        }
       }
     }
   }
@@ -915,42 +930,11 @@ function mind(self) {
   //code for determing when castle sends its local army out.
   //let unitsInVincinity = search.unitsInRadius(self, 100);
 
-  let unitsInVincinity = {0:[],1:[],2:[],3:[],4:[],5:[]};
-  let farthestUnitDist = {0:0,1:0,2:0,3:0,4:0,5:0};
-  for (let i = 0; i < robotsInVision.length; i++) {
-    let obot = robotsInVision[i];
-    if (obot.team === self.me.team){
-      let distToUnit = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
-      if (distToUnit <= 100) {
-        unitsInVincinity[obot.unit].push(obot);
-        if (distToUnit > farthestUnitDist[obot.unit]) {
-          farthestUnitDist[obot.unit] = distToUnit;
-        }
-      }
-    }
-  }
+
   
   //determine if we want to move our archer defence up to front line
   
-  if (unitsInVincinity[SPECS.PROPHET].length >= 12) {
-    let newRallyTarget = null;
-    //go to our own rally target
-    let bc = self.rallyTargets[self.myScoutsId];
-    if (bc !== undefined && bc.position !== undefined) {
-      if (bc.position[0] !== null && bc.position[1] !== null){ 
-        newRallyTarget = bc.position;
-      }
-    }
-
-    if (newRallyTarget !== null && self.lastRallySignal < self.me.turn - 5){
-      let padding = 29003
-      //reduce the number of times this signal is sent later
-      let compressedLocationNum = self.compressLocation(newRallyTarget[0], newRallyTarget[1]);
-      self.signal(padding + compressedLocationNum, 64);
-      self.lastRallySignal = self.me.turn
-      //return '';
-    }
-  }
+  
   
   
   

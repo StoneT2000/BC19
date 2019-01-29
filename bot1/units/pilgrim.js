@@ -31,7 +31,7 @@ function mind(self) {
     self.statusBeforeReturn = '';
     self.status = 'searchForKarbDeposit';
     self.status = 'waitingForCommand';
-
+    self.onFrontLine = false;
     // SCOUTING
     self.firstTimeScouting = true;
     self.frontLineScoutingTarget = {x: 0, y: 0};
@@ -67,7 +67,6 @@ function mind(self) {
       if (initialized.signal === 29002) {
         self.status = 'frontLineScout';
         self.castleTalk(6);
-        self.log(`Castle talking 6`);
       }
       
       self.globalTurn += 1;
@@ -228,7 +227,6 @@ function mind(self) {
           }
         }
         self.log(`Enemy Direction from pilgrim at ${self.me.x}, ${self.me.y} is ${self.enemyDirection}`);
-        self.log(`Pilgrim on own half: ${ownHalf(self,self.me.x, self.me.y)}`);
       }
     }
     //if waiting for command, no signal is given, go to old spot, don't wait for castle to reassign
@@ -250,84 +248,34 @@ function mind(self) {
   // FRONTLINE SCOUTING
   else if (self.status === 'frontLineScout') {
     //self.log("Hey guys, I'm a front line scout!");
-    // 1. Find the closest carbonite spot
     if (self.firstTimeScouting) {
-      /*
-      let minSpotDist = 9999;
-      let targetLoc = {x: 0, y: 0};
-      for (let i = 0; i < self.allSpots.length; i++) {
-        if (!ownHalf(self, self.allSpots[i].x, self.allSpots[i].y)) {
-          // Calculate minimum distance
-          let currentDist = qmath.dist(self.me.x, self.me.y, self.allSpots[i].x, self.allSpots[i].y)
-          if (currentDist < minSpotDist) {
-            minSpotDist = currentDist;
-            targetLoc.x = self.allSpots[i].x;
-            targetLoc.y = self.allSpots[i].y; // By end of loop, targetLoc should be minimum
-          }
-        }
-      }
-      self.log(`And I have identified the nearest enemy spot to be located at ${targetLoc.x}, ${targetLoc.y}`)
-      self.frontLineScoutingTarget = targetLoc;
-      self.finalTarget = [targetLoc.x, targetLoc.y];
-      self.firstTimeScouting = false;
-      */
       self.frontLineScoutingTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
       self.finalTarget = self.frontLineScoutingTarget;
     }
-    // Search for enemy units
-    /*
-    let robotsInVision = self.getVisibleRobots();
-    for (let i = 0; i < robotsInVision.length; i++) {
-      if (robotsInVision[i].team === otherTeamNum) {
-        let distToEnemy = qmath.dist(self.me.x, self.me.y, robotsInVision[i].x, robotsInVision[i].y);
-        if (distToEnemy > 64 && distToEnemy <= 100) { // Change these values
-          // Do we care about being exposed by enemy pilgrims?
-          self.log(`I'm gonna stop for now at position: ${self.me.x}, ${self.me.y}`);
-          self.finalTarget = [self.me.x, self.me.y];
-        }
-      }
-    }*/
   }
-  /* PILGRIM SCOUTING
-  else if (self.status === 'scout') {
-    // Scouting code by Tom
-    // First, find the closest resource spot where enemies could build churches
-    // Could we improve this to be resource clumps?
-    if (self.firstTimeScouting) {
-      let minSpotDist = 9999;
-      let targetLoc = [0, 0];
-      for (let i = 0; i < self.allSpots.length; i++) {
-        if (!ownHalf(self, self.allSpots[i].x, self.allSpots[i].y)) {
-          // Calculate minimum distance
-          let currentDist = qmath.dist(self.me.x, self.me.y, self.allSpots[i].x, self.allSpots[i].y)
-          if (currentDist < minSpotDist) {
-            minSpotDist = currentDist;
-            targetLoc = [self.allSpots[i].x, self.allSpots[i].y]; // By end of loop, targetLoc should be minimum
-          }
-        }
-      }
-      self.finalTarget = [targetLoc[0], targetLoc[1]];
-      self.firstTimeScouting = false;
-    }
 
-    // Constantly search for enemy churches
-    let robotsInVision = self.getVisibleRobots();
-    for (let i = 0; i < robotsInVision.length; i++) {
-      if (robotsInVision[i].team !== self.me.team) { // If on other team
-        if (robotsInVision[i].unit === SPECS.CHURCH) {
-          // Do some nice castleTalk stuff to send the info back
-        }
-      }
-    }
-  }*/
 
     //here, we tell castles our location
   if (self.status === 'frontLineScout' && self.me.turn > 1) {
-    if (self.me.turn % 2 === 0) { 
-      self.castleTalk(71 + self.me.y);
+    if (self.onFrontLine === true) {
+      //if on frontline, ocassionally remind caslte that
+      if (self.me.turn % 3 === 0) { 
+        self.castleTalk(71 + self.me.y);
+      }
+      else if (self.me.turn % 3 === 1){
+        self.castleTalk(7 + self.me.x);
+      }
+      else {
+        self.castleTalk(135);
+      }
     }
     else {
-      self.castleTalk(7 + self.me.x);
+      if (self.me.turn % 2 === 0) { 
+        self.castleTalk(71 + self.me.y);
+      }
+      else {
+        self.castleTalk(7 + self.me.x);
+      }
     }
   }
   
@@ -344,18 +292,25 @@ function mind(self) {
   //regardless, pilgrim tries to stay out of shooting range
   let farthestdist;
   let enemyPositionsToAvoid = [];
+  self.onFrontLine = false;
   for (let i = 0; i < robotsInVision.length; i++) {
     let obot = robotsInVision[i];
     //find position that is the farthest away from all enemies
     if (obot.team === otherTeamNum) {
       let distToEnemy = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
       if (self.status === 'frontLineScout' && distToEnemy > 64 && distToEnemy <= 100 && obot.unit !== SPECS.PILGRIM) {
+        //enemies just out of range of attack but inside vision don't need to be avoided, we can proceed as normal.
+        
         //self.log(`I'm gonna stop for now at position: ${self.me.x}, ${self.me.y}`);
         self.finalTarget = [self.me.x, self.me.y];
-        
-        //self.castleTalk(129); //tell castle in position along frontline
+        if (self.onFrontLine === true) {
+          //tell castle in position along frontline
+          
+        }
+        self.onFrontLine = true;
       } 
       else {
+        //enemies that are possibly in range of attack may need to be avoided
         if (self.status === 'frontLineScout' && distToEnemy <= 100) { // Not sure if we need this
           //we use this to tell the pilgrim to move onto the scouting target if it is open
           //self.finalTarget = [self.frontLineScoutingTarget.x, self.frontLineScoutingTarget.y];
