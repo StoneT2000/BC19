@@ -38,21 +38,6 @@ function processMessageCastleTalk(self, msg, id) {
         self.rallyTargets[id] = {};
         self.rallyTargets[id].position = [null, null];
         break;
-      case 7:
-        //this means castle opposing the very first castle in turnqueue is gone
-        //let pmsg = msg - 7;
-        //self.knownStructures[self.me.team].shift();
-      case 8:
-        //this means castle opposing the 2nd caslte in queue is gone
-        //self.knownStructures[self.me.team].shift();
-        break;
-      case 9:
-        //this means castle oppoisng the 3rd caslte in queue is gone
-        //self.knownStructures[self.me.team].shift();
-        break;
-      case 75:
-      case 237:
-        break;
       default:
         break;
     }
@@ -60,14 +45,10 @@ function processMessageCastleTalk(self, msg, id) {
 function processMessageCastle (self, msg, id) {
   switch (msg) {
     case 4:
-      //process in castle.js. Received when a pilgrim is about to give karbonite or fuel
       break;
   }
 }
 
-/* All of the bottom message processing functions will receive the same message if within range
-* 
-*/
 function processMessageCrusader(self, msg){
   switch (msg){
     case 0:
@@ -76,8 +57,6 @@ function processMessageCrusader(self, msg){
       self.status = 'searchAndAttack';
       break;
     case 16390:
-      //self.status = 'rally';
-      //self.finalTarget = self.rallyTarget;
       break;
     case 16391:
       if (self.oldStatus !== 'searchAndAttack' && self.status !== 'searchAndAttack'){
@@ -98,18 +77,11 @@ function processMessagePreacher(self, msg){
       self.status = 'searchAndAttack';
       break;
     case 5:
-      //preachers waiting for stack of fuel to engage in next venture stay as that status
       if (self.status !== 'waitingForFuelStack'){
         self.status = 'defend';
       }
       break;
-    //if message is from 6 to 4101, this is a map location, with 6 units of padding. Used to tell attacking units to target a location
-      //if message is from 4102, to 8197, this is a map location that a castle tells the unit, it is the map location of an enemy castle.
-      //if message is from 8198 12293
-      //if message is from 12294 to 16389, attack target
     case 16390:
-      //self.status = 'rally';
-      //self.finalTarget = self.rallyTarget;
       break;
     case 16391:
       if (self.oldStatus !== 'searchAndAttack' && self.status !== 'searchAndAttack'){
@@ -132,18 +104,15 @@ function processMessageProphet(self, msg){
       }
       break;
     case 5:
-      //preachers waiting for stack of fuel to engage in next venture stay as that status
       if (self.status !== 'waitingForFuelStack'){
         self.status = 'defend';
       }
       break;
     case 16390:
       self.status = 'defend';
-      //self.finalTarget = self.defendTarget;
       break;
     case 16391:
       self.status = 'defendOldPos';
-      //self.finalTarget = self.defendTarget;
       self.defendTarget = self.origStructureLoc;
       break;
     case 24585:
