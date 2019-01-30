@@ -455,12 +455,13 @@ function mind(self) {
     let msg = robotsInVision[i].castle_talk;
     let id = robotsInVision[i].id;
     if (msg >= 77 && self.allUnits[id] !== undefined) {
-      if (self.allUnits[id].unit === SPECS.PROPHET || self.allUnits[id].units === SPECS.PILGRIM) {
+      //self.log(`Unit Type: ${self.allUnits[id].unit}, id: ${id}`);
+      if (self.allUnits[id].unit === SPECS.PROPHET || self.allUnits[id].unit === SPECS.PILGRIM) {
         let newInd = msg - 77;
         //self.log(`Heard ${msg}`);
         let oml = self.allSpots[newInd];
         let distToThere = qmath.dist(self.me.x, self.me.y, oml.x, oml.y);
-        //self.log(`Heard that ${oml.x}, ${oml.y} is open (${oml.type})`);
+        self.log(`Heard that ${oml.x}, ${oml.y} is open (${oml.type} from ${self.allUnits[id].unit})`);
 
         //let newSafeSpot = {x: oml.x, y: oml.y, safe: true};
         self.allSpots[newInd].safe = true;
@@ -484,6 +485,7 @@ function mind(self) {
     }
     if (pushThis === true) {
       uniqueQueue.push(thisSpot);
+      self.log(`spot: ${thisSpot.position}`);
     }
   }
   self.searchQueue = uniqueQueue;
