@@ -1,9 +1,5 @@
 import qmath from 'math.js'
 import search from 'search.js';
-
-
-//unitMoveFuelCosts corresponds directly with unitMoveDeltas in terms of unittype and cost for that move at that index
-//unitMoveDeltas sorted by fuel cost
 const unitMoveDeltas = {
   0:null,
   1:null,
@@ -83,16 +79,6 @@ const unitAttackFuelCosts = {
   4:25,
   5:15,
 }
-/*
-*
-* Greedy algorithm that returns relative dx dy that this unit should take that reaches the closest to target p2x,p2y within fuel constraints, passability etc.
-* @param {number} p1x - x
-* @param {number} p1y - x
-* @param {number} p2x - x
-* @param {number} p2y - x
-* @param {self} self - self
-* @param {boolean} avoidFriends - whether or not avoid friendly units to avoid clumping
-*/
 function relToPos(p1x, p1y, p2x, p2y, self, avoidFriends = false, fast = true) {
   let vals = rel(p1x, p1y, p2x, p2y);
   let deltas = unitMoveDeltas[self.me.unit];
@@ -161,7 +147,6 @@ function logStructure(self, x, y, team, unit, push = true) {
   let exists = false;
   for (let k = 0; k < self.knownStructures[team].length; k++) {
     let knownStructure = self.knownStructures[team][k];
-    //self.log(`${knownStructure.x}, ${knownStructure.y}`);
     if (x === knownStructure.x && y === knownStructure.y) {
       exists = true;
       break;
@@ -178,31 +163,21 @@ function logStructure(self, x, y, team, unit, push = true) {
   }
 }
 
-//Checks within vision and updates itself whether or not a structure still exists
 function updateKnownStructures(self) {
   let robotMap = self.getVisibleRobotMap();
-  //self.log(`ORIG ENEMY CASTLE: ${self.knownStructures[1][0].x},${self.knownStructures[1][0].y}`);
-  //self.log(`NEW ENEMY CASTLE: ${self.knownStructures[1][1].x},${self.knownStructures[1][1].y}`);
-  
   for (let teamNum = 0; teamNum < 2; teamNum++){
     let newKnownStructures = [];
     for (let k = 0; k < self.knownStructures[teamNum].length; k++) {
       let knownStructure = self.knownStructures[teamNum][k];
       let id = robotMap[knownStructure.y][knownStructure.x];
       let orobot = self.getRobot(id);
-      //self.log(`${teamNum}: Struct at ${knownStructure.x},${knownStructure.y} is ${orobot}`);
       if (orobot === null){
-        //we dont know about the structure's whereabouts
         newKnownStructures.push(knownStructure);
       }
       else if (orobot.unit === knownStructure.unit) {
-        //structure is still there
         newKnownStructures.push(knownStructure);
       }
       else if (teamNum !== self.me.team){
-        //structure is def. gone
-        //destroyed structure, send signal to castle about its death
-        self.log(`Killed castle`);
         if (self.mapIsHorizontal){
           self.castleTalk(7 + knownStructure.x);
         }
@@ -217,7 +192,6 @@ function updateKnownStructures(self) {
     self.knownStructures[teamNum] = newKnownStructures;
   }
   for (let i = 0; i < self.knownStructures[1].length; i++) {
-    //self.log(`Enemy structs: ${self.knownStructures[1][1].x}, ${self.knownStructures[1][1].y}`);
   }
   
 }

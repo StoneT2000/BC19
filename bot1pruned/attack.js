@@ -13,11 +13,6 @@ function attackNearestAOE(self){
   for (let i = 0; i < robotMap.length; i++) {
     for (let j = 0; j < robotMap[i].length; j++) {
       if (robotMap[i][j] >= 0 && gameMap[i][j] === true) {
-
-        //i = y value, j =  value;
-        //let oRobot = self.getRobot(oRobotId);
-        //location in vision and attackble because preacher vision = attack radius
-        //check units that will get hit, maximize damage
         let checkPositions = search.circle(self, j, i, 2);
         let unitsAttacked = 0;
         let thereIsEnemy = false;
@@ -26,10 +21,8 @@ function attackNearestAOE(self){
           let oRobotId = robotMap[checkPos[1]][checkPos[0]];
           if (oRobotId > 0) {
             let oRobot = self.getRobot(oRobotId);
-            //if other team, add to number of affected enemies
-            //Strategy is to hit as many enemies as possible and as little friendlies as possible
             if (oRobot.team !== self.me.team) {
-              unitsAttacked += 1; //enemy team hit
+              unitsAttacked += 1;
               thereIsEnemy = true;
             }
             else {
@@ -61,7 +54,6 @@ function attackNearest(self) {
   for (let i = 0; i < robotsInVision.length; i++) {
     let oVisRobot = robotsInVision[i];
 
-    //check if they defined or not, because of some bugs with bc19 i think
     if (oVisRobot.x !== undefined && oVisRobot.y !== undefined){
       let distToTarget = qmath.dist(self.me.x, self.me.y, oVisRobot.x, oVisRobot.y);
       if (distToTarget < leastDistToTarget) {
