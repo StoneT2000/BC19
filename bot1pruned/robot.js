@@ -10,32 +10,20 @@ import search from './bot1/search.js'
 import base from './bot1/base.js';
 
 
-//REMEMBER, NO GLOBAL VARIABLES
 let unitTypesStr = ['Castle', 'Church', 'Pilgrim', 'Crusader', 'Prophet', 'Preacher'];
-
-
-/* SYSTEM
-* We run unit.mind(this) to get decisions
-* That returns an object result where
-* result.action = the action to be returned
-*/
-
 class MyRobot extends BCAbstractRobot {
   constructor() {
     super();
     this.globalTurn = 0;
-    this.status = 'justBuilt'; //current status of robot; just built means bot was just built has no prior status
+    this.status = 'justBuilt';
     
-    this.target = [0,0]; //current target destination for robot, used for travelling to waypoints
-    this.finalTarget = [0,0]; //the final target bot wants to go to
-    this.path = []; //path bot follows
+    this.target = [0,0];
+    this.finalTarget = [0,0];
+    this.path = [];
 
-    this.knownStructures = {0:[],1:[]}; //contains positions of all the known structures this robot knows. Keys 0 is team 0, key 1 is team1. Each is an array of objects {x:,y:}
-    //this.knownStructures[id].team = team the structure is on, .position = [x,y] position array;
+    this.knownStructures = {0:[],1:[]};
     this.knownDeposits = {};
     
-    //Counts for number of units we have
-    //Available only to castles
     this.castles = 0;
     this.churches = 0;
     this.pilgrims = 0;
@@ -43,22 +31,20 @@ class MyRobot extends BCAbstractRobot {
     this.prophets = 0;
     this.preachers = 0;
     
-    this.buildQueue = []; //queue of what unit to build for castles and churches. First element is the next unit to build.
+    this.buildQueue = [];
     
     this.maxPilgrims = 0;
     this.maxCrusaders = 1000;
     
     
     
-    this.allSpots = []; //array of all deposits;
-    this.fuelSpots = []; //array of all fuelspots
-    this.karboniteSpots = []; //array of all karbonite spots
+    this.allSpots = [];
+    this.fuelSpots = [];
+    this.karboniteSpots = [];
     this.sentCommand = false;
-    this.planner = null; //planner used to navigate
+    this.planner = null;
     
-    this.allUnits = {}; //array of all units castle can still hear. allUnits[id] is unit type
-    //if we no longer hear back from id, we remove it from this list. This is how we keep accurate unit counts
-    
+    this.allUnits = {};
   };
   
   turn() {
@@ -92,14 +78,7 @@ class MyRobot extends BCAbstractRobot {
     }
     let endTime = new Date();
   }
-  
-  //other helper functions
 
-  /* 
-  * Returns whether or not a bot can move dx dy
-  * @param {number} dx - move dx in x direction
-  * @param {number} dy - move dy in y direction
-  */
   canMove(dx, dy) {
     let robotMap = this.getVisibleRobotMap();
     let passableMap = this.getPassableMap();
@@ -112,20 +91,13 @@ class MyRobot extends BCAbstractRobot {
     }
     return false;
   }
-
-  /*
-  * Returns true if bot has enough fuel to attack
-  */
   readyAttack() {
     let fuelCost = SPECS.UNITS[this.me.unit].ATTACK_FUEL_COST;
     if (this.fuel >= fuelCost) {
       return true;
     }
   }
-  /*
-  * Sets the robots finalTarget key and also plans new path. After setting this, if the robot mind hasn't decided to perform an action earlier, it will always move towards this target accordingly. This doesn't need to be run because each unit uses navigate to run
-  * @param{[px,py]} newTarget - array of position of new target
-  */
+
   setFinalTarget(newTarget) {
     this.finalTarget = newTarget;
     let path = [];
@@ -142,11 +114,6 @@ class MyRobot extends BCAbstractRobot {
     this.target[0] = path.shift();
   }
 
-  /*
-  * Returns the action that leads the bot to the final target using the planner
-  * @param{[x,y]} finalTarget - An array of the position of the target the bot wants to navigate to
-  * @param{boolean} avoidFriends - whether or not to move to 
-  */
   navigate(finalTarget, avoidFriends = false, fast = true) {
     if (finalTarget !== null){
       this.setFinalTarget(finalTarget);
@@ -175,35 +142,18 @@ class MyRobot extends BCAbstractRobot {
     }
     return '';
   }
-  /*
-  * Returns the nearest enemy unit
-  *
-  */
-  
-  /*
-  * Returns the map location given a compressed location value
-  * @param{num} hash - The compressed location
-  */
+
   getLocation(hash) {
     let xpos = hash % this.map[0].length;
     let ypos = (hash - xpos) / this.map[0].length;
     return {x:xpos, y:ypos};
     //hash is now a value from 0 to 4095, representing every possible map location
   }
-  /*
-  * Compresses a location into a number between 0 and 4095
-  * @param{num} x - Xpos
-  * @param{num} y - Ypos
-  */
+
   compressLocation(x,y) {
     return x + y * this.map[0].length;
   }
-  
-  /*
-  * Finds and stores enemy castle and friendly castle to this.knownStructures, to be used upon initialization. MUST HAVE SYMMETRY DETERMINED BEFORE HAND
-  *
-  *
-  */
+
   initializeCastleLocations() {
     let possibleCastlePositions = search.circle(this, this.me.x, this.me.y, 2);
     let robotMap = this.getVisibleRobotMap();
@@ -243,11 +193,7 @@ class MyRobot extends BCAbstractRobot {
     }
     
   }
-  
-  /*
-  * Returns the best move a bot should take in order to maximize distance away from the provided enemy locations
-  * 
-  */
+
   avoidEnemyLocations(enemyPositionsToAvoid) {
     let largestSumDist = null;
     let avoidLocs = [];
@@ -267,7 +213,6 @@ class MyRobot extends BCAbstractRobot {
       }
     }
     if (avoidLocs.length > 0) {
-      //FORCE A MOVE AWAY
 
       avoidLocs.sort(function(a,b) {
         return b.dist - a.dist;
@@ -280,15 +225,6 @@ class MyRobot extends BCAbstractRobot {
     }
   }
   
-  /*
-  * Returns the best defending location that is available between x1 and x2 and between y1 and y2
-  * @param{robot} self
-  * @param{array} unitsInVision - Units In vision array, used to make lookup faster when looking for certain units
-  * @param{num} x1
-  * @param{num} x2
-  * @param{num} y1
-  * @param{num} y2
-  */
   findDefendLoc(self, unitsInVision, x1, x2, y1, y2) {
     let robotMap = self.getVisibleRobotMap();
     let gameMap = self.map;
@@ -301,7 +237,6 @@ class MyRobot extends BCAbstractRobot {
     let bestLoc = null;
     
     
-    //restrict our search area to these positions
     let distToDefenceTarget = 0;
     if (self.status === 'defendOldPos' || self.status === 'defendSpot') {
       distToDefenceTarget = qmath.dist(self.me.x, self.me.y, self.defendTarget[0], self.defendTarget[1]);
@@ -312,12 +247,10 @@ class MyRobot extends BCAbstractRobot {
     }
     let spotHasToBeInVision = false;
     
-    //self.useRallyTargetToMakeLattice = true;
     for (let i = y1; i < y2; i++) {
       for (let j = x1; j < x2; j++) {
         if (i % 2 !== j % 2 ){
 
-          //x:j, y:i
           if ((search.emptyPos(j, i , robotMap, gameMap, spotHasToBeInVision) || self.me.id === robotMap[i][j]) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
             let nearestStructureHere = search.findNearestStructureHere(self, j, i, unitsInVision[6]);
             let distToStructure = qmath.dist(j, i, nearestStructureHere.x, nearestStructureHere.y);
@@ -328,7 +261,6 @@ class MyRobot extends BCAbstractRobot {
               }
               else if (self.status === 'rally' && self.useRallyTargetToMakeLattice === true) {
                 tgt = self.rallyTarget;
-                //once we use rally target to find nearest position, we don't use it again
                 if (distToDefenceTarget <= SPECS.UNITS[this.me.unit].VISION_RADIUS/4) {
                   self.useRallyTargetToMakeLattice = false;
                 }
@@ -344,14 +276,11 @@ class MyRobot extends BCAbstractRobot {
       }
     }
     
-    //if for some reason in this search area we don't have anything, search the rest
     if (bestLoc === null) {
-      this.log(`HELP, WE HAD TO SEARCH MAP AGAIN BECAUSE WE COULDNT FIND A GOOD SPOT!!!`)
       for (let i = mapLength; i < mapLength; i++) {
         for (let j = 0; j < mapLength; j++) {
           if (i % 2 !== j % 2 ){
 
-            //x:j, y:i
             if ((search.emptyPos(j, i , robotMap, gameMap, false) || self.me.id === robotMap[i][j]) && fuelMap[i][j] === false && karboniteMap[i][j] === false){
               let nearestStructureHere = search.findNearestStructureHere(self, j, i, unitsInVision[6]);
               let distToStructure = qmath.dist(j, i, nearestStructureHere.x, nearestStructureHere.y);
@@ -371,15 +300,9 @@ class MyRobot extends BCAbstractRobot {
     return bestLoc;
   }
   
-  /*
-  * Determines which direction the enemy will come from. ONLY USED UPON INITIALIZATION!
-  * If unit is spawned on the enemy half, uh idk
-  */
   determineEnemyDirection(nx = this.me.x, ny = this.me.y) {
     let mapLength = this.map.length;
     if (this.mapIsHorizontal) {
-      //reflection across x-axis
-      //up or down
       if (ny <= mapLength/2) {
         return 'down';
       }
@@ -401,7 +324,6 @@ class MyRobot extends BCAbstractRobot {
   
   setBuildTowardsEnemyDirections(self) {
     if (self.enemyDirection === 'left') {
-      //self.buildingAttackUnitPositions should be sorted by which is more close to the left
       self.buildingAttackUnitPositions = [[self.me.x - 1, self.me.y - 1], [self.me.x - 1, self.me.y], [self.me.x - 1, self.me.y + 1], [self.me.x, self.me.y -1], [self.me.x, self.me.y + 1], [self.me.x + 1, self.me.y - 1], [self.me.x + 1, self.me.y], [self.me.x + 1, self.me.y + 1]]
     }
     else if (self.enemyDirection === 'right') {
