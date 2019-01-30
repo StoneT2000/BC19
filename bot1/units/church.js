@@ -134,6 +134,8 @@ function mind(self){
         }
         base.logStructure(self, ox, oy, self.me.team, 0);
         
+        
+        //These values are erroneous if we are chaining churches.
         self.enemyDirection = self.determineEnemyDirection(ox, oy);
         self.log(`Enemy Direction from church at ${self.me.x}, ${self.me.y} is ${self.enemyDirection}`);
         let needsdefence = false;
@@ -164,6 +166,7 @@ function mind(self){
         if (padding === 37195) {
           self.status = 'churchchain';
           self.churchNeedsProtection = false;
+          //set this to fals,e we don't want this church attempting to protect itself.
           self.churchAttackLoc = [enemyPos.x, enemyPos.y];
         }
       }
@@ -226,7 +229,7 @@ function mind(self){
     
     //determine if we stop chaining or not
     let padding = 37195;
-    if (self.karbonite <= 220 || self.fuel <= 4200) {
+    if (self.karbonite <= 500 || self.fuel <= 6100) {
       padding = 33099;
       self.log(`Stopping Church Chain and telling everyone to spam`);
       //end the church chain and tell everyone to build preachers
@@ -234,10 +237,8 @@ function mind(self){
       self.signal(41291, 2);
     }
     else {
-      if (self.knownStructures[otherTeamNum].length) {
-        let nx = self.knownStructures[otherTeamNum][0].x;
-        let ny = self.knownStructures[otherTeamNum][0].y;
-        let msg = self.compressLocation(nx, ny); // Eventually = compressed location
+      if (self.churchAttackLoc !== null) {
+        let msg = self.compressLocation(self.churchAttackLoc[0], self.churchAttackLoc[1]); // Eventually = compressed location
 
         // Send this message to all units in surrounding area, though it is specifically aimed at churches
         self.signal(padding + msg, 2);
@@ -255,6 +256,7 @@ function mind(self){
     //keep spamming until we run out
     if (self.karbonite < 30 || self.fuel < 1000) {
       self.status = 'build';
+      self.pastChurchChain = false;
     }
     else {
       self.buildQueue = [5];

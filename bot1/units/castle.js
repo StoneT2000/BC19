@@ -33,6 +33,7 @@ function mind(self) {
     self.newIndices = [];
     self.finalSignal = false;
     self.minKarbonite = 200;
+    self.minFuel = 50;
     let offsetVal = 0;
     self.castleNum = 0;
     if (self.karbonite === 90) {
@@ -460,7 +461,7 @@ function mind(self) {
         let newInd = msg - 77;
         let oml = self.allSpots[newInd];
         let distToThere = qmath.dist(self.me.x, self.me.y, oml.x, oml.y);
-        self.log(`Heard that ${oml.x}, ${oml.y} is open (${oml.type} from ${self.allUnits[id].unit})`);
+        //self.log(`Heard that ${oml.x}, ${oml.y} is open (${oml.type} from ${self.allUnits[id].unit})`);
 
         //let newSafeSpot = {x: oml.x, y: oml.y, safe: true};
         self.allSpots[newInd].safe = true; // IN THE FUTURE WATCH OUT FOR UNDEFINED!!!
@@ -484,7 +485,7 @@ function mind(self) {
     }
     if (pushThis === true) {
       uniqueQueue.push(thisSpot);
-      self.log(`spot: ${thisSpot.position}`);
+      //self.log(`spot: ${thisSpot.position}`);
     }
   }
   self.searchQueue = uniqueQueue;
@@ -733,9 +734,12 @@ function mind(self) {
           self.churches += 1;
           break;
         case 2:
-          self.pilgrims += 1;
+          
           if (self.allUnits[id].type === 'scout') {
             self.scouts += 1;
+          }
+          else {
+            self.pilgrims += 1;
           }
           break;
         case 3:
@@ -953,10 +957,12 @@ function mind(self) {
     }
   }
   if (self.castleHasScout === true) {
-    self.minKarbonite = 500;
+    self.minKarbonite = 900;
+    self.minFuel = 200;
   }
   else {
     self.minKarbonite = 200;
+    self.minFuel = 50;
   }
   if (self.castles > 1){
     if (sawEnemyThisTurn === false && self.me.turn > 4 && self.stackKarbonite === false && self.stackFuel === false) {
@@ -964,9 +970,10 @@ function mind(self) {
       if (self.pilgrims <= self.maxPilgrims && self.karbonite >= 100) {
         self.buildQueue.push(2);
       }
-      else if (self.karbonite >= self.minKarbonite && self.fuel > (self.prophets + self.preachers) * 50){
+      else if (self.karbonite >= self.minKarbonite && self.fuel > (self.prophets + self.preachers) * self.minFuel){
 
-        if (unitsInVincinity[SPECS.PROPHET].length <= self.prophets/(self.castles) && self.status !== 'pause') {
+        if ((unitsInVincinity[SPECS.PROPHET].length <= self.prophets/(self.castles) || self.karbonite > self.minKarbonite + 90) && self.status !== 'pause') {
+          //we do minKarbonite +90 to treat edge cases when casltes double count some prophets in their vincinity, so this forces the castle to build anyway.
           //self.castleTalk(72);
           self.buildQueue = [4];
           if (self.prophets > 15 * self.crusaders) {
@@ -1078,7 +1085,7 @@ function mind(self) {
       if (self.pilgrims <= self.maxPilgrims && self.karbonite >= 100) {
         self.buildQueue = [2];
       }
-      else if ((self.karbonite >= self.minKarbonite && self.fuel > (self.prophets + self.preachers) * 50)){
+      else if ((self.karbonite >= self.minKarbonite && self.fuel > (self.prophets + self.preachers) * self.minFuel)){
         self.buildQueue = [4];
         if (self.prophets > 15 * self.crusaders) {
             self.buildQueue = [3];

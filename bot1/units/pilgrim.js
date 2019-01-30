@@ -240,7 +240,7 @@ function mind(self) {
             self.status = 'chainedPilgrim';
           }
 
-          if (self.karbonite > 220 && self.fuel > 4200){
+          if (self.karbonite > 400 && self.fuel > 6100){
             if (self.knownStructures[otherTeamNum].length) {
               let nx = self.knownStructures[otherTeamNum][0].x;
               let ny = self.knownStructures[otherTeamNum][0].y;
@@ -379,7 +379,7 @@ function mind(self) {
               
               
               //min resources needed before spamming like that
-              if (self.karbonite >= 400 && self.fuel >= 8000 && self.lastChainTurn < self.me.turn - 2 && unitsInVincinity[SPECS.PROPHET].length > 6) {
+              if (self.karbonite >= 800 && self.fuel >= 10000 && self.lastChainTurn < self.me.turn - 2 && unitsInVincinity[SPECS.PROPHET].length > 6) {
                 
                 //build closest to target, could be castle or seen enemy...
                 
@@ -395,10 +395,17 @@ function mind(self) {
                 });
                 for (let i = 0; i < adjacentPos.length; i++) {
                   let checkPos = adjacentPos[i];
-                  if(canBuild(self, checkPos[0], checkPos[1], robotMap, gameMap)){
+                  //if there is a church in that position
+                  let robotThere = robotMap[checkPos[1]][checkPos[0]];
+                  if (robotThere !== null && robotThere.unit === SPECS.CHURCH && robotThere.team === self.me.team) {
+                    self.signal(padding2 + msg2, 2);
+                    break;
+                  }
+                  else if (canBuild(self, checkPos[0], checkPos[1], robotMap, gameMap)){
                     let rels = base.rel(self.me.x, self.me.y, checkPos[0], checkPos[1]);
                     self.signal(padding2 + msg2, 2);
                     self.log(`Starting church chain`);
+                    //dont build if there's an existing church adjacent!
                     self.lastChainTurn = self.me.turn; //this is to force our pilgrim from chaining too much
                     return {action:self.buildUnit(SPECS.CHURCH, rels.dx, rels.dy)};
                     
