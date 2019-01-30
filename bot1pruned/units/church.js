@@ -10,21 +10,18 @@ function mind(self){
   let mapLength = self.map.length;
   let otherTeamNum = (self.me.team + 1) % 2;
   let forcedAction = null;
-  //self.log(`Church (${self.me.x}, ${self.me.y}); Status: ${self.status}`);
   let action = '';
   let fuelMap = self.getFuelMap();
   let karboniteMap = self.getKarboniteMap();
   let robotsMapInVision = self.getVisibleRobotMap();
   let robotMap = self.getVisibleRobotMap();
   let passableMap = self.map;
-  //INITIALIZATION
   if (self.me.turn === 1) {
     self.castleTalk(self.me.unit);
     self.buildQueue = [];
     self.builtDirect = false;
     self.pastChurchChain = false;
     self.churchAttackLoc = null;
-    // Occupied half
     self.occupiedHalf = null;
     self.churchNeedsProtection = false;
     
@@ -71,7 +68,6 @@ function mind(self){
     }
     
     
-    //determine if the church is in danger
     let closestDepositDist = 99999;
     for (let i = 0; i < self.fuelSpots.length; i++) {
       if (ownHalf(self, self.fuelSpots[i].x, self.fuelSpots[i].y) === false){
@@ -93,34 +89,26 @@ function mind(self){
     if (closestDepositDist <= 256) {
       self.churchNeedsProtection = true;
       self.buildQueue = [4];
-      //self.castleTalk(75);
     }
     let numFuelSpots = self.fuelSpots.length;
     self.maxPilgrims = Math.ceil((self.fuelSpots.length + self.karboniteSpots.length)/2);
     
-    
-    //general enemy direction
     self.enemyDirection = self.determineEnemyDirection();
     self.buildingAttackUnitPositions = [];
-    self.setBuildTowardsEnemyDirections(self); //sets the buildingAttackUnitPositions variable
+    self.setBuildTowardsEnemyDirections(self);
     
   }
   
   let robotsInVision = self.getVisibleRobots();
   
-  //SIGNAL PROCESSION
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
-    // signal.processMessageChurch(self, msg); // Occupied half stuff is in here
     if (robotsInVision[i].team === self.me.team) {
       
       if (msg >= 33099 && msg <= 41290 && self.pastChurchChain === false) {
         let padding = 33099;
         if (msg >= 37195) {
           padding = 37195;
-          self.log('part of church chain');
-          
-          //this padding indicates we are on church chain strat
         }
         let enemyPos = self.getLocation(msg - padding);
         base.logStructure(self, enemyPos.x, enemyPos.y, otherTeamNum, 0);
@@ -133,11 +121,7 @@ function mind(self){
           ox = mapLength - ox - 1;
         }
         base.logStructure(self, ox, oy, self.me.team, 0);
-        
-        
-        //These values are erroneous if we are chaining churches.
         self.enemyDirection = self.determineEnemyDirection(ox, oy);
-        self.log(`Enemy Direction from church at ${self.me.x}, ${self.me.y} is ${self.enemyDirection}`);
         let needsdefence = false;
         if (self.mapIsHorizontal) {
           if (oy <= mapLength/2 && self.me.y > mapLength/2) {
@@ -166,7 +150,6 @@ function mind(self){
         if (padding === 37195) {
           self.status = 'churchchain';
           self.churchNeedsProtection = false;
-          //set this to fals,e we don't want this church attempting to protect itself.
           self.churchAttackLoc = [enemyPos.x, enemyPos.y];
         }
       }
@@ -176,7 +159,6 @@ function mind(self){
           self.signal(41291, 4);
           self.status = 'spampreachers';
           self.pastChurchChain = true;
-          self.log(`Heard that chain stopped, spamming preachers`);
         }
       }
     }
@@ -186,7 +168,6 @@ function mind(self){
   
   
   
-  /* Watch for enemies */
   let sawEnemyThisTurn = false;
   let nearestEnemyLoc = null
   let closestEnemyDist = 1000;
@@ -197,7 +178,6 @@ function mind(self){
   for (let i = 0; i < robotsInVision.length; i++) {
     let obot = robotsInVision[i];
     if (obot.team === otherTeamNum) {
-      //sees enemy unit, send our units to defend spot
       if (obot.unit === SPECS.CHURCH) {
         sawChurch = true;
       }
@@ -212,39 +192,25 @@ function mind(self){
         nearestEnemyLoc = {x: obot.x, y: obot.y};
         closestEnemyDist = distToUnit
         closestEnemyType = obot.unit;
-        self.log(`Nearest to church is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
         sawEnemyThisTurn = true;
       }
     }
   }
   
-  //CHURCH CHAIN
   if (self.status === 'churchchain') {
-    //build another pilgrim if we are far away from bulk of enemy
-    //start building preachers if we are close enough to a good deal of enemies.
-    //by now we know what the closest enemy is and type.
-    self.log(`Church Chained Church`);
     
-    
-    
-    //determine if we stop chaining or not
     let padding = 37195;
     if (self.karbonite <= 500 || self.fuel <= 6100) {
       padding = 33099;
-      self.log(`Stopping Church Chain and telling everyone to spam`);
-      //end the church chain and tell everyone to build preachers
       self.buildQueue = [5];
       self.signal(41291, 4);
     }
     else {
       if (self.churchAttackLoc !== null) {
-        let msg = self.compressLocation(self.churchAttackLoc[0], self.churchAttackLoc[1]); // Eventually = compressed location
-
-        // Send this message to all units in surrounding area, though it is specifically aimed at churches
+        let msg = self.compressLocation(self.churchAttackLoc[0], self.churchAttackLoc[1]);
         self.signal(padding + msg, 4);
       }
       self.buildQueue = [2];
-      //build a pilgrim and send it the church chain signal
     }
     
    
@@ -253,7 +219,6 @@ function mind(self){
     
   }
   else if (self.status === 'spampreachers') {
-    //keep spamming until we run out
     if (self.karbonite < 30 || self.fuel < 4000) {
       self.status = 'build';
       self.pastChurchChain = false;
@@ -262,8 +227,7 @@ function mind(self){
       self.buildQueue = [5];
       if (nearestEnemyLoc !== null){
         let compressedLocationHash = self.compressLocation(nearestEnemyLoc.x, nearestEnemyLoc.y);
-        //let padding = 12294;
-        let padding = 41292; //tell all preachers only to attack, no other units to attack
+        let padding = 41292;
         self.signal(padding + compressedLocationHash, 64);
       }
       else {
@@ -281,24 +245,20 @@ function mind(self){
     if (sawEnemyThisTurn === false) {
       let unitsInVincinity = search.unitsInRadius(self, 8);
       let unitsInVincinity100 = search.unitsInRadius(self, 100);
-      //keep karbonite in stock so we can spam mages out when needed
       if (self.sawEnemyLastTurn === true) {
-        self.signal(16391, 64); //tell everyone to defend
+        self.signal(16391, 64);
         self.buildQueue = [];
       }
 
       if (self.karbonite >= 125 && self.fuel >= (unitsInVincinity100[SPECS.PROPHET].length + unitsInVincinity100[SPECS.PREACHER].length) * 60 && unitsInVincinity100[SPECS.PROPHET].length < 12){
         if (self.churchNeedsProtection === true){
-          self.log(`Building prophet`)
           self.buildQueue = [4];
-          //self.castleTalk(75)
         }
       }
 
       self.sawEnemyLastTurn = false;
 
 
-      //THIS CODE MUST BE AT THE END OF THIS IF STATEMENT BECAUSE WE PREEMPTIVELY RETURNA  BUILD
       if (self.karbonite >= 50 && self.builtDirect === false) {
         let buildPilgrim = false;
         let buildLoc = null;
@@ -315,7 +275,6 @@ function mind(self){
         }
         if (buildLoc === null) {
           self.builtDirect = true;
-          //this way church doesn't accidentally spam pilgrims
         }
 
 
@@ -328,14 +287,11 @@ function mind(self){
               self.castleTalk(77 + val);
             }
             let rels = base.rel(self.me.x, self.me.y, buildLoc[0], buildLoc[1]);
-            // Tom is assuming this is where we build pilgrims
-            // EDIT THIS
             if (self.knownStructures[otherTeamNum].length) {
               let nx = self.knownStructures[otherTeamNum][0].x;
               let ny = self.knownStructures[otherTeamNum][0].y;
-              let msg = self.compressLocation(nx, ny); // Eventually = compressed location
+              let msg = self.compressLocation(nx, ny);
               let padding = 33099;
-              // Send this message to all units in surrounding area, though it is specifically aimed at churches
               self.signal(padding + msg, 2);
             }
 
@@ -352,15 +308,11 @@ function mind(self){
       let unitsInVincinity36 = search.unitsInRadius(self, 36);
       let compressedLocationHash = self.compressLocation(nearestEnemyLoc.x, nearestEnemyLoc.y);
       let padding = 12294;
-      //tell units to hold from moving towards enenmy if the nearest enenmy isn't a prophet
-      //if a pilgrim, chase it as it is safe to chase
       if (closestEnemyType === SPECS.PROPHET || closestEnemyType === SPECS.PILGRIM || closestEnemyType === SPECS.CHURCH) {
         padding = 20488;
       }
       self.signal(padding + compressedLocationHash, 64);
-      //self.log(`Nearest to castle is ${nearestEnemyLoc.x}, ${nearestEnemyLoc.y}`);
       self.sawEnemyLastTurn = true;
-      //self.buildQueue.unshift(5);
 
 
       if ((sawChurch || sawCrusader) && unitsInVincinity36[SPECS.PREACHER].length < 1){
@@ -382,14 +334,12 @@ function mind(self){
   //DECISION MAKING
   if (self.status === 'build' || self.status === 'churchchain' || self.status === 'spampreachers') {
     
-    //self.log(`BuildQueue: ${self.buildQueue}`)
     if (self.buildQueue[0] !== -1){
       
       let adjacentPos = search.circle(self, self.me.x, self.me.y, 2);
       if (self.buildQueue[0] > 2 && self.status !== 'churchchain') {
         adjacentPos = self.buildingAttackUnitPositions;
       }
-      //if we are church chaining, build pilgrim on spot closest to enemy we want to attack as defined by signal sent by initial pilgrim
       if (self.status === 'churchchain') {
         let adjacentPosDist = adjacentPos.map(function (a) {
           return {pos: a, dist: qmath.dist(a[0], a[1], self.churchAttackLoc[0], self.churchAttackLoc[1])}
@@ -416,10 +366,8 @@ function mind(self){
               let ny = self.knownStructures[otherTeamNum][0].y;
               let msg = self.compressLocation(nx, ny); // Eventually = compressed location
               let padding = 33099;
-              // Send this message to all units in surrounding area, though it is specifically aimed at churches
               if (self.status !== 'churchchain'){
                 self.signal(padding + msg, 2);
-                //send only if we aren't chaining to avoid signal confuddlement.
               }
             }
 
