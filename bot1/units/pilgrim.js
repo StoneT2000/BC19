@@ -278,7 +278,9 @@ function mind(self) {
         //notify other units in the chain that we are done with chaining, go back to normal tasks
         if (self.status === 'chainedPilgrim'){
           self.signal(41291, 4);
+          //self.status = 'moveaway';
           self.status = 'searchForAnyDeposit';
+          
         }
         if (self.status === 'frontLineScout') {
           
@@ -312,13 +314,19 @@ function mind(self) {
       self.finalTarget = self.frontLineScoutingTarget;
     }
   }
-
+  if (self.status === 'moveaway') {
+    let possiblePos = search.circle(self, self.me.x, self.me.y, 2);
+    for (let k = 0; k < possiblePos.length; k++) {
+      let ppos = possiblePos[k];
+      
+    }
+  }
 
     //here, we tell castles our location
   if (self.status === 'frontLineScout' && self.me.turn > 1) {
     if (self.onFrontLine === true) {
       //if on frontline, ocassionally remind caslte that
-      if (self.me.turn % 3 === 0) { 
+      if (self.me.turn % 3 === 0) {
         self.castleTalk(71 + self.me.y);
       }
       else if (self.me.turn % 3 === 1){

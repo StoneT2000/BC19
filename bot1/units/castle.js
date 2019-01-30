@@ -968,7 +968,7 @@ function mind(self) {
     if (sawEnemyThisTurn === false && self.me.turn > 4 && self.stackKarbonite === false && self.stackFuel === false) {
 
       if (self.pilgrims <= self.maxPilgrims && self.karbonite >= 100) {
-        self.buildQueue.push(2);
+        self.buildQueue.push[2];
       }
       else if (self.karbonite >= self.minKarbonite && self.fuel > (self.prophets + self.preachers) * self.minFuel){
 
