@@ -3472,11 +3472,9 @@ createPlanner = require('l1-path-finder');
 },{"l1-path-finder":10,"ndarray":14}]},{},[22]);
 
 
-//declare ndarray and createPlanner outside so that browserify can do its magic by converting node's require functions and it will come up here
 var ndarray;
 var createPlanner;
 
-//Initializes the L1 planner into self.planner
 function initializePlanner(self) {
   let t1 = new Date();
   let gameMap = self.map;
@@ -3487,11 +3485,8 @@ function initializePlanner(self) {
   
   //vvv doesn't include 0,0
   let surrounding = [[-1,-1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]];
-  //[[0,-1], [1,-1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
-  //FIRST WE REDUCE MAP TO SAVE PLANNING TIME
   for (let i = 0; i < h; i++) {
     for (let j = 0; j < w; j++) {
-      //x:j, y:i
       let indexInMap = j + i * w;
       if (gameMap[i][j] === false){
         
@@ -3517,23 +3512,11 @@ function initializePlanner(self) {
           }
         }
         if (numObstacles <= 2) {
-          //remove all wals that are singular
           mapArr[indexInMap] = 0;
         }
         else {
           mapArr[indexInMap] = 1;
         }
-        /*
-        else if (surroundingTileInfo[1] === false && surroundingTileInfo[6] === false) {
-          mapArr[indexInMap] = 0;
-        }
-        else if (surroundingTileInfo[3] === false && surroundingTileInfo[4] === false) {
-          mapArr[indexInMap] = 0;
-        }
-        else {
-          mapArr[indexInMap] = 1;
-        }
-        */
       }
     }
   }
