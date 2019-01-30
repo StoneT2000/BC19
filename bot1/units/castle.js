@@ -323,7 +323,6 @@ function mind(self) {
             self.initialCastleLocationMessages[botId].y = (msg - 192);
           }
         }
-
       }
     }
   }
@@ -393,7 +392,6 @@ function mind(self) {
           if (otherClosestContestableSpotDist >= distTospot2) {
             otherClosestContestableSpotDist = distTospot2;
           }
-
         }
       }
       if (myClosestContestableSpotDist <= otherClosestContestableSpotDist) {
@@ -408,7 +406,6 @@ function mind(self) {
     }
   }
   
-  
   //BY DEFAULT CASTLE ALWAYS BUILDS UNLESS TOLD OTHERWISE:
   self.status = 'build';
   self.canBuildPilgrims = true;
@@ -418,10 +415,6 @@ function mind(self) {
   self.numPilgrimsMiningKarbonite = 0;
   self.numPilgrimsMiningFuel = 0;
   let idsWeCanHear = [];
-  
-  
-  
-
   
   //initialize priority queue of mining locations
   self.searchQueue = [];
