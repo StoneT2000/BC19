@@ -11,12 +11,10 @@ function mind(self){
   let otherTeamNum = (self.me.team + 1) % 2;
   let action = '';
   let forcedAction = null;
-  //self.log(`Prophet (${self.me.x}, ${self.me.y}); Status: ${self.status}; FinalTarget: ${self.finalTarget}; ${self.me.time} ms left`);
   let robotMap = self.getVisibleRobotMap();
   let fuelMap = self.getFuelMap();
   let karboniteMap = self.getKarboniteMap();
   
-  //INITIALIZATION
   if (self.me.turn === 1) {
     self.defendLocChosen = false;
     self.useRallyTargetToMakeLattice = true;
@@ -60,14 +58,11 @@ function mind(self){
   }
   if (self.me.turn === 5) {
     pathing.initializePlanner(self);
-    //self.setFinalTarget(self.finalTarget);
   }
   
   let robotsInVision = self.getVisibleRobots();
   
-  //self.status = 'defend';
   
-  //SIGNAL PROCESSION
   let seeMage = false;
   let closestMage = null;
   let closestMageDistance = 99999;
@@ -78,23 +73,14 @@ function mind(self){
       signal.processMessageProphet(self, msg);
       if (msg >= 12294 && msg <= 24583){
         if (msg >= 12294 && msg <= 16389) {
-          //self.status = 'attackTarget';
-          //current status should be defend
-          //this signal means we see an enemy that is other than a prophet
-          //thus, we stay still
           let padding = 12294;
           let targetLoc = self.getLocation(msg - padding);
-          //self.finalTarget = [targetLoc.x, targetLoc.y];
-          self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
-          //final target is wherever is max dist from final target
         }
         if (msg >= 16392 && msg <= 20487) {
           self.status = 'attackTarget';
-          //seeing an enemey prophet means we try to engage it
           let padding = 16392;
           let targetLoc = self.getLocation(msg - padding);
           self.finalTarget = [targetLoc.x, targetLoc.y];
-          self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
         }
         if (msg >= 20488 && msg <= 24583) {
           self.status = 'goToTarget';
@@ -102,7 +88,6 @@ function mind(self){
 
           let targetLoc = self.getLocation(msg - padding);
           self.finalTarget = [targetLoc.x, targetLoc.y];
-          self.log(`Preparing to attack enemey castle at ${self.finalTarget}`);
           base.logStructure(self,self.finalTarget[0], self.finalTarget[1], otherTeamNum, 0);
         }
 
@@ -113,7 +98,6 @@ function mind(self){
         let targetLoc = self.getLocation(msg - padding);
         self.defendTarget = [targetLoc.x, targetLoc.y];
         self.finalTarget = [targetLoc.x, targetLoc.y];
-        self.log(`Preparing to surround spot at ${self.finalTarget}`);
       }
       else if (msg >= 29003 && msg <= 33098 && self.status !== 'rally') {
         if (self.status !== 'rally') {
@@ -124,7 +108,6 @@ function mind(self){
         let targetLoc = self.getLocation(msg - padding);
         self.finalTarget = [targetLoc.x, targetLoc.y];
         self.rallyTarget = self.finalTarget;
-        self.log(`Preparing to rally at ${self.finalTarget}`);
       }
       // Determine position of enemy castle
       else if (msg >= 33099 && msg <= 37194) {
@@ -141,15 +124,12 @@ function mind(self){
         }
         base.logStructure(self, ox, oy, self.me.team, 0);
         self.enemyDirection = self.determineEnemyDirection(ox, oy);
-        self.log(`Enemy Direction from prophet at ${self.me.x}, ${self.me.y} is ${self.enemyDirection}`);
       }
       else if (msg >= 41292 && msg <= 45387 && self.status !== 'rally') {
         self.status = 'attackTarget';
-        //seeing an enemey prophet means we try to engage it
         let padding = 41292;
         let targetLoc = self.getLocation(msg - padding);
         self.finalTarget = [targetLoc.x, targetLoc.y];
-        self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
       }
     }
     
@@ -165,10 +145,8 @@ function mind(self){
       unitsInVision[6].push(robotsInVision[i]);
     }
   }
-  //each turn using calte talk tell castles which places are empty and free if we see them
   
   if (self.me.turn > 1){
-    //find closest
     let cdist = 99999;
     let cSpot = null;
     for (let i = 0; i < self.allSpots.length; i++) {
@@ -188,7 +166,6 @@ function mind(self){
     }
     if (cSpot !== null) {
       let indexOfspot = getIndexAllSpots(self, [cSpot.x, cSpot.y]);
-      //self.log(`Spot ${cSpot.x}, ${cSpot.y} is free; index: ${indexOfspot + 77}`);
       self.castleTalk(indexOfspot + 77);
       
     }
@@ -196,8 +173,6 @@ function mind(self){
   
   
   
-  //each turn, we update our local self.knownStructures list.
-  //it also sets self.destroyedCastle to true if the castle that it knew about is no longer there anymore
   base.updateKnownStructures(self);
   
   if (self.status !== 'rally') {
@@ -205,7 +180,6 @@ function mind(self){
   }
   
   if (self.status === 'defend' || self.status === 'defendOldPos' || self.status === 'defendSpot' || self.status === 'rally' || self.status === 'defend2nd') {
-    //follow lattice structure
     
     let nearestStructure = search.findNearestStructure(self);
     let distToStructureFromMe = qmath.dist(self.me.x, self.me.y, nearestStructure.x, nearestStructure.y);
@@ -214,17 +188,10 @@ function mind(self){
       self.defendLocChosen = false;
     }
     
-    //if status === defendOldPos, we force unit to reposition itself.
     if ((self.me.x % 2 === 1 && self.me.y % 2 === 1 ) || (self.me.x % 2 === 0 && self.me.y % 2 === 0) || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true || distToStructureFromMe <= 2 || self.status === 'defendOldPos') {
         
       let bestLoc = null;
       
-      //first add the best locations that will protect against self.enemyDirection
-      //if self.enemyDirection === 'left', then we prefer positons to the left of defend position
-      //if we are defending, defendSpot, defendOldPos?, stand in between enemy and defend spot, so prefer left
-      //if we are rallying, stand in between rally and our own side, so prefer !left === right
-      
-      //search for all left positions
       if (self.defendLocChosen === false){
         
       if (self.enemyDirection === 'left'){
@@ -264,7 +231,6 @@ function mind(self){
       }
       if (bestLoc !== null) {
         self.finalTarget = bestLoc;
-        self.log('New location near defend point :' + self.finalTarget);
       }
       if (self.status === 'defendOldPos') {
           self.status = 'defend';
@@ -276,26 +242,18 @@ function mind(self){
       self.finalTarget = [self.knownStructures[otherTeamNum][0].x, self.knownStructures[otherTeamNum][0].y];
     }
     else {
-      self.status = 'defend2nd'; // the same as status = defend, but is allowed to go forward and attack
+      self.status = 'defend2nd';
     }
   }
   
-  //kiting code
   if (self.status === 'defend' || self.status === 'attackTarget' || self.status === 'defendSpot' || self.status === 'defend2nd') {
-    //if defending, and not evenough friends nearby, perform kite manuevers
     let enemyPositionsToAvoid = [];
     let friendsNearby = 0;
     for (let i = 0; i < robotsInVision.length; i++) {
       let obot = robotsInVision[i];
 
-      //find position that is the farthest away from all enemies
       if (obot.team === otherTeamNum) {
         let distToEnemy = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
-        /*
-        if (obot.unit === SPECS.PROPHET && distToEnemy <= 80) {
-          enemyPositionsToAvoid.push([obot.x, obot.y]);
-        }
-        */
         let mpr = 16;
         let cpr = 16;
         if (self.status === 'defendSpot') {
@@ -336,7 +294,6 @@ function mind(self){
         }
       }
       if (avoidLocs.length > 0) {
-        //FORCE A MOVE AWAY
         self.log(`Prophet running away from enemy`)
         avoidLocs.sort(function(a,b) {
           return b.dist - a.dist;
@@ -347,8 +304,6 @@ function mind(self){
     }
   }
   if (self.status === 'defend' || self.status === 'attackTarget' || self.status === 'goToTarget' || self.status === 'defendSpot' || self.status === 'rally' || self.status === 'defend2nd') {
-    //watch for enemies, then chase them
-    //call out friends to chase as well?, well enemy might only send scout, so we might get led to the wrong place
     let leastDistToTarget = 99999999;
     let isEnemy = false;
     let enemyBot;
@@ -369,11 +324,8 @@ function mind(self){
       else {
       }
     }
-    //enemy nearby, attack it?
     if (leastDistToTarget <= 64 && isEnemy === true) {
-      //let rels = base.relToPos(self.me.x, self.me.y, target[0], target[1], self);
       let rels = base.rel(self.me.x, self.me.y, enemyBot.x, enemyBot.y);
-      self.log(`Prophet Attacks ${rels.dx},${rels.dy}`);
       if (self.readyAttack()){
         action = self.attack(rels.dx,rels.dy)
         return {action:action};
@@ -383,10 +335,8 @@ function mind(self){
     
     if (self.destroyedCastle === true) {
       self.destroyedCastle = false;
-      //go back home
       
       let newLoc = [self.knownStructures[self.me.team][0].x,self.knownStructures[self.me.team][0].y];
-      self.log('Destroyed castle, now going to: ' + newLoc);
       self.status = 'defend';
     }
     
@@ -394,13 +344,11 @@ function mind(self){
   
   
   if (self.status === 'attackTarget') {
-    //finaltarget is enemy target pos.
     let distToEnemy = qmath.dist(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
     if (distToEnemy >= 82) {
       
     }
     else {
-      //stay put
       return '';
     }
     
@@ -413,7 +361,6 @@ function mind(self){
   }
   
   
-  //PROCESSING FINAL TARGET
   if (forcedAction !== null) {
     return {action:forcedAction};
   }

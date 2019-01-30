@@ -19,12 +19,6 @@ function mind(self){
   let karboniteMap = self.getKarboniteMap();
   let robotMap = self.getVisibleRobotMap();
   
-  self.log(`Preacher (${self.me.x}, ${self.me.y}); Status: ${self.status}; Final Target: ${self.finalTarget}`);
-  //STRATS:
-  //3 preacher defence. build a pilgrim then 3 preachers
-  
-  
-  //INITIALIZATION
   if (self.me.turn === 5) {
     pathing.initializePlanner(self);
     self.setFinalTarget(self.finalTarget);
@@ -42,7 +36,6 @@ function mind(self){
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
     
     let initializedCastles = self.initializeCastleLocations();
-    self.log(`initialized castles: ${initializedCastles}`);
     if (initializedCastles){
       self.status = 'defend';
       self.oldStatus = 'defend';
@@ -51,13 +44,11 @@ function mind(self){
       self.finalTarget = [self.me.x, self.me.y];
     }
     else {
-      //set defending target
       self.status = 'defend';
       self.oldStatus = 'defend';
       self.defendTarget = [self.me.x, self.me.y];
       self.finalTarget = [self.me.x, self.me.y];
     }
-    //needs to be runf or lattice to work
     self.enemyDirection = self.determineEnemyDirection();
     
     
@@ -74,23 +65,19 @@ function mind(self){
       }
     }
     
-    //self.finalTarget = [exploreTarget[0], exploreTarget[1]];
     
   }
   
   
   let robotsInVision = self.getVisibleRobots();
   
-  //SIGNAL PROCESSION
   let unitsInVision = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
     signal.processMessagePreacher(self, msg);
     if(robotsInVision[i].team === self.me.team && robotsInVision[i].id !== self.me.id){
-      //process new target location
       if (msg >= 12294 && msg <= 16389) {
         if (self.status !== 'attackTarget') {
-          //if setting new status, old status gets updated.
           self.oldStatus = self.status;
         }
         self.status = 'attackTarget';
@@ -171,7 +158,6 @@ function mind(self){
     }
   }
   
-  //always update our locations and send death of enemy castle signal if possible
   base.updateKnownStructures(self);
 
   if (self.status !== 'rally') {
@@ -183,9 +169,7 @@ function mind(self){
   if (robotMap[self.finalTarget[1]][self.finalTarget[0]] > 0 && robotMap[self.finalTarget[1]][self.finalTarget[0]] !== self.me.id) {
     self.defendLocChosen = false;
   }
-  //defenders and units that are have no final target. If they did, then they must be waiting for a fuel stack to go that target
   if (self.status === 'defend' || self.status === 'defendOldPos' || self.status === 'rally') {
-    //SPEED IMPROVEMENT USING BFS.
     if ((self.me.x % 2 === 1 && self.me.y % 2 === 1 ) || (self.me.x % 2 === 0 && self.me.y % 2 === 0) || fuelMap[self.me.y][self.me.x] === true || karboniteMap[self.me.y][self.me.x] === true || distToStructureFromMe <= 2 || self.status === 'defendOldPos') {
       let bestLoc = null;
       if (self.defendLocChosen === false){
@@ -252,39 +236,28 @@ function mind(self){
     
   }
   if (self.status === 'defend' || self.status === 'attackTarget' || self.status === 'goToTarget' || self.status === 'searchAndAttack') {
-    //watch for enemies, then chase them
-    //call out friends to chase as well?, well enemy might only send scout, so we might get led to the wrong place
     
     let attackLoc = attack.attackNearestAOE(self);
     
     
-    //check if castle is destroyed
     if (self.destroyedCastle === true) {
       self.log(`Killed castle`);
       self.destroyedCastle = false;
-      //CASTLE DESTROYED!
-
-      //destroyed the castle, now have all units move elsewhere
 
       let longestDistance = 0;
       let newLoc = [self.knownStructures[self.me.team][0].x,self.knownStructures[self.me.team][0].y];
 
       self.log(`Destroyed castle, now going to ${newLoc}`);
       let compressedLocationHash = self.compressLocation(newLoc[0], newLoc[1]);
-      //padding hash by 6
       self.status = 'defend';
 
 
 
     }
-    //enemy nearby, attack it?
     if (attackLoc !== null) {
-      //let rels = base.relToPos(self.me.x, self.me.y, target[0], target[1], self);
       let rels = base.rel(self.me.x, self.me.y, attackLoc.x, attackLoc.y);
-      //self.log(`Attack ${rels.dx},${rels.dy}`);
       self.log(`Preacher Attacks ${rels.dx},${rels.dy}`);
       if (self.readyAttack()){
-        //self.lastAttackedUnit = robotToAttack
         action = self.attack(rels.dx,rels.dy)
         return {action:action};
       }
@@ -292,23 +265,10 @@ function mind(self){
   }
 
   if (self.status === 'attackTarget') {
-    //finaltarget is enemy target pos.
-    /*
-    let distToEnemy = qmath.dist(self.me.x, self.me.y, self.finalTarget[0], self.finalTarget[1]);
-    if (distToEnemy >= 50) {
-      
-    }
-    else {
-      //stay put
-      return '';
-    }
-    */
   }
   if (self.status === 'goToTarget') {
     
   }
-  
-  //PROCESSING FINAL TARGET
   
   if (forcedAction !== null) {
     return {action:forcedAction};
@@ -317,10 +277,8 @@ function mind(self){
     let avoidFriends = false;
     let moveFast = true;
     if (self.status === 'attackTarget'){
-      //avoidFriends = true;
     }
     if (self.me.turn <= 3 && self.status === 'defend') {
-      //initially, allow bot to move freely if its not attackinga
       avoidFriends = false;
     }
     if (self.status === 'rally') {
