@@ -297,13 +297,15 @@ function mind(self){
         }
         */
         let mpr = 16;
+        let cpr = 16;
         if (self.status === 'defendSpot') {
           mpr = 25;
+          cpr = 49;
         }
         if (obot.unit === SPECS.PREACHER && distToEnemy <= mpr) {
           enemyPositionsToAvoid.push([obot.x, obot.y]);
         }
-        else if (obot.unit === SPECS.CRUSADER && distToEnemy <= 16) {
+        else if (obot.unit === SPECS.CRUSADER && distToEnemy <= cpr) {
           enemyPositionsToAvoid.push([obot.x, obot.y]);
         }
 
