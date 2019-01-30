@@ -1,3 +1,4 @@
+// Some code that I thought would work but apparently doesn't :(
 import {BCAbstractRobot, SPECS} from 'battlecode';
 import search from '../search.js';
 import base from '../base.js';
@@ -262,7 +263,7 @@ function mind(self) {
                 let checkPos = adjacentPos[i];
                 if(canBuild(self, checkPos[0], checkPos[1], robotMap, gameMap)){
                   let rels = base.rel(self.me.x, self.me.y, checkPos[0], checkPos[1]);
-                  self.signal(padding2 + msg2, 4);
+                  self.signal(padding2 + msg2, 2);
                   return {action:self.buildUnit(SPECS.CHURCH, rels.dx, rels.dy)};
 
                 }
@@ -277,10 +278,8 @@ function mind(self) {
       else if (msg ===  41291 && heardId !== self.me.id) {
         //notify other units in the chain that we are done with chaining, go back to normal tasks
         if (self.status === 'chainedPilgrim'){
-          self.signal(41291, 4);
-          //self.status = 'moveaway';
+          self.signal(41291, 2);
           self.status = 'searchForAnyDeposit';
-          
         }
         if (self.status === 'frontLineScout') {
           
@@ -314,19 +313,13 @@ function mind(self) {
       self.finalTarget = self.frontLineScoutingTarget;
     }
   }
-  if (self.status === 'moveaway') {
-    let possiblePos = search.circle(self, self.me.x, self.me.y, 2);
-    for (let k = 0; k < possiblePos.length; k++) {
-      let ppos = possiblePos[k];
-      
-    }
-  }
+
 
     //here, we tell castles our location
   if (self.status === 'frontLineScout' && self.me.turn > 1) {
     if (self.onFrontLine === true) {
       //if on frontline, ocassionally remind caslte that
-      if (self.me.turn % 3 === 0) {
+      if (self.me.turn % 3 === 0) { 
         self.castleTalk(71 + self.me.y);
       }
       else if (self.me.turn % 3 === 1){
@@ -368,7 +361,14 @@ function mind(self) {
       
       //if enemy is preacher, stay within 16 to 100
       //if anything else but a pilgrim, stay within 64 to 100
-      if (((distToEnemy > 64 && obot.unit !== SPECS.PREACHER) || (distToEnemy >= 36 && obot.unit === SPECS.PREACHER)) && distToEnemy <= 100 && obot.unit !== SPECS.PILGRIM) {
+      if (
+        obot.unit !== SPECS.PILGRIM &&
+        distToEnemy <= 100 &&
+        (
+          (obot.unit === SPECS.PREACHER && distToEnemy > 37) ||
+          (obot.unit !== SPECS.PREACHER && distToEnemy > 65) // Not a preacher or pilgrim: castle (64), prophet (64) crusader (speedy)
+        )
+      ) {
         // WE SAFE
         //enemies just out of range of attack but inside vision don't need to be avoided, we can proceed as normal.
         
@@ -407,12 +407,12 @@ function mind(self) {
                   //if there is a church in that position
                   let robotThere = robotMap[checkPos[1]][checkPos[0]];
                   if (robotThere !== null && robotThere.unit === SPECS.CHURCH && robotThere.team === self.me.team) {
-                    self.signal(padding2 + msg2, 4);
+                    self.signal(padding2 + msg2, 2);
                     break;
                   }
                   else if (canBuild(self, checkPos[0], checkPos[1], robotMap, gameMap)){
                     let rels = base.rel(self.me.x, self.me.y, checkPos[0], checkPos[1]);
-                    self.signal(padding2 + msg2, 4);
+                    self.signal(padding2 + msg2, 2);
                     self.log(`Starting church chain`);
                     //dont build if there's an existing church adjacent!
                     self.lastChainTurn = self.me.turn; //this is to force our pilgrim from chaining too much
@@ -432,13 +432,13 @@ function mind(self) {
             forcedAction = '';
           }
         }
-      } 
+      }
       else { // TIME TO AVOID THESE SKETCHY POSITIONS. enemies that are possibly in range of attack may need to be avoided
-        self.log(`Pilgrim ${self.me.id} is not in a safe position!`);
         if (self.status === 'frontLineScout' && distToEnemy <= 100) { // Not sure if we need this
           //we use this to tell the pilgrim to move onto the scouting target if it is open
           //self.finalTarget = [self.frontLineScoutingTarget.x, self.frontLineScoutingTarget.y];
         }
+        self.log("My name is pilgrim " + self.me.id + " and I am in range of getting rekt");
         if (obot.unit === SPECS.PROPHET && distToEnemy < 100) {
           enemyPositionsToAvoid.push([obot.x, obot.y, SPECS.PROPHET]);
         }
@@ -463,14 +463,32 @@ function mind(self) {
   if (enemyPositionsToAvoid.length > 0){
     //self.log(`Pilgrim sees enemies nearby`)
     let positionsToGoTo = search.circle(self, self.me.x, self.me.y, 4);
+
     for (let i = 0; i < positionsToGoTo.length; i++) {
       let thisSumDist = 0;
       let pos = positionsToGoTo[i];
-      if (search.emptyPos(pos[0], pos[1], robotMap, self.map)){
+      if (search.emptyPos(pos[0], pos[1], robotMap, self.map)) { // If the position at hand is empty
+        let pushPositionToAvoidLocs = true; // Decide whether to consider this position later
+
         for (let j = 0; j < enemyPositionsToAvoid.length; j++) {
-          thisSumDist += qmath.dist(pos[0], pos[1], enemyPositionsToAvoid[j][0], enemyPositionsToAvoid[j][1]);
+          let distFromEmptyToEnemy = qmath.dist(pos[0], pos[1], enemyPositionsToAvoid[j][0], enemyPositionsToAvoid[j][1]); //[j][0]: x, [j][1]: y, [j][2]: unit type
+          let obotUnit = enemyPositionsToAvoid[j][2];
+          if (
+          (obotUnit === SPECS.PREACHER && distFromEmptyToEnemy <= 36) ||
+          (obotUnit !== SPECS.PREACHER && distFromEmptyToEnemy < 64)
+          ) {
+            // The empty position is too close to ANY enemy position, this is not OK
+            pushPositionToAvoidLocs = false;
+            break; // Stop searching through enemies
+          }
+          // If outside range, continue on
+          thisSumDist += distFromEmptyToEnemy; // Sum distances between current position to go to and position to avoid
         }
-        avoidLocs.push({pos:pos, dist:thisSumDist});
+        // Only consider this position if it is outside range
+        if (pushPositionToAvoidLocs) {
+          self.log(`It seems that x: ${pos[0]} and y: ${pos[1]} is a safe place for pilgrim ${self.me.id}`);
+          avoidLocs.push({pos:pos, dist:thisSumDist});
+        }
       }
     }
   }
@@ -479,35 +497,23 @@ function mind(self) {
     //self.log(`Pilgrim running away from enemy`)
     avoidLocs.sort(function(a,b) {
       return b.dist - a.dist;
-    });
+    }) // Sorts avoidLocs by distance from most to least
+    
+    // Final check before moving
+
+    // Move to the location which is further away from enemies as a whole (by comparing sum of distances from enemies)
+
+    self.log(`So pilgrim ${self.me.id} decided to go to position x: ${avoidLocs[0].pos[0]} and y: ${avoidLocs[0].pos[1]} `);
+    
     let rels = base.rel(self.me.x, self.me.y, avoidLocs[0].pos[0], avoidLocs[0].pos[1]);
+    
     //search for previous deposit?
     if (self.status !== 'frontLineScout') {
       self.status = 'searchForAnyDeposit';
     }
     
-    // Final check
-    let stop = false;
-    for (let i = 0; i < enemyPositionsToAvoid.length; i++) {
-      let dist = qmath.dist(avoidLocs[0].pos[0], avoidLocs[0].pos[1], enemyPositionsToAvoid[i][0], enemyPositionsToAvoid[i][1]);
-      if (enemyPositionsToAvoid[i][2] !== SPECS.PILGRIM) {
-        if (enemyPositionsToAvoid[i][2] === SPECS.PREACHER) {
-          if (dist <= 36) {
-            stop = true;
-          }
-        }
-        else { // Castle, Prophet, Crusader
-          if (dist <= 64) {
-            stop = true;
-          }
-        }
-      }
-    }
-
-    if (!stop) {
-      return {action:self.move(rels.dx,rels.dy)}
-    } else return {action:self.move(0,0)}
-  }
+    return {action:self.move(rels.dx,rels.dy)}
+  } // Else don't fking move
   
 
   
