@@ -455,7 +455,7 @@ function mind(self) {
     let msg = robotsInVision[i].castle_talk;
     let id = robotsInVision[i].id;
     if (msg >= 77 && self.allUnits[id] !== undefined) {
-      if (self.allUnits[id].unit === SPECS.PROPHET) {
+      if (self.allUnits[id].unit === SPECS.PROPHET || self.allUnits[id].units === SPECS.PILGRIM) {
         let newInd = msg - 77;
         //self.log(`Heard ${msg}`);
         let oml = self.allSpots[newInd];
