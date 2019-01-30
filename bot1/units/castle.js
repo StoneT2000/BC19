@@ -801,7 +801,7 @@ function mind(self) {
     let msg = robotsInVision[i].castle_talk;
     let heardId = robotsInVision[i].id;
     let signalmsg = robotsInVision[i].signal;
-    if (signalmsg === 4) {
+    if (signalmsg === 4 && robotsInVision[i].team === self.me.team) {
       //pilgrim is nearby, assign it new mining status if needed. Alow it to mine anything if we have enough pilgrims
       let queueToCheck = self.searchQueue;
       let pilgrimAdjacentOnFuel = false;
