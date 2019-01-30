@@ -360,7 +360,15 @@ function mind(self) {
       
       //if enemy is preacher, stay within 16 to 100
       //if anything else but a pilgrim, stay within 64 to 100
-      if (((distToEnemy > 64 && obot.unit !== SPECS.PREACHER) || (distToEnemy >= 36 && obot.unit === SPECS.PREACHER)) && distToEnemy <= 100 && obot.unit !== SPECS.PILGRIM) {
+      if (
+        obot.unit !== SPECS.PILGRIM &&
+        distToEnemy <= 100 &&
+        (
+          (obot.unit === SPECS.PREACHER && distToEnemy >= 36) ||
+          (obot.unit !== SPECS.PREACHER && distToEnemy > 64) // Not a preacher or pilgrim: castle (64), prophet (64) crusader (speedy)
+        )
+      ) {
+        // WE SAFE
         //enemies just out of range of attack but inside vision don't need to be avoided, we can proceed as normal.
         
         //self.log(`I'm gonna stop for now at position: ${self.me.x}, ${self.me.y}`);
@@ -418,14 +426,13 @@ function mind(self) {
           
         }
         else {
-          //return a forced action if the bot is mining. if the bot is trying to go to a spot, allow it to keep testing the bounds and go to its desired spot
+          //return a forced action if the bot is mining. if the bot is trying to go to a spot, allow it to keep testing the bounds and go to its desired spot (ok)
           if (self.status === 'mineKarb' || self.status === 'mineFuel'){
             forcedAction = '';
           }
         }
       } 
-      else {
-        //enemies that are possibly in range of attack may need to be avoided
+      else { // TIME TO AVOID THESE SKETCHY POSITIONS. enemies that are possibly in range of attack may need to be avoided
         if (self.status === 'frontLineScout' && distToEnemy <= 100) { // Not sure if we need this
           //we use this to tell the pilgrim to move onto the scouting target if it is open
           //self.finalTarget = [self.frontLineScoutingTarget.x, self.frontLineScoutingTarget.y];
@@ -448,6 +455,8 @@ function mind(self) {
       }
     }
   }
+
+  // MOVEMENT DECISION
   let avoidLocs = [];
   if (enemyPositionsToAvoid.length > 0){
     //self.log(`Pilgrim sees enemies nearby`)
@@ -457,7 +466,8 @@ function mind(self) {
       let pos = positionsToGoTo[i];
       if (search.emptyPos(pos[0], pos[1], robotMap, self.map)){
         for (let j = 0; j < enemyPositionsToAvoid.length; j++) {
-          thisSumDist += qmath.dist(pos[0], pos[1], enemyPositionsToAvoid[j][0], enemyPositionsToAvoid[j][1]);
+          thisSumDist += qmath.dist(pos[0], pos[1], enemyPositionsToAvoid[j][0], enemyPositionsToAvoid[j][1]); //[j][0]: x, [j][1]: y
+          // Sum distances between current position to go to and position to avoid
         }
         avoidLocs.push({pos:pos, dist:thisSumDist});
       }
@@ -468,8 +478,12 @@ function mind(self) {
     //self.log(`Pilgrim running away from enemy`)
     avoidLocs.sort(function(a,b) {
       return b.dist - a.dist;
-    })
+    }) // Sorts avoidLocs by distance from most to least
+    
+    // Move to the location which is further away from enemies as a whole (by comparing sum of distances from enemies)
     let rels = base.rel(self.me.x, self.me.y, avoidLocs[0].pos[0], avoidLocs[0].pos[1]);
+    
+
     //search for previous deposit?
     if (self.status !== 'frontLineScout') {
       self.status = 'searchForAnyDeposit';
