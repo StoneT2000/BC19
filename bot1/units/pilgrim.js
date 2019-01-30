@@ -428,9 +428,12 @@ function mind(self) {
         }
         else {
           //return a forced action if the bot is mining. if the bot is trying to go to a spot, allow it to keep testing the bounds and go to its desired spot (ok)
+          forcedAction = '';
+          /*
           if (self.status === 'mineKarb' || self.status === 'mineFuel'){
             forcedAction = '';
           }
+          */
         }
       } 
       else { // TIME TO AVOID THESE SKETCHY POSITIONS. enemies that are possibly in range of attack may need to be avoided
@@ -506,7 +509,10 @@ function mind(self) {
 
     if (!stop) {
       return {action:self.move(rels.dx,rels.dy)}
-    } else return {action:self.move(0,0)}
+    } 
+    else {
+      forcedAction = '';
+    }
   }
   
 
