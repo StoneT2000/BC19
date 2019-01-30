@@ -184,4 +184,4 @@ function horizontalSymmetry(gameMap){
   }
   return true;
 }
-export default {circle, bfsDeltas, emptyPos, bfs, canPass, fuelDeposit, karboniteDeposit, findNearestStructure, horizontalSymmetry, inArr, unitsInRadius, findNearestStructureHere};
+export default {circle, bfsDeltas, emptyPos, canPass, fuelDeposit, karboniteDeposit, findNearestStructure, horizontalSymmetry, inArr, unitsInRadius, findNearestStructureHere};
