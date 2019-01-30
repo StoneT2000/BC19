@@ -262,7 +262,7 @@ function mind(self) {
                 let checkPos = adjacentPos[i];
                 if(canBuild(self, checkPos[0], checkPos[1], robotMap, gameMap)){
                   let rels = base.rel(self.me.x, self.me.y, checkPos[0], checkPos[1]);
-                  self.signal(padding2 + msg2, 2);
+                  self.signal(padding2 + msg2, 4);
                   return {action:self.buildUnit(SPECS.CHURCH, rels.dx, rels.dy)};
 
                 }
@@ -277,7 +277,7 @@ function mind(self) {
       else if (msg ===  41291 && heardId !== self.me.id) {
         //notify other units in the chain that we are done with chaining, go back to normal tasks
         if (self.status === 'chainedPilgrim'){
-          self.signal(41291, 2);
+          self.signal(41291, 4);
           self.status = 'searchForAnyDeposit';
         }
         if (self.status === 'frontLineScout') {
@@ -406,12 +406,12 @@ function mind(self) {
                   //if there is a church in that position
                   let robotThere = robotMap[checkPos[1]][checkPos[0]];
                   if (robotThere !== null && robotThere.unit === SPECS.CHURCH && robotThere.team === self.me.team) {
-                    self.signal(padding2 + msg2, 2);
+                    self.signal(padding2 + msg2, 4);
                     break;
                   }
                   else if (canBuild(self, checkPos[0], checkPos[1], robotMap, gameMap)){
                     let rels = base.rel(self.me.x, self.me.y, checkPos[0], checkPos[1]);
-                    self.signal(padding2 + msg2, 2);
+                    self.signal(padding2 + msg2, 4);
                     self.log(`Starting church chain`);
                     //dont build if there's an existing church adjacent!
                     self.lastChainTurn = self.me.turn; //this is to force our pilgrim from chaining too much

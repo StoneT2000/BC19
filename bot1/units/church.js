@@ -173,7 +173,7 @@ function mind(self){
       else if (msg === 41291) {
         if (self.status === 'churchchain'){
           self.buildQueue = [5];
-          self.signal(41291, 2);
+          self.signal(41291, 4);
           self.status = 'spampreachers';
           self.pastChurchChain = true;
           self.log(`Heard that chain stopped, spamming preachers`);
@@ -234,14 +234,14 @@ function mind(self){
       self.log(`Stopping Church Chain and telling everyone to spam`);
       //end the church chain and tell everyone to build preachers
       self.buildQueue = [5];
-      self.signal(41291, 2);
+      self.signal(41291, 4);
     }
     else {
       if (self.churchAttackLoc !== null) {
         let msg = self.compressLocation(self.churchAttackLoc[0], self.churchAttackLoc[1]); // Eventually = compressed location
 
         // Send this message to all units in surrounding area, though it is specifically aimed at churches
-        self.signal(padding + msg, 2);
+        self.signal(padding + msg, 4);
       }
       self.buildQueue = [2];
       //build a pilgrim and send it the church chain signal
@@ -254,7 +254,7 @@ function mind(self){
   }
   else if (self.status === 'spampreachers') {
     //keep spamming until we run out
-    if (self.karbonite < 30 || self.fuel < 1000) {
+    if (self.karbonite < 30 || self.fuel < 4000) {
       self.status = 'build';
       self.pastChurchChain = false;
     }
@@ -287,7 +287,7 @@ function mind(self){
         self.buildQueue = [];
       }
 
-      if (self.karbonite >= 125 && self.fuel >= unitsInVincinity100[SPECS.PROPHET].length * 60 && unitsInVincinity100[SPECS.PROPHET].length < 12){
+      if (self.karbonite >= 125 && self.fuel >= (unitsInVincinity100[SPECS.PROPHET].length + unitsInVincinity100[SPECS.PREACHER].length) * 60 && unitsInVincinity100[SPECS.PROPHET].length < 12){
         if (self.churchNeedsProtection === true){
           self.log(`Building prophet`)
           self.buildQueue = [4];
@@ -380,7 +380,7 @@ function mind(self){
   
   
   //DECISION MAKING
-  if (self.status === 'build' || self.status === 'churchchain') {
+  if (self.status === 'build' || self.status === 'churchchain' || self.status === 'spampreachers') {
     
     //self.log(`BuildQueue: ${self.buildQueue}`)
     if (self.buildQueue[0] !== -1){
