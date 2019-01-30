@@ -463,7 +463,7 @@ function mind(self) {
         //self.log(`Heard that ${oml.x}, ${oml.y} is open (${oml.type})`);
 
         //let newSafeSpot = {x: oml.x, y: oml.y, safe: true};
-        self.allSpots[newInd].safe = true;
+        self.allSpots[newInd].safe = true; // IN THE FUTURE WATCH OUT FOR UNDEFINED!!!
         self.searchQueue.push({position: [oml.x, oml.y], distance: distToThere, type:oml.type});
       }
     }
