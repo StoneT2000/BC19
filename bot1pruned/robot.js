@@ -1,13 +1,13 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
-import castle from './bot1/units/castle.js';
-import church from './bot1/units/church.js';
-import pilgrim from './bot1/units/pilgrim.js';
-import crusader from './bot1/units/crusader.js';
-import prophet from './bot1/units/prophet.js';
-import preacher from './bot1/units/preacher.js';
-import qmath from './bot1/math.js';
-import search from './bot1/search.js'
-import base from './bot1/base.js';
+import castle from './bot1pruned/units/castle.js';
+import church from './bot1pruned/units/church.js';
+import pilgrim from './bot1pruned/units/pilgrim.js';
+import crusader from './bot1pruned/units/crusader.js';
+import prophet from './bot1pruned/units/prophet.js';
+import preacher from './bot1pruned/units/preacher.js';
+import qmath from './bot1pruned/math.js';
+import search from './bot1pruned/search.js'
+import base from './bot1pruned/base.js';
 
 
 let unitTypesStr = ['Castle', 'Church', 'Pilgrim', 'Crusader', 'Prophet', 'Preacher'];
