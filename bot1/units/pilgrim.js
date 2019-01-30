@@ -448,6 +448,8 @@ function mind(self) {
       }
     }
   }
+
+  // MOVEMENT DECISION
   let avoidLocs = [];
   if (enemyPositionsToAvoid.length > 0){
     //self.log(`Pilgrim sees enemies nearby`)
@@ -457,7 +459,8 @@ function mind(self) {
       let pos = positionsToGoTo[i];
       if (search.emptyPos(pos[0], pos[1], robotMap, self.map)){
         for (let j = 0; j < enemyPositionsToAvoid.length; j++) {
-          thisSumDist += qmath.dist(pos[0], pos[1], enemyPositionsToAvoid[j][0], enemyPositionsToAvoid[j][1]);
+          thisSumDist += qmath.dist(pos[0], pos[1], enemyPositionsToAvoid[j][0], enemyPositionsToAvoid[j][1]); //[j][0]: x, [j][1]: y
+          // Sum distances between current position to go to and position to avoid
         }
         avoidLocs.push({pos:pos, dist:thisSumDist});
       }
@@ -468,8 +471,12 @@ function mind(self) {
     //self.log(`Pilgrim running away from enemy`)
     avoidLocs.sort(function(a,b) {
       return b.dist - a.dist;
-    })
+    }) // Sorts avoidLocs by distance from most to least
+    
+    // Move to the location which is further away from enemies as a whole (by comparing sum of distances from enemies)
     let rels = base.rel(self.me.x, self.me.y, avoidLocs[0].pos[0], avoidLocs[0].pos[1]);
+    
+
     //search for previous deposit?
     if (self.status !== 'frontLineScout') {
       self.status = 'searchForAnyDeposit';
