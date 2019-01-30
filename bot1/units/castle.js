@@ -33,9 +33,6 @@ function mind(self) {
     self.newIndices = [];
     self.finalSignal = false;
 
-    // Array storing safe deposits
-    self.safeDeposits = []; // Watch out for typos, Stone!
-
     let offsetVal = 0;
     self.castleNum = 0;
     if (self.karbonite === 90) {
@@ -464,9 +461,10 @@ function mind(self) {
         let oml = self.allSpots[newInd];
         let distToThere = qmath.dist(self.me.x, self.me.y, oml.x, oml.y);
         //self.log(`Heard that ${oml.x}, ${oml.y} is open (${oml.type})`);
-        let newSafeSpot = {x: oml.x, y: oml.y, safe: true};
+
+        //let newSafeSpot = {x: oml.x, y: oml.y, safe: true};
+        self.allSpots[newInd].safe = true;
         self.searchQueue.push({position: [oml.x, oml.y], distance: distToThere, type:oml.type});
-        
       }
     }
   }
@@ -496,6 +494,10 @@ function mind(self) {
   self.maxPilgrims = Math.max(self.searchQueue.length, self.maxHalf);
   //self.log(`Safe spots:${self.searchQueue.length}`);
   //COUNTING NUMBER OF UNITS PLANNING TO OR ALREADY MINING FUEL OR KARB.
+
+  // COOL BEANS
+  self.log(`Hey guys, self.searchQueue.length: ${self.searchQueue.length}, max pilgrims: ${self.maxPilgrims}`);
+
   for (let index in self.occupiedMiningLocationsIndices) {
     let ind = self.occupiedMiningLocationsIndices[index];
     //self.log(`Occupied positions of ${index}: (${self.allSpots[ind].x}, ${self.allSpots[ind].y})`);
@@ -784,6 +786,7 @@ function mind(self) {
       }
     }
   }
+
   //Commands code:
   //Here, castles give commands to surrounding units?
   //Give commands to rally units to attack a known castle
@@ -946,7 +949,6 @@ function mind(self) {
       let range = 64;
       range = Math.min(Math.max(Math.pow(Math.ceil(Math.sqrt(Math.max(farthestUnitDist[SPECS.PROPHET], farthestUnitDist[SPECS.PREACHER]))), 2), 4),64);
       self.signal(16391, range);
-      
     }
   }
   
