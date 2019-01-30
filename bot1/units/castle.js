@@ -456,9 +456,8 @@ function mind(self) {
     let id = robotsInVision[i].id;
     if (msg >= 77 && self.allUnits[id] !== undefined) {
       //self.log(`Unit Type: ${self.allUnits[id].unit}, id: ${id}`);
-      if (self.allUnits[id].unit === SPECS.PROPHET || self.allUnits[id].unit === SPECS.PILGRIM) {
+      if (self.allUnits[id].unit === SPECS.PROPHET || (self.allUnits[id].unit === SPECS.PILGRIM && self.allUnits[id].type === 'miner')) {
         let newInd = msg - 77;
-        //self.log(`Heard ${msg}`);
         let oml = self.allSpots[newInd];
         let distToThere = qmath.dist(self.me.x, self.me.y, oml.x, oml.y);
         self.log(`Heard that ${oml.x}, ${oml.y} is open (${oml.type} from ${self.allUnits[id].unit})`);
