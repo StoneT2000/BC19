@@ -365,7 +365,6 @@ function mind(self) {
         
         //self.log(`I'm gonna stop for now at position: ${self.me.x}, ${self.me.y}`);
         self.onFrontLine = true;
-        self.log(`staying still`)
         if (self.status === 'frontLineScout' ){
           self.finalTarget = [self.me.x, self.me.y];
           if (self.onFrontLine === true) {
