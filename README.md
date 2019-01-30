@@ -83,8 +83,9 @@ The values ...
 - 28842 to 29001 is for telling old pilgrims to mine that location.
 - 29002 is for pilgrim scouting
 - 29003, .... ,33098 is for rallying troops to a location
-- 33099 means pilgrim tells church it's building on own half
-- 33100 means pilgrim tells church it's building on other half
+- 33099,...37194,
+- 
+- 41292,..., 45387 is to tell only preachers to go and attack target
 
 ## STRATEGIES
 ### EARLY GAME

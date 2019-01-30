@@ -32,7 +32,7 @@ function mind(self) {
     self.sentContestableBot = false;
     self.newIndices = [];
     self.finalSignal = false;
-
+    self.minKarbonite = 200;
     let offsetVal = 0;
     self.castleNum = 0;
     if (self.karbonite === 90) {
@@ -951,14 +951,19 @@ function mind(self) {
       self.signal(16391, range);
     }
   }
-  
+  if (self.castleHasScout === true) {
+    self.minKarbonite = 500;
+  }
+  else {
+    self.minKarbonite = 200;
+  }
   if (self.castles > 1){
     if (sawEnemyThisTurn === false && self.me.turn > 4 && self.stackKarbonite === false && self.stackFuel === false) {
 
       if (self.pilgrims <= self.maxPilgrims && self.karbonite >= 100) {
         self.buildQueue.push(2);
       }
-      else if (self.karbonite >= 200 && self.fuel > (self.prophets + self.preachers) * 50){
+      else if (self.karbonite >= self.minKarbonite && self.fuel > (self.prophets + self.preachers) * 50){
 
         if (unitsInVincinity[SPECS.PROPHET].length <= self.prophets/(self.castles) && self.status !== 'pause') {
           //self.castleTalk(72);
@@ -1004,14 +1009,6 @@ function mind(self) {
           self.buildQueue = [2];
         }
         
-      }
-      if (self.karbonite > 200 && self.fuel > self.prophets * 50) {
-        if (self.buildQueue.length === 0){
-          self.buildQueue = [4];
-          if (self.prophets > 15 * self.crusaders) {
-            self.buildQueue = [3];
-          }
-        }
       }
       self.sawEnemyLastTurn = false;
 
@@ -1080,7 +1077,7 @@ function mind(self) {
       if (self.pilgrims <= self.maxPilgrims && self.karbonite >= 100) {
         self.buildQueue = [2];
       }
-      else if ((self.karbonite >= 200 && self.fuel > (self.prophets + self.preachers) * 50)){
+      else if ((self.karbonite >= self.minKarbonite && self.fuel > (self.prophets + self.preachers) * 50)){
         self.buildQueue = [4];
         if (self.prophets > 15 * self.crusaders) {
             self.buildQueue = [3];

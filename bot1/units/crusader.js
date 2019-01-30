@@ -131,6 +131,17 @@ function mind(self){
         self.log(`Enemy Direction from crusader at ${self.me.x}, ${self.me.y} is ${self.enemyDirection}`);
         }
       }
+      else if (msg >= 41292 && msg <= 45387) {
+        if (self.status !== 'attackTarget') {
+          self.oldStatus = self.status;
+        }
+        self.status = 'attackTarget';
+        
+        let padding = 41292;
+        let targetLoc = self.getLocation(msg - padding);
+        self.finalTarget = [targetLoc.x, targetLoc.y];
+        self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
+      }
     
     if (robotsInVision[i].unit === SPECS.CHURCH) {
       unitsInVision[6].push(robotsInVision[i]);

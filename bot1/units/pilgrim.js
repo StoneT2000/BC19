@@ -28,6 +28,7 @@ function mind(self) {
     
     //Mining Index: The index of the bots mining spot in self.allSpots. ONLY CHANGED WHEN TOLD BY CASTLE
     self.miningIndex = -1;
+    self.lastChainTurn = -1;
     self.statusBeforeReturn = '';
     self.status = 'searchForKarbDeposit';
     self.status = 'waitingForCommand';
@@ -126,6 +127,7 @@ function mind(self) {
     //we don't process the signal if the signal isn't from a unit that is visible and is on our team
     if (robotsInVision[i].team === self.me.team) {
       let msg = robotsInVision[i].signal;
+      let heardId = robotsInVision[i].id;
       signal.processMessagePilgrim(self, msg);
       if (msg >= 24586 && msg <= 28681 && self.status !== 'frontLineScout'){
         self.status = 'goingToDeposit';
@@ -195,8 +197,13 @@ function mind(self) {
         self.finalTarget = [self.allSpots[self.miningIndex].x, self.allSpots[self.miningIndex].y];
       }
       // Transfer location of enemy location        
-      else if (msg >= 33099 && msg <= 37194) {
+      else if (msg >= 33099 && msg <= 41290) {
+        
         let padding = 33099;
+        if (msg >= 37195) {
+          padding = 37195;
+          //we use this padding for church chain strategy
+        }
         let enemyPos = self.getLocation(msg-padding);
         base.logStructure(self, enemyPos.x, enemyPos.y, otherTeamNum, 0);
         let ox = enemyPos.x;
@@ -227,6 +234,58 @@ function mind(self) {
           }
         }
         self.log(`Enemy Direction from pilgrim at ${self.me.x}, ${self.me.y} is ${self.enemyDirection}`);
+        //if chaining churches, immedietely build a new church in direction of enemy
+        if (padding === 37195){
+          if (self.status !== 'frontLineScout') {
+            self.status = 'chainedPilgrim';
+          }
+
+          if (self.karbonite > 220 && self.fuel > 4200){
+            if (self.knownStructures[otherTeamNum].length) {
+              let nx = self.knownStructures[otherTeamNum][0].x;
+              let ny = self.knownStructures[otherTeamNum][0].y;
+              let msg2 = self.compressLocation(nx, ny); // Eventually = compressed location
+              let padding2 = 37195;
+              // Send this message to all units in surrounding area, though it is specifically aimed at churches
+              
+              let adjacentPos = search.circle(self, self.me.x, self.me.y, 2);
+              let adjacentPosDist = adjacentPos.map(function (a) {
+                return {pos: a, dist: qmath.dist(a[0], a[1], nx, ny)}
+              });
+              adjacentPosDist.sort(function (a, b) {
+                return a.dist - b.dist;
+              })
+              adjacentPos = adjacentPosDist.map(function (a) {
+                return a.pos
+              });
+              for (let i = 0; i < adjacentPos.length; i++) {
+                let checkPos = adjacentPos[i];
+                if(canBuild(self, checkPos[0], checkPos[1], robotMap, gameMap)){
+                  let rels = base.rel(self.me.x, self.me.y, checkPos[0], checkPos[1]);
+                  self.signal(padding2 + msg2, 2);
+                  return {action:self.buildUnit(SPECS.CHURCH, rels.dx, rels.dy)};
+
+                }
+              }
+            }
+
+          }
+        }
+        
+        
+      }
+      else if (msg ===  41291 && heardId !== self.me.id) {
+        //notify other units in the chain that we are done with chaining, go back to normal tasks
+        if (self.status === 'chainedPilgrim'){
+          self.signal(41291, 2);
+          self.status = 'searchForAnyDeposit';
+        }
+        if (self.status === 'frontLineScout') {
+          
+        }
+      }
+      else if(msg >= 41292 && msg <= 45387) {
+        //reserved
       }
     }
     //if waiting for command, no signal is given, go to old spot, don't wait for castle to reassign
@@ -305,13 +364,52 @@ function mind(self) {
         //enemies just out of range of attack but inside vision don't need to be avoided, we can proceed as normal.
         
         //self.log(`I'm gonna stop for now at position: ${self.me.x}, ${self.me.y}`);
+        self.onFrontLine = true;
+        self.log(`staying still`)
         if (self.status === 'frontLineScout' ){
           self.finalTarget = [self.me.x, self.me.y];
           if (self.onFrontLine === true) {
             //tell castle in position along frontline
-
+            self.log(`I'm on front line`)
+            if (self.knownStructures[otherTeamNum].length) {
+              let nx = self.knownStructures[otherTeamNum][0].x;
+              let ny = self.knownStructures[otherTeamNum][0].y;
+              let msg2 = self.compressLocation(nx, ny); // Eventually = compressed location
+              let padding2 = 37195;
+              // Send this message to all units in surrounding area, though it is specifically aimed at churches
+              
+              
+              //min resources needed before spamming like that
+              if (self.karbonite >= 400 && self.fuel >= 8000 && self.lastChainTurn < self.me.turn - 2 && unitsInVincinity[SPECS.PROPHET].length > 6) {
+                
+                //build closest to target, could be castle or seen enemy...
+                
+                let adjacentPos = search.circle(self, self.me.x, self.me.y, 2);
+                let adjacentPosDist = adjacentPos.map(function (a) {
+                  return {pos: a, dist: qmath.dist(a[0], a[1], nx, ny)};
+                });
+                adjacentPosDist.sort(function (a, b) {
+                  return a.dist - b.dist;
+                })
+                adjacentPos = adjacentPosDist.map(function (a) {
+                  return a.pos
+                });
+                for (let i = 0; i < adjacentPos.length; i++) {
+                  let checkPos = adjacentPos[i];
+                  if(canBuild(self, checkPos[0], checkPos[1], robotMap, gameMap)){
+                    let rels = base.rel(self.me.x, self.me.y, checkPos[0], checkPos[1]);
+                    self.signal(padding2 + msg2, 2);
+                    self.log(`Starting church chain`);
+                    self.lastChainTurn = self.me.turn; //this is to force our pilgrim from chaining too much
+                    return {action:self.buildUnit(SPECS.CHURCH, rels.dx, rels.dy)};
+                    
+                  }
+                }
+                
+              }
+            }
           }
-          self.onFrontLine = true;
+          
         }
         else {
           //return a forced action if the bot is mining. if the bot is trying to go to a spot, allow it to keep testing the bounds and go to its desired spot
@@ -885,7 +983,16 @@ function ownHalf(self, nx, ny) {
   }
   return false;
 }
-
+function canBuild(self, xpos, ypos, robotMap, passableMap) {
+  if (search.inArr(xpos,ypos,robotMap)) {
+    if (robotMap[ypos][xpos] === 0) {
+      if (passableMap[ypos][xpos] === true){
+        return true;
+      }
+    }
+  }
+  return false;
+}
 function getIndexAllSpots(self, pos){
   for (let i = 0; i < self.allSpots.length; i++) {
     let p = self.allSpots[i];

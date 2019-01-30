@@ -133,6 +133,16 @@ function mind(self){
         self.rallyTarget = self.finalTarget;
         self.log(`Preparing to rally at ${self.finalTarget}`);
       }
+      else if (msg >= 41292 && msg <= 45387) {
+        if (self.status !== 'goToTarget') {
+          self.oldStatus = self.status;
+        }
+        self.status = 'goToTarget';
+        let padding = 41292;
+        let targetLoc = self.getLocation(msg - padding);
+        self.finalTarget = [targetLoc.x, targetLoc.y];
+        self.log(`Preparing to attack enemy at ${self.finalTarget}`);
+      }
       if (msg === 5) {
         self.log(`Received ${msg} from ${robotsInVision[i].id}`);
       }

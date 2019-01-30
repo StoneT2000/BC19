@@ -143,6 +143,14 @@ function mind(self){
         self.enemyDirection = self.determineEnemyDirection(ox, oy);
         self.log(`Enemy Direction from prophet at ${self.me.x}, ${self.me.y} is ${self.enemyDirection}`);
       }
+      else if (msg >= 41292 && msg <= 45387 && self.status !== 'rally') {
+        self.status = 'attackTarget';
+        //seeing an enemey prophet means we try to engage it
+        let padding = 41292;
+        let targetLoc = self.getLocation(msg - padding);
+        self.finalTarget = [targetLoc.x, targetLoc.y];
+        self.log(`Preparing to defend against enemy at ${self.finalTarget}`);
+      }
     }
     
     if (robotsInVision[i].unit === SPECS.PREACHER && robotsInVision[i].team === otherTeamNum) {
