@@ -320,7 +320,6 @@ function mind(self) {
             self.initialCastleLocationMessages[botId].y = (msg - 192);
           }
         }
-
       }
     }
   }
@@ -390,7 +389,6 @@ function mind(self) {
           if (otherClosestContestableSpotDist >= distTospot2) {
             otherClosestContestableSpotDist = distTospot2;
           }
-
         }
       }
       if (myClosestContestableSpotDist <= otherClosestContestableSpotDist) {
@@ -405,7 +403,6 @@ function mind(self) {
     }
   }
   
-  
   //BY DEFAULT CASTLE ALWAYS BUILDS UNLESS TOLD OTHERWISE:
   self.status = 'build';
   self.canBuildPilgrims = true;
@@ -415,10 +412,6 @@ function mind(self) {
   self.numPilgrimsMiningKarbonite = 0;
   self.numPilgrimsMiningFuel = 0;
   let idsWeCanHear = [];
-  
-  
-  
-
   
   //initialize priority queue of mining locations
   self.searchQueue = [];
@@ -468,8 +461,10 @@ function mind(self) {
         let oml = self.allSpots[newInd];
         let distToThere = qmath.dist(self.me.x, self.me.y, oml.x, oml.y);
         //self.log(`Heard that ${oml.x}, ${oml.y} is open (${oml.type})`);
+
+        //let newSafeSpot = {x: oml.x, y: oml.y, safe: true};
+        self.allSpots[newInd].safe = true;
         self.searchQueue.push({position: [oml.x, oml.y], distance: distToThere, type:oml.type});
-        
       }
     }
   }
@@ -499,6 +494,10 @@ function mind(self) {
   self.maxPilgrims = Math.max(self.searchQueue.length, self.maxHalf);
   //self.log(`Safe spots:${self.searchQueue.length}`);
   //COUNTING NUMBER OF UNITS PLANNING TO OR ALREADY MINING FUEL OR KARB.
+
+  // COOL BEANS
+  self.log(`Hey guys, self.searchQueue.length: ${self.searchQueue.length}, max pilgrims: ${self.maxPilgrims}`);
+
   for (let index in self.occupiedMiningLocationsIndices) {
     let ind = self.occupiedMiningLocationsIndices[index];
     //self.log(`Occupied positions of ${index}: (${self.allSpots[ind].x}, ${self.allSpots[ind].y})`);
@@ -787,6 +786,7 @@ function mind(self) {
       }
     }
   }
+
   //Commands code:
   //Here, castles give commands to surrounding units?
   //Give commands to rally units to attack a known castle
@@ -949,7 +949,6 @@ function mind(self) {
       let range = 64;
       range = Math.min(Math.max(Math.pow(Math.ceil(Math.sqrt(Math.max(farthestUnitDist[SPECS.PROPHET], farthestUnitDist[SPECS.PREACHER]))), 2), 4),64);
       self.signal(16391, range);
-      
     }
   }
   if (self.castleHasScout === true) {
