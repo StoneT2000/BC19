@@ -32,6 +32,10 @@ function mind(self) {
     self.sentContestableBot = false;
     self.newIndices = [];
     self.finalSignal = false;
+
+    // Array storing safe deposits
+    self.safeDeposits = []; // Watch out for typos, Stone!
+
     let offsetVal = 0;
     self.castleNum = 0;
     if (self.karbonite === 90) {
@@ -467,6 +471,7 @@ function mind(self) {
         let oml = self.allSpots[newInd];
         let distToThere = qmath.dist(self.me.x, self.me.y, oml.x, oml.y);
         //self.log(`Heard that ${oml.x}, ${oml.y} is open (${oml.type})`);
+        let newSafeSpot = {x: oml.x, y: oml.y, safe: true};
         self.searchQueue.push({position: [oml.x, oml.y], distance: distToThere, type:oml.type});
         
       }
