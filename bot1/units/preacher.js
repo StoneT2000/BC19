@@ -86,7 +86,7 @@ function mind(self){
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
     signal.processMessagePreacher(self, msg);
-    if(robotsInVision[i].id !== self.me.id){
+    if(robotsInVision[i].team === self.me.team && robotsInVision[i].id !== self.me.id){
       //process new target location
       if (msg >= 12294 && msg <= 16389) {
         if (self.status !== 'attackTarget') {
