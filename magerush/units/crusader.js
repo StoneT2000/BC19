@@ -126,7 +126,7 @@ function mind(self){
   if (forcedAction !== null) {
     return {action:forcedAction};
   }
-  action = self.navigate(self.finalTarget);
+  action = self.navigate(self.finalTarget, true);
   return {action:action};
   
 

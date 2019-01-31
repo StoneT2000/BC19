@@ -6,6 +6,8 @@ const bfsDeltas = {
   0: [[0,0]],
   1: [[0,0], [0,-1], [1, 0], [0, 1], [-1, 0]],
   2: [[0,0], [0,-1], [1,-1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]],
+  3: [[0,0], [0,-1], [1,-1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]],
+  4: [[0,0], [0,-1], [1,-1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -2], [2, 0], [0, 2], [-2, 0]],
 }
 
 //Search in a circle
@@ -28,9 +30,11 @@ function circle(self, xpos, ypos, radius) {
 function emptyPos(xpos, ypos, robotMap, passableMap, inVision = true) {
   if (inArr(xpos,ypos, robotMap)) {
     if (inVision === false){
-      //only check for impassable tile
-      if (passableMap[ypos][xpos] === true){
-        return true;
+      //means we consider a position empty if its not invision either
+      if (robotMap[ypos][xpos] <= 0) {
+        if (passableMap[ypos][xpos] === true){
+          return true;
+        }
       }
     }
     else {
@@ -165,7 +169,49 @@ function findNearestStructure(self) {
   //self.log(`${bestTarget.x},${bestTarget.y}`)
   return bestTarget;
 }
-
+function findNearestStructureHere(self, x, y, unitsInVisionFiltered) {
+  let visibleRobots;
+  if (unitsInVisionFiltered) {
+    visibleRobots = unitsInVisionFiltered;
+  }
+  else {
+    visibleRobots = self.getVisibleRobots();
+  }
+  let shortestDist = 10000000;
+  let bestTarget = null;
+  
+  //First we search through known locations in case these structures aren't visible
+  for (let i = 0; i < self.knownStructures[self.me.team].length; i++) {
+    let friendlyStructure = self.knownStructures[self.me.team][i];
+    let distToStruct = qmath.dist(x, y, friendlyStructure.x, friendlyStructure.y);
+    if (distToStruct < shortestDist) {
+      shortestDist = distToStruct;
+      bestTarget = friendlyStructure;
+      //self.log(`Pilgrim-${self.me.id} found past struct: ${bestTarget}`);
+    }
+  }
+  
+  
+  
+  //Now we search through the robots that are visible by this robot.
+  for (let i = 0; i < visibleRobots.length; i++) {
+    let thatRobot = visibleRobots[i];
+    if (thatRobot.unit === SPECS.CHURCH || thatRobot.unit === SPECS.CASTLE) {
+      if (thatRobot.team === self.me.team){
+        let distToStruct = qmath.dist(x,y, thatRobot.x, thatRobot.y);
+        if (distToStruct < shortestDist) {
+          shortestDist = distToStruct;
+          bestTarget = {x:thatRobot.x, y:thatRobot.y, unit: thatRobot.unit};
+        }
+      }
+    }
+  }
+  if (bestTarget === null) {
+    return false;
+  }
+  //self.log(`${bestTarget.x},${bestTarget.y}`)
+  return bestTarget;
+}
 
 //Finds the nearest enemy unit, optionally searches for nearest unit type unit
 //returns null if no nearby enemies
@@ -193,14 +239,16 @@ function findNearestEnemy(self, unit) {
 }
 
 //returns an object with different unit types as keys, containing an array of units within radius, bounded by vision,
-function unitsInRadius(self, radius) {
+function unitsInRadius(self, radius, team = self.me.team, nx = self.me.x, ny = self.me.y) {
   let robotsInVision = self.getVisibleRobots();
   let unitsInVincinity = {0:[],1:[],2:[],3:[],4:[],5:[]};
     for (let i = 0; i < robotsInVision.length; i++) {
       let obot = robotsInVision[i];
-      let distToUnit = qmath.dist(self.me.x, self.me.y, obot.x, obot.y);
-      if (distToUnit <= radius) {
-        unitsInVincinity[obot.unit].push(obot);
+      if (obot.team === team){
+        let distToUnit = qmath.dist(nx, ny, obot.x, obot.y);
+        if (distToUnit <= radius) {
+          unitsInVincinity[obot.unit].push(obot);
+        }
       }
     }
   return unitsInVincinity;
@@ -220,4 +268,4 @@ function horizontalSymmetry(gameMap){
   }
   return true;
 }
-export default {circle, bfsDeltas, emptyPos, bfs, canPass, fuelDeposit, karboniteDeposit, findNearestStructure, horizontalSymmetry, inArr, unitsInRadius};
+export default {circle, bfsDeltas, emptyPos, bfs, canPass, fuelDeposit, karboniteDeposit, findNearestStructure, horizontalSymmetry, inArr, unitsInRadius, findNearestStructureHere};

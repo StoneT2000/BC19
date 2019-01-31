@@ -16,7 +16,7 @@ search.js - Functions for searching for data
 - Has a BFS algorithm thats really slow
 - horizontalSymmetry(gameMap) returns true if map is horizontally symmetric
 
-signals.js - Functions for processing signal data sent by bots to other bots
+signals.js - Functions for processing signal data sent by bots to other bots. Only has some of it
 - processMessage...(self, msg) updates self as needed
 
 units - Folder with all the code for processing self and returning an action, status update, and target
@@ -59,23 +59,40 @@ Send signals to other bots depending on self.status, received signals etc.
 The values ...
 - 0, ... 5 are reserved for units to tell all castles which unit got spawned.
 - 6 is reserved for units to tell all castles to pause building that turn.
+- 77, ..., 236 is reserved for pilgrims to tell all castles which resource tile they are mining
+- 237 is for pilgrim to tell castle it is a scout and all castle talk from that scout is location information.
 
 ## Signal Encoding
 The values ...
 - 1 is reserved for units to tell other units with attacking abilities to go and attack the first known structure
 - 2,3 for castle to tell pilgrim to search for karbonite (2) or fuel (3)
 - 4 for pilgrim to tell castle it just gave out its fuel and karbonite and is ready to receive new instructions if needed
+- 5??? **not sure if we need it**
+- 6, ... 4101 are for sending new target locations for units. **Doesn't seem to be used anymore??**
+- 4102,... 8197 are for sending the 1st new castle location for newly built units. **Also doesn't seem to be used anymore**, can be used for rush strats.
+- 8198,... 12293 **Also doesn't seem to be used anymore**
+- 12294, ...16389 are for setting unit statuses to 'attackTarget', used for defensive purposes to move units closer to enemy and farther away from own castle. Units only move such that they are outside attacking radius.
+- 16390 is not really used
+- 16391 tells units to go to defend mode. Prophets and Preachers go to defendOldPos mode so that they surround their castle instead of trailing off.
+- 16392, ... 20487 are for setting unit statuses to 'goToTarget', tells unit to always move to that target and then attack that target if possible. Sent by castle often to tell preachers (add crusaders later) to go attack a incoming prophet
+- 20488, ... 24583 are for setting all unit status to 'goToTarget'. All these units then attack the target, usually an enemy castle
+- 24834 is for telling a pilgrim to search and mine any deposit
+- 24585 is for telling units to move at fastest speed possible
+- 24586, ... 28681 is for telling prophets to move and defend a new location.
+- 28682 to 28841  is for telling newly built pilgrims to mine that location. (Specify type?)
+- 28842 to 29001 is for telling old pilgrims to mine that location.
+- 29002 is for pilgrim scouting
+- 29003, .... ,33098 is for rallying troops to a location
+- 33099,...37194,
 - 
-- 6, ... 5001 are for sending new target locations for preachers
-- 5002,... 9997 are for send new castle locations for preachers
-
+- 41292,..., 45387 is to tell only preachers to go and attack target
 
 ## STRATEGIES
 ### EARLY GAME
 #### Preacher Defence
 Defenders have a general advantage, so we start with stacking 3 preachers onto the first castle, then a pilgrim.
 
-Preachers move apart from each other in the direction of the enenmy castle, this way enemy preachers can't hit all our units at once. Preachers are initialized with mode ```rally``` and attempt to go to a rally target as determined at initialization
+Preachers move apart from each other in the direction of the enenmy castle, this way enemy preachers can't hit all our units at once. Preachers are initialized with mode ```defend``` . We also force a prophet to be built after there is sufficient karbonite and enough defending preachers. Once we stock up on prophets, the castle is basically unbeatable as long as we have tons of fuel.
 
 #### Preacher Attack
 
@@ -93,25 +110,29 @@ Pilgrims by default search and mine for karbonite. When they return to a castle 
 
 #### PILGRIM + CRUSADER MINING (TODO)
 
-Let pilgrims sit at a mining spot and just mine. Let crusaders deliver resources to castles from pilgrims.
+Let pilgrims sit at a mining spot and just mine. Let crusaders deliver resources to castles from pilgrims if the pilgrim is not close.
 
 #### Pilgrim Scouting (TODO)
+Idea:
+ During the mid game, send cheap pilgrims to scout the map. Pilgrim will search for enemy units. The pilgrim will communicate the positions of the enemy units back (see communication section)
 
-TODO: Implement code to make pilgrims that scout the map for enemy castles. Once it finds them, it finds our army of preachers, probably waiting at some rally point, (hopefully they are alive), and signals them the location of the enemy castle.
+Why is this useful?
+ We can determine whether to defend a contestable place
+ We can determine whether to defend one of our churches
+ We decide how much many resources to spend on defense on specific areas
 
+Timing
+ Do this during the mid game, so we can gain advantage in the mid-late game. In early game, this could be expensive.
+
+Communication:
+ Pilgrim can castleTalk back to castles if units are being built and sent. Once scouting is complete, the pilgrim finds our preacher army in its visible range, and will inform the information to the preachers with the normal communication method.
+
+#### Pilgrim Telescope (TODO)
 TODO: Implement code for a pilgrim to follow an army of preachers. The pilgrim acts as a telescope for the preachers, looks out for enemy castles along the way and also helps defend against enemy prophets (long range units). If it sees prophets that can attack our units, it should send a signal for the army to attack the prophets.
+I approve - Tom
 
-#### Signalling!!!! (TODO)
+#### Prophet defense (TODO)
 
-How can castles communicate each other their locations? We already know which unit ids are which types
-
-Through castle talk, last bits of data is reserved for sending enemy castle locations
-
-We send through 2 messages
-
-If the sender is an castle, we process as so
-
-If the message is
 
 # TODO
 
@@ -119,6 +140,23 @@ Check todos in strategy
 
 Strategy pls.
 
-SIGNAL TO CASTLE THE DESTRUCTION OF A CASTLE
+SIGNAL TO CASTLE THE DESTRUCTION OF A CASTLE (We sort of do, we jsut need a better way to uniquely hash a castle location in a maximum 64x64 map into a number between )
 
-(Reserve)
+Improve the way pilgrims decide on where to build churches. Sometimes they just go to enenmy fuel locations
+
+Better way to determine when to build churches
+
+Improve the defence of our own churches. We build them and they auto build 2 more prophets. How can this be improved? How do we know when to better defend it.
+
+Better defending, preachers against incoming crusaders.
+
+Scouting with pilgrims?
+
+Fix issue with castles deciding ot stop building prophets after some tme
+
+Force prophets to not stand right next to the castle
+
+BUG!!!!!
+
+Lattice strucutre is inefficient, our prophets for some reason just keep on trying to move into the lattice but end up expending fuel for no reason
+

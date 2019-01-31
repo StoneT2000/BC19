@@ -24,7 +24,7 @@ function mind(self){
     self.castleTalk(self.me.unit);
     self.allowedToMove = true;
     self.finalTarget = [self.me.x, self.me.y];
-    self.status = 'searchAndAttack';
+    self.status = 'defend';
     self.lastAttackedUnit = null;
     
     self.mapIsHorizontal = search.horizontalSymmetry(gameMap);
@@ -61,8 +61,10 @@ function mind(self){
   //SIGNAL PROCESSION
   for (let i = 0; i < robotsInVision.length; i++) {
     let msg = robotsInVision[i].signal;
-    signal.processMessagePreacher(self, msg);
-    if(robotsInVision[i].id !== self.me.id){
+    if (robotsInVision[i].team === self.me.team){
+      signal.processMessagePreacher(self, msg);
+    }
+    if(robotsInVision[i].id !== self.me.id && robotsInVision[i].team === self.me.team){
       //process new target location
       if (msg >= 6 && msg <= 5001) {
         //- 6 for padding
@@ -374,7 +376,7 @@ function mind(self){
     return {action:forcedAction};
   }
   if (self.allowedToMove === true){
-    action = self.navigate(self.finalTarget);
+    action = self.navigate(self.finalTarget, true, true);
   }
   else {
     action = '';

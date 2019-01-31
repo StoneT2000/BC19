@@ -18,10 +18,10 @@ function mind(self) {
     //CALCULATING HOW MANY INITIAL CASTLES WE HAVE
     //we make the assumption that each castle makes a pilgrim first thing
     let offsetVal = 0;
-    if (self.karbonite === 90) {
+    if (self.karbonite === 70) {
       offsetVal = 1;
     }
-    else if (self.karbonite === 60) {
+    else if (self.karbonite === 40) {
       offsetVal = 2;
     }
     //we can also detemrine the offset val by looking at how many castle talk messages of 0 this castle gets.
@@ -81,7 +81,7 @@ function mind(self) {
     if (self.castles === 3) {
       //only first castle builds pilgrim in 3 preacher defence strategy
       if (offsetVal === 0) {
-        self.buildQueue.push(2,5, 5, 5, 5);
+        self.buildQueue.push(5, 5, 5, 2,5,5);
       }
       else if (offsetVal === 1){
         self.buildQueue.push(-1,-1, -1, 2, 5, 5);
@@ -92,14 +92,14 @@ function mind(self) {
     }
     else if (self.castles === 2) {
       if (offsetVal === 0) {
-        self.buildQueue.push(2,5, 5, 5, 5);
+        self.buildQueue.push(5, 5, 5, 2,5,5);
       }
       else if (offsetVal === 1) {
         self.buildQueue.push(-1, -1, -1, 2, 5, 5);
       }
     }
     else if (self.castles === 1) {
-      self.buildQueue.push(2,5,5,5,5,2);
+      self.buildQueue.push(5,5,5,2,5);
     }
     
     
@@ -182,7 +182,9 @@ function mind(self) {
       }
     }
   }
-  
+  if (self.me.turn >=3) {
+    self.signal(1,36);
+  }
   
   //Count units
   self.castles = 0;
@@ -286,13 +288,13 @@ function mind(self) {
             let unit = self.buildQueue.shift(); //remove that unit
 
             if (self.buildQueue[self.buildQueue.length-1] === 2){
-              self.buildQueue.push(5,5);
+              self.buildQueue.push(4,5);
             }
             else if (self.pilgrims <= self.maxPilgrims){
               self.buildQueue.push(2);
             }
             else {
-              self.buildQueue.push(5,5);
+              self.buildQueue.push(4,5);
             }
             if (unit === 3) {
               //send an initial signal?

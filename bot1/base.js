@@ -91,23 +91,45 @@ const unitAttackFuelCosts = {
 * @param {number} p2x - x
 * @param {number} p2y - x
 * @param {self} self - self
+* @param {boolean} avoidFriends - whether or not avoid friendly units to avoid clumping
 */
-function relToPos(p1x, p1y, p2x, p2y, self) {
+function relToPos(p1x, p1y, p2x, p2y, self, avoidFriends = false, fast = true) {
   let vals = rel(p1x, p1y, p2x, p2y);
   let deltas = unitMoveDeltas[self.me.unit];
-  
+  if (fast === false) {
+    deltas = unitMoveDeltas[self.me.unit].slice(0, 9);
+  }
+  let robotMap = self.getVisibleRobotMap();
   let closestDist = qmath.dist(p2x,p2y,p1x, p1y);
   let bestDelta = [0,0];
   for (let i = 0; i < deltas.length; i++) {
 
     let nx = p1x+deltas[i][0];
-    let ny = p1y+deltas[i][1]
+    let ny = p1y+deltas[i][1];
+    
     let pass = self.canMove(deltas[i][0],deltas[i][1])
+    //self.log(`check: ${nx}, ${ny}; can move there? : ${pass}`);
     if (pass === true){
-      let distLeft = qmath.dist(nx,ny,p2x,p2y);
-      if (distLeft < closestDist) {
-        closestDist = distLeft;
-        bestDelta = deltas[i];
+      let validPlace = true;
+      if (avoidFriends) {
+        
+        let checkPositions = search.circle(self, nx, ny, 2);
+        for (let k = 1; k < checkPositions.length; k++) {
+          let pos = checkPositions[k];
+          //self.log(`Check for friends at ${pos}`)
+          let robotThere = self.getRobot(robotMap[pos[1]][pos[0]]);
+          if (robotThere !== null && robotThere.team === self.me.team && robotThere.id !== self.me.id) {
+            validPlace = false;
+          }
+        }
+      }
+      //self.log(`${nx}, ${ny} is valid?:${validPlace}`);
+      if (validPlace){
+        let distLeft = qmath.dist(nx,ny,p2x,p2y);
+        if (distLeft < closestDist) {
+          closestDist = distLeft;
+          bestDelta = deltas[i];
+        }
       }
     }
   }
@@ -135,11 +157,11 @@ function logStructureBot(self, structureBot) {
 * Logs a structure of unit type unit at x,y of team: team. Stores it in self.knownStructures if it doesn't exist already
 * 
 */
-function logStructure(self, x, y, team, unit) {
+function logStructure(self, x, y, team, unit, push = true) {
   let exists = false;
   for (let k = 0; k < self.knownStructures[team].length; k++) {
     let knownStructure = self.knownStructures[team][k];
-    self.log(`${knownStructure.x}, ${knownStructure.y}`);
+    //self.log(`${knownStructure.x}, ${knownStructure.y}`);
     if (x === knownStructure.x && y === knownStructure.y) {
       exists = true;
       break;
@@ -147,7 +169,12 @@ function logStructure(self, x, y, team, unit) {
   }
   //log structure
   if (exists === false) {
-    self.knownStructures[team].push({x:x,y:y,unit:unit});
+    if (push === true){
+      self.knownStructures[team].push({x:x,y:y,unit:unit});
+    }
+    else {
+      self.knownStructures[team].unshift({x:x,y:y,unit:unit});
+    }
   }
 }
 
@@ -172,8 +199,17 @@ function updateKnownStructures(self) {
         //structure is still there
         newKnownStructures.push(knownStructure);
       }
-      else {
+      else if (teamNum !== self.me.team){
         //structure is def. gone
+        //destroyed structure, send signal to castle about its death
+        self.log(`Killed castle`);
+        if (self.mapIsHorizontal){
+          self.castleTalk(7 + knownStructure.x);
+        }
+        else {
+          self.castleTalk(7 + knownStructure.y);
+        }
+        self.destroyedCastle = true;
       }
       
 
@@ -185,6 +221,7 @@ function updateKnownStructures(self) {
   }
   
 }
+function destroyedCastle(self) {
+}
 
-
-export default {rel, relToPos, unitMoveDeltas, logStructure, updateKnownStructures};
+export default {rel, relToPos, unitMoveDeltas, logStructure, updateKnownStructures, destroyedCastle};
