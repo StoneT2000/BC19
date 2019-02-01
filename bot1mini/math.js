@@ -1,0 +1,1 @@
+function dist(t,n,i,u){return(i-t)*(i-t)+(u-n)*(u-n)}function distDelta(t,n){return t*t+n*n}function unitDist(t,n,i,u){return Math.abs(i-t)+Math.abs(u-n)}export default {dist, distDelta, unitDist};
