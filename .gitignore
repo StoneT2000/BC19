@@ -1,2 +1,3 @@
 node_modules/
 *.bc19
+.DS_Store
