@@ -2,9 +2,9 @@
 
 This is team "Codelympians" source code for our bot. We competed in JavaScript this year.
 
-We finished nth place
+We finished 9th overall out of 600+ registered teams, 4th out of all high school teams.
 
-Our final bot that got submitted is in the root directory and is called botfinal.js
+Our final bot that got submitted is in the root directory and is called botfinal.js (or check out mini.js, our entire bot on one line of code)
 
 A commented version and with logs is located in the folder bot1.
 
